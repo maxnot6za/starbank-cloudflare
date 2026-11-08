@@ -329,13 +329,29 @@ const ACTIONS = {
     const s = await requireParentSession(request, env);
     const fid = s.member.family_id;
     const [mem, ses] = await env.DB.batch([
-      env.DB.prepare('SELECT member_id, name, avatar, role, line_user_id, pin_hash FROM Members WHERE family_id = ? ORDER BY rowid').bind(fid),
+      // ใช้งานล่าสุด = เวลาล่าสุดของ: เข้าระบบ, อนุมัติ/ปฏิเสธ, เพิ่มภารกิจ/รางวัล, รับทราบการแลก
+      env.DB.prepare(`SELECT m.member_id, m.name, m.avatar, m.role, m.line_user_id, m.pin_hash, m.created_at,
+          (SELECT MAX(last_seen_at) FROM Sessions WHERE member_id = m.member_id) AS seen,
+          (SELECT MAX(reviewed_at) FROM Submissions WHERE family_id = m.family_id AND reviewed_by = m.member_id) AS reviewed,
+          (SELECT COUNT(*) FROM Submissions WHERE family_id = m.family_id AND reviewed_by = m.member_id) AS n_review,
+          (SELECT MAX(created_at) FROM Missions WHERE family_id = m.family_id AND created_by = m.member_id) AS mission,
+          (SELECT COUNT(*) FROM Missions WHERE family_id = m.family_id AND created_by = m.member_id) AS n_mission,
+          (SELECT MAX(created_at) FROM Rewards WHERE family_id = m.family_id AND created_by = m.member_id) AS reward,
+          (SELECT COUNT(*) FROM Rewards WHERE family_id = m.family_id AND created_by = m.member_id) AS n_reward,
+          (SELECT MAX(acknowledged_at) FROM Redemptions WHERE family_id = m.family_id AND acknowledged_by = m.member_id) AS ack,
+          (SELECT COUNT(*) FROM Sessions WHERE member_id = m.member_id) AS n_device
+        FROM Members m WHERE m.family_id = ? ORDER BY m.rowid`).bind(fid),
       env.DB.prepare('SELECT s.session_hash, s.member_id, s.device, s.last_seen_at, m.name, m.avatar FROM Sessions s JOIN Members m ON m.member_id = s.member_id WHERE s.family_id = ? ORDER BY s.last_seen_at DESC').bind(fid),
     ]);
     const members = mem.results;
     return { value: {
       children: members.filter(m => m.role === 'child').map(m => ({ member_id: m.member_id, name: m.name, avatar: m.avatar, hasPin: !!m.pin_hash })),
-      parents: members.filter(m => m.role === 'parent').map(m => ({ member_id: m.member_id, name: m.name, avatar: m.avatar, hasLine: !!m.line_user_id, isMe: m.member_id === s.member.member_id })),
+      parents: members.filter(m => m.role === 'parent').map(m => ({
+        member_id: m.member_id, name: m.name, avatar: m.avatar, hasLine: !!m.line_user_id, isMe: m.member_id === s.member.member_id,
+        createdAt: m.created_at || '',
+        lastActive: [m.seen, m.reviewed, m.mission, m.reward, m.ack, m.created_at].filter(Boolean).sort().pop() || '',
+        reviews: m.n_review, missions: m.n_mission, rewards: m.n_reward, devices: m.n_device,
+      })),
       devices: ses.results.map(d => ({ id: d.session_hash.slice(0, 16), name: d.name, avatar: d.avatar, device: d.device, lastSeen: d.last_seen_at, current: d.session_hash === s.hash })),
     } };
   },
@@ -387,6 +403,33 @@ const ACTIONS = {
     const f = await env.DB.prepare('SELECT family_name FROM Families WHERE family_id = ?').bind(t.family_id).first();
     const m = t.member_id ? await env.DB.prepare('SELECT name FROM Members WHERE member_id = ?').bind(t.member_id).first() : null;
     return { value: { familyName: f ? f.family_name : '', claimName: m ? m.name : '' } };
+  },
+
+  // รวมผู้ปกครองซ้ำ: ย้ายประวัติทั้งหมดไปที่ intoId แล้วลบแถว fromId (เฉพาะแถวที่ไม่ได้ผูก LINE)
+  async mergeParent(request, env, [fromId, intoId]) {
+    const s = await requireParentSession(request, env);
+    const fid = s.member.family_id;
+    fromId = String(fromId || ''); intoId = String(intoId || '');
+    if (!fromId || !intoId || fromId === intoId) throw new Error('เลือกสมาชิกไม่ถูกต้อง');
+    const from = await env.DB.prepare("SELECT * FROM Members WHERE member_id = ? AND family_id = ? AND role = 'parent'").bind(fromId, fid).first();
+    const into = await env.DB.prepare("SELECT * FROM Members WHERE member_id = ? AND family_id = ? AND role = 'parent'").bind(intoId, fid).first();
+    if (!from || !into) throw new Error('ไม่พบสมาชิก');
+    if (from.line_user_id) throw new Error('รวมได้เฉพาะสมาชิกที่ยังไม่ผูก LINE');
+    const db = env.DB;
+    await db.batch([
+      // ลบก่อน แล้วเช็กว่าลบได้จริง (ถ้าระหว่างนั้นมีคนผูก LINE ให้แถวนี้ → ยกเลิกทั้งชุด)
+      db.prepare("DELETE FROM Members WHERE member_id = ? AND family_id = ? AND role = 'parent' AND (line_user_id IS NULL OR line_user_id = '')").bind(fromId, fid),
+      db.prepare('INSERT INTO _guard (ok) VALUES (changes())'),
+      db.prepare('UPDATE Submissions SET reviewed_by = ? WHERE family_id = ? AND reviewed_by = ?').bind(intoId, fid, fromId),
+      db.prepare('UPDATE Missions SET created_by = ? WHERE family_id = ? AND created_by = ?').bind(intoId, fid, fromId),
+      db.prepare('UPDATE Rewards SET created_by = ? WHERE family_id = ? AND created_by = ?').bind(intoId, fid, fromId),
+      db.prepare('UPDATE Redemptions SET acknowledged_by = ? WHERE family_id = ? AND acknowledged_by = ?').bind(intoId, fid, fromId),
+      db.prepare('DELETE FROM Sessions WHERE member_id = ?').bind(fromId),
+      db.prepare('DELETE FROM AuthTokens WHERE member_id = ?').bind(fromId),
+      db.prepare('INSERT INTO MergeLog (from_id, into_id, family_id, merged_by, merged_at) VALUES (?,?,?,?,?)').bind(fromId, intoId, fid, s.member.member_id, nowIso()),
+      db.prepare('DELETE FROM _guard'),
+    ]).catch(e => { throw new Error(/CHECK/i.test(String(e.message)) ? 'ข้อมูลเพิ่งเปลี่ยน กรุณาลองใหม่' : e.message); });
+    return { value: true, touched: fid };
   },
 
   async revokeDevice(request, env, [id]) {

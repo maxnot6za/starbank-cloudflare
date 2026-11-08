@@ -2615,8 +2615,16 @@ function renderAccess(a) {
       '<button class="chip-btn" onclick="showChildQr(\'' + escJs(c.member_id) + '\',\'' + escJs(c.name) + '\')">📱 QR</button></div>';
   }).join('') || '<div class="empty" style="padding:8px 0">ยังไม่มีเด็ก</div>';
   var parents = a.parents.map(function (p) {
-    return '<div class="acc-row"><div style="font-size:1.6rem">' + p.avatar + '</div><div class="nm"><div>' + esc(p.name) + (p.isMe ? ' (คุณ)' : '') + '</div><div>' + (p.hasLine ? 'ผูก LINE แล้ว ✓' : 'ยังไม่ผูก LINE') + '</div></div>' +
-      (p.hasLine ? '' : '<button class="chip-btn" onclick="showInviteLink(\'' + escJs(p.member_id) + '\',\'' + escJs(p.name) + '\')">🔗 ส่งลิงก์ผูก LINE</button>') + '</div>';
+    var acts = [];
+    if (p.reviews) acts.push('อนุมัติ ' + p.reviews);
+    if (p.missions) acts.push('ภารกิจ ' + p.missions);
+    if (p.rewards) acts.push('รางวัล ' + p.rewards);
+    return '<div class="acc-row" style="flex-wrap:wrap"><div style="font-size:1.6rem">' + p.avatar + '</div><div class="nm"><div>' + esc(p.name) + (p.isMe ? ' (คุณ)' : '') + '</div>' +
+      '<div>' + (p.hasLine ? 'ผูก LINE แล้ว ✓' : 'ยังไม่ผูก LINE') + ' · ใช้งานล่าสุด ' + lastActiveText(p.lastActive) + '</div>' +
+      '<div>' + (acts.length ? acts.join(' · ') : 'ยังไม่เคยทำรายการ') + ' · รหัส ' + esc(String(p.member_id).slice(0, 4)) + '…</div></div>' +
+      (p.hasLine ? '' : '<div style="display:flex;gap:6px;width:100%;justify-content:flex-end">' +
+        '<button class="chip-btn" onclick="showInviteLink(\'' + escJs(p.member_id) + '\',\'' + escJs(p.name) + '\')">🔗 ผูก LINE</button>' +
+        '<button class="chip-btn" style="color:var(--danger)" onclick="showMergeParent(\'' + escJs(p.member_id) + '\')">🧹 รวมกับ…</button></div>') + '</div>';
   }).join('');
   var devices = a.devices.map(function (d) {
     return '<div class="acc-row"><div style="font-size:1.4rem">' + d.avatar + '</div><div class="nm"><div>' + esc(d.name) + ' · ' + esc(d.device || '') + '</div><div>' + (d.current ? 'เครื่องนี้' : 'ใช้ล่าสุด ' + timeAgo(d.lastSeen)) + '</div></div>' +
@@ -2629,6 +2637,49 @@ function renderAccess(a) {
     '<button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px" onclick="showInviteLink(\'\',\'\')">💌 เชิญผู้ปกครองเพิ่ม</button></div>' +
     '<div class="card" style="box-shadow:none;background:var(--bg)"><h3>📱 เครื่องที่เข้าระบบอยู่</h3>' + devices +
     '<p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px">มือถือหาย? กด "ออกจากระบบ" ที่เครื่องนั้นได้เลย</p></div>';
+}
+
+function lastActiveText(iso) {
+  if (!iso) return '-';
+  var ms = Date.now() - new Date(iso);
+  if (ms < 7 * 86400000) return timeAgo(iso);
+  return new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+}
+
+function showMergeParent(fromId) {
+  var a = window.__access, from = a.parents.find(function (p) { return p.member_id === fromId; });
+  var targets = a.parents.filter(function (p) { return p.member_id !== fromId; })
+    .sort(function (x, y) { return (y.hasLine - x.hasLine) || (x.name === from.name ? -1 : 0); });
+  openModal('<h2>🧹 รวม "' + esc(from.name) + '"</h2>' +
+    '<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">เลือกคนที่ใช่ตัวจริง ประวัติทั้งหมดของแถวนี้จะย้ายไปอยู่กับคนนั้น แล้วลบแถวนี้ทิ้ง</p>' +
+    targets.map(function (p) {
+      return '<button class="btn btn-outline" style="margin-bottom:8px;justify-content:flex-start" onclick="confirmMerge(\'' + escJs(fromId) + '\',\'' + escJs(p.member_id) + '\')">' +
+        p.avatar + ' ' + esc(p.name) + (p.hasLine ? ' · LINE ✓' : '') + ' · ' + lastActiveText(p.lastActive) + '</button>';
+    }).join('') +
+    '<button class="btn btn-outline" style="margin-top:6px" onclick="showSettings()">ย้อนกลับ</button>');
+}
+
+function confirmMerge(fromId, intoId) {
+  var a = window.__access;
+  var from = a.parents.find(function (p) { return p.member_id === fromId; }), into = a.parents.find(function (p) { return p.member_id === intoId; });
+  var moved = [];
+  if (from.reviews) moved.push('การอนุมัติ ' + from.reviews + ' ครั้ง');
+  if (from.missions) moved.push('ภารกิจที่สร้าง ' + from.missions);
+  if (from.rewards) moved.push('รางวัลที่สร้าง ' + from.rewards);
+  openModal('<h2>ยืนยันการรวม</h2>' +
+    '<div class="card" style="box-shadow:none;background:var(--bg);line-height:1.8">' +
+    '🗑️ ลบ: <b>' + from.avatar + ' ' + esc(from.name) + '</b> (รหัส ' + esc(fromId.slice(0, 4)) + '…)<br>' +
+    '✅ เก็บ: <b>' + into.avatar + ' ' + esc(into.name) + '</b>' + (into.hasLine ? ' · LINE ✓' : '') + '<br>' +
+    '📦 ย้าย: ' + (moved.length ? moved.join(', ') : 'ไม่มีประวัติ') + '</div>' +
+    '<p style="text-align:center;color:var(--danger);font-size:0.85rem;margin:10px 0">ย้อนกลับไม่ได้ · ภารกิจ รางวัล และดาวของเด็กไม่หาย</p>' +
+    '<button class="btn btn-danger" id="merge-btn" onclick="doMerge(\'' + escJs(fromId) + '\',\'' + escJs(intoId) + '\')">ยืนยันรวม</button>' +
+    '<button class="btn btn-outline" style="margin-top:10px" onclick="showSettings()">ยกเลิก</button>');
+}
+
+function doMerge(fromId, intoId) {
+  var btn = document.getElementById('merge-btn'); btn.disabled = true;
+  authApi('mergeParent', [fromId, intoId]).then(function () { toast('🧹 รวมเรียบร้อย'); showSettings(); })
+    .catch(function (e) { btn.disabled = false; toast(e.message); });
 }
 
 function pinInputModal(title, sub, onSave) {
