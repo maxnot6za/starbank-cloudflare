@@ -3,6 +3,23 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>⭐ ธนาคารดาว</title>
+<meta name="description" content="ทำภารกิจ สะสมดาว แลกรางวัล — แอปของครอบครัวเรา">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#E5484D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ธนาคารดาว">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ธนาคารดาว">
+<meta property="og:title" content="⭐ ธนาคารดาว">
+<meta property="og:description" content="ทำภารกิจ สะสมดาว แลกรางวัล — แอปของครอบครัวเรา">
+<meta property="og:image" content="https://starbank-cloudflare.maxnot6za.workers.dev/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
   <meta charset="utf-8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -435,7 +452,7 @@
   <div class="card" style="margin-top:20px">
     <h3>👨‍👩‍👧 ผู้ปกครอง</h3>
     <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px">เข้าสู่ระบบด้วยบัญชี LINE ไม่ต้องจำรหัสผ่าน<br>ยังไม่มีครอบครัว? กดปุ่มนี้แล้วสร้างใหม่ได้เลย</p>
-    <a class="btn btn-line" href="/auth/line/start" data-no-fe>
+    <a class="btn btn-line" href="/auth/line/start" data-no-fe onclick="return lineLoginClick(event)">
       <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M12 3C6.48 3 2 6.58 2 11c0 3.96 3.54 7.28 8.32 7.9.32.07.77.21.88.49.1.25.07.65.03.9l-.14.85c-.04.25-.2.98.86.53 1.06-.44 5.7-3.36 7.78-5.75C21.17 14.38 22 12.8 22 11c0-4.42-4.48-8-10-8z"/></svg>
       เข้าสู่ระบบด้วย LINE
     </a>
@@ -1492,6 +1509,7 @@ function showSettings() {
     if (slot) slot.innerHTML = wheelSettingsCard();
   }).getWheelStatus(currentMember.memberId);
   loadAccess();
+  setTimeout(loadPush, 0);
   const joinCode = d.family.join_code || '???';
   var notifySub = d.member.notify_submission;
   var isSubOn = (notifySub !== false && notifySub !== 'false' && notifySub !== 'FALSE');
@@ -1507,12 +1525,13 @@ function showSettings() {
     <div class="divider"></div>
     <div id="wheel-settings-slot">${wheelSettingsCard()}</div>
     <div class="divider"></div>
+    <div id="push-slot"></div>
     <div class="card" style="box-shadow:none;background:var(--bg)">
-      <h3>🔔 การแจ้งเตือน LINE</h3>
+      <h3>🔔 แจ้งเตือนเรื่องไหนบ้าง</h3>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
         <div>
           <div style="font-weight:600;font-size:0.9rem">📋 เด็กส่งภารกิจ</div>
-          <div style="font-size:0.8rem;color:var(--text-muted)">แจ้งเตือน + ปุ่มอนุมัติใน LINE</div>
+          <div style="font-size:0.8rem;color:var(--text-muted)">แจ้งเตือน + ปุ่มอนุมัติ (LINE / แอป)</div>
         </div>
         <label style="position:relative;display:inline-block;width:50px;height:28px;cursor:pointer">
           <input type="checkbox" id="toggle-notify-submission" ${isSubOn ? 'checked' : ''} onchange="toggleNotifySub(this.checked)" style="opacity:0;width:0;height:0">
@@ -2446,7 +2465,9 @@ function enterAs(m) {
   try { localStorage.setItem('starbank_member', JSON.stringify(currentMember)); } catch (e) {}
   document.getElementById('auto-login-status').style.display = 'none';
   if (m.role === 'child') loadChildDashboard(); else loadParentDashboard();
+  if (m.role === 'parent' && location.hash === '#approvals') { parentNav('approvals'); cleanUrl(); }
   musicAfterLogin();
+  if (!isStandalone()) checkHandoff();
 }
 
 function enterFromServer(greet) {
@@ -2776,6 +2797,189 @@ function showInviteLink(claimId, claimName) {
 
 function revokeDevice(id) {
   authApi('revokeDevice', [id]).then(function () { toast('ออกจากระบบเครื่องนั้นแล้ว'); loadAccess(); }).catch(function (e) { toast(e.message); });
+}
+</script>
+
+<script>
+// ===================================================================
+// แจ้งเตือนในแอป (Web Push) + แอปบนหน้าจอโฮม
+// ===================================================================
+function isStandalone() {
+  return !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
+}
+function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1); }
+function inLineApp() { return /Line\//.test(navigator.userAgent); }
+function pushSupported() { return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; }
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
+  navigator.serviceWorker.addEventListener('message', function (e) {
+    var d = e.data || {};
+    if (d.type === 'open' && currentMember && currentMember.role === 'parent') {
+      closeModal();
+      if (/approvals/.test(d.url || '')) parentNav('approvals');
+      if (typeof Live !== 'undefined') Live.request();
+    }
+  });
+}
+
+function b64ToBytes(b64) {
+  var s = b64.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '=';
+  var bin = atob(s), out = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function currentSub() {
+  if (!pushSupported()) return Promise.resolve(null);
+  return navigator.serviceWorker.getRegistration().then(function (reg) { return reg ? reg.pushManager.getSubscription() : null; }).catch(function () { return null; });
+}
+
+function loadPush() {
+  var el = document.getElementById('push-slot');
+  if (!el) return;
+  var box = function (inner) { el.innerHTML = '<div class="card" style="box-shadow:none;background:var(--bg)"><h3>📲 แจ้งเตือนบนมือถือเครื่องนี้</h3>' + inner + '</div><div class="divider"></div>'; };
+  if (!pushSupported()) {
+    if (isIOS() && !isStandalone()) {
+      box('<p style="font-size:0.88rem;line-height:1.7">iPhone ต้องเพิ่มแอปลงหน้าจอโฮมก่อน:<br>' +
+        '1. เปิดลิงก์นี้ใน <b>Safari</b>' + (inLineApp() ? ' (ตอนนี้เปิดอยู่ใน LINE)' : '') + '<br>' +
+        '2. กดปุ่ม <b>แชร์</b> (สี่เหลี่ยมมีลูกศรขึ้น)<br>3. เลือก <b>"เพิ่มไปยังหน้าจอโฮม"</b><br>' +
+        '4. เปิดแอปจากไอคอนดาว แล้วกลับมาที่หน้านี้</p>');
+    } else if (inLineApp()) {
+      box('<p style="font-size:0.88rem">เปิดลิงก์นี้ใน Chrome หรือ Safari ก่อน (เบราว์เซอร์ในแอป LINE เปิดแจ้งเตือนไม่ได้)</p>');
+    } else {
+      box('<p style="font-size:0.88rem">เบราว์เซอร์นี้ไม่รองรับแจ้งเตือน ใช้ LINE ตามเดิมได้เลย</p>');
+    }
+    return;
+  }
+  box('<div class="loading">⏳</div>');
+  currentSub().then(function (sub) {
+    return authApi('pushInfo', [sub ? sub.endpoint : '']).then(function (info) {
+      // มีในเครื่องแต่เซิร์ฟเวอร์ไม่รู้จัก (เช่นเปลี่ยนบัญชี) → ลงทะเบียนใหม่เงียบ ๆ
+      if (sub && !info.thisDevice && Notification.permission === 'granted') {
+        return authApi('pushSubscribe', [sub.toJSON()]).then(function () { return authApi('pushInfo', [sub.endpoint]); });
+      }
+      return info;
+    }).then(function (info) { renderPush(info, sub); });
+  }).catch(function (e) { box('<div class="empty">โหลดไม่สำเร็จ: ' + esc(e.message) + '</div>'); });
+}
+
+function renderPush(info, sub) {
+  window.__pushInfo = info;
+  var el = document.getElementById('push-slot'); if (!el) return;
+  var on = !!(sub && info.thisDevice && Notification.permission === 'granted');
+  var html = '';
+  if (Notification.permission === 'denied') {
+    html += '<p style="font-size:0.88rem">การแจ้งเตือนถูกปิดไว้ในตั้งค่าของเครื่อง<br>ไปที่ ตั้งค่า → การแจ้งเตือน → ' + (isStandalone() ? 'ธนาคารดาว' : 'เบราว์เซอร์') + ' แล้วเปิดอนุญาต</p>';
+  } else if (on) {
+    html += '<div style="font-weight:700;color:var(--success);margin-bottom:8px">✓ เครื่องนี้รับแจ้งเตือนแล้ว</div>' +
+      '<div style="display:flex;gap:8px"><button class="chip-btn" onclick="testPush()">🔔 ทดสอบ</button><button class="chip-btn" style="color:var(--danger)" onclick="disablePush()">ปิดในเครื่องนี้</button></div>';
+  } else {
+    html += '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:10px">เด็กส่งภารกิจหรือแลกรางวัล → แจ้งเตือนเด้งบนเครื่องนี้ทันที ฟรี ไม่กินโควต้า LINE</p>' +
+      '<button class="btn btn-primary" id="push-on-btn" onclick="enablePush()">🔔 เปิดแจ้งเตือนในเครื่องนี้</button>';
+  }
+  if (info.devices > 0) {
+    var opt = function (v, label, dis) {
+      var act = info.channel === v;
+      return '<button class="chip-btn" ' + (dis ? 'disabled style="opacity:.4"' : '') + ' onclick="setChannel(\'' + v + '\')" style="flex:1;' + (act ? 'background:var(--primary);color:#fff;border-color:var(--primary)' : '') + '">' + label + '</button>';
+    };
+    html += '<div style="margin-top:14px;font-weight:600;font-size:0.9rem">รับแจ้งเตือนทาง</div>' +
+      '<div style="display:flex;gap:6px;margin-top:6px">' + opt('app', '📲 แอป', false) + opt('both', 'ทั้งสอง', !info.hasLine) + opt('line', '💬 LINE', !info.hasLine) + '</div>' +
+      '<p style="font-size:0.78rem;color:var(--text-muted);margin-top:6px">' +
+      (info.channel === 'app' ? 'ไม่ส่ง LINE ให้คุณ (ประหยัดโควต้า) · ' : '') + 'เปิดไว้ ' + info.devices + ' เครื่อง</p>';
+  }
+  el.innerHTML = '<div class="card" style="box-shadow:none;background:var(--bg)"><h3>📲 แจ้งเตือนบนมือถือเครื่องนี้</h3>' + html + '</div><div class="divider"></div>';
+}
+
+function enablePush() {
+  var btn = document.getElementById('push-on-btn'); if (btn) btn.disabled = true;
+  // ต้องขออนุญาตทันทีตอนนิ้วแตะ (Safari บังคับ)
+  Notification.requestPermission().then(function (perm) {
+    if (perm !== 'granted') throw new Error('ยังไม่ได้อนุญาตการแจ้งเตือน');
+    return navigator.serviceWorker.register('/sw.js').then(function () { return navigator.serviceWorker.ready; });
+  }).then(function (reg) {
+    return authApi('pushInfo').then(function (info) {
+      return reg.pushManager.getSubscription().then(function (old) {
+        return old || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(info.publicKey) });
+      });
+    });
+  }).then(function (sub) {
+    return authApi('pushSubscribe', [sub.toJSON()]);
+  }).then(function () {
+    toast('🔔 เปิดแจ้งเตือนแล้ว! ลองกด "ทดสอบ"');
+    loadPush();
+  }).catch(function (e) { if (btn) btn.disabled = false; toast(e.message || 'เปิดแจ้งเตือนไม่สำเร็จ', 4000); loadPush(); });
+}
+
+function disablePush() {
+  currentSub().then(function (sub) {
+    var ep = sub ? sub.endpoint : '';
+    return (sub ? sub.unsubscribe() : Promise.resolve()).then(function () { return authApi('pushUnsubscribe', [ep]); });
+  }).then(function () { toast('ปิดแจ้งเตือนในเครื่องนี้แล้ว'); loadPush(); }).catch(function (e) { toast(e.message); });
+}
+
+function testPush() {
+  authApi('pushTest').then(function (n) { toast('ส่งแล้ว ' + n + ' เครื่อง · รอสักครู่'); }).catch(function (e) { toast(e.message); });
+}
+
+function setChannel(ch) {
+  authApi('setNotifyChannel', [ch]).then(function () {
+    toast(ch === 'app' ? '📲 แจ้งเตือนทางแอปอย่างเดียว' : ch === 'line' ? '💬 แจ้งเตือนทาง LINE อย่างเดียว' : 'แจ้งเตือนทั้งสองทาง');
+    loadPush();
+  }).catch(function (e) { toast(e.message); });
+}
+
+// ---------- เข้าสู่ระบบด้วย LINE จากแอปบนหน้าจอโฮม ----------
+// แอปบนหน้าจอโฮมเก็บคุกกี้แยกจากเบราว์เซอร์ → ให้เบราว์เซอร์เข้า LINE แล้ว "ยืนยัน" ส่งสิทธิ์มาให้แอป
+function lineLoginClick(e) {
+  if (!isStandalone()) return true;   // เบราว์เซอร์ปกติ: ไปตามลิงก์
+  e.preventDefault();
+  var bytes = crypto.getRandomValues(new Uint8Array(24));
+  var token = Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  var code = token.slice(0, 4).toUpperCase();
+  window.open('/auth/line/start?handoff=' + token, '_blank');
+  openModal('<h2>🔑 เข้าสู่ระบบด้วย LINE</h2>' +
+    '<p style="text-align:center;line-height:1.7">เข้าสู่ระบบในหน้าที่เปิดขึ้นมา<br>แล้วกด <b>"ยืนยัน"</b> เมื่อเห็นรหัสนี้</p>' +
+    '<div style="text-align:center;font:700 2.4rem Mali,sans-serif;letter-spacing:8px;color:var(--primary);margin:10px 0">' + code + '</div>' +
+    '<p style="text-align:center;color:var(--text-muted);font-size:0.85rem" id="handoff-status">⏳ รอการยืนยัน...</p>' +
+    '<button class="btn btn-outline" style="margin-top:12px" onclick="stopHandoff();closeModal()">ยกเลิก</button>');
+  startHandoffPoll(token);
+  return false;
+}
+var handoffTimer = null;
+function stopHandoff() { clearInterval(handoffTimer); handoffTimer = null; }
+function startHandoffPoll(token) {
+  stopHandoff();
+  var started = Date.now(), busy = false;
+  var tick = function () {
+    if (busy) return;
+    if (Date.now() - started > 10 * 60000) { stopHandoff(); var st = document.getElementById('handoff-status'); if (st) st.textContent = 'หมดเวลา ลองใหม่อีกครั้ง'; return; }
+    busy = true;
+    authApi('handoffCheck', [token]).then(function (ok) {
+      busy = false;
+      if (ok) { stopHandoff(); enterFromServer(true); }
+    }).catch(function (e) { busy = false; if (/หมดเวลา/.test(e.message) && Date.now() - started > 5000) { stopHandoff(); var st = document.getElementById('handoff-status'); if (st) st.textContent = e.message; } });
+  };
+  handoffTimer = setInterval(tick, 2000);
+  document.addEventListener('visibilitychange', function v() { if (!handoffTimer) { document.removeEventListener('visibilitychange', v); return; } if (document.visibilityState === 'visible') tick(); });
+}
+
+// (ฝั่งเบราว์เซอร์) หลังเข้าระบบแล้ว ถ้ามีแอปบนหน้าจอโฮมขอสิทธิ์อยู่ → ให้ยืนยันด้วยรหัส
+function checkHandoff() {
+  authApi('handoffInfo').then(function (h) {
+    if (!h) return;
+    openModal('<h2>📲 ยืนยันเข้าสู่ระบบในแอป</h2>' +
+      '<p style="text-align:center;line-height:1.7">แอปธนาคารดาวบนหน้าจอโฮม<br>ขอเข้าสู่ระบบเป็น <b>' + h.avatar + ' ' + esc(h.name) + '</b></p>' +
+      '<div style="text-align:center;font:700 2.4rem Mali,sans-serif;letter-spacing:8px;color:var(--primary);margin:10px 0">' + esc(h.code) + '</div>' +
+      '<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">กดยืนยันเฉพาะเมื่อรหัสตรงกับที่แอปแสดงอยู่</p>' +
+      '<button class="btn btn-primary" onclick="approveHandoff()">ยืนยัน</button>' +
+      '<button class="btn btn-outline" style="margin-top:10px" onclick="authApi(\'handoffCancel\');closeModal()">ไม่ใช่ฉัน</button>');
+  }).catch(function () {});
+}
+function approveHandoff() {
+  authApi('handoffApprove').then(function () {
+    openModal('<h2>✅ เรียบร้อย</h2><p style="text-align:center;line-height:1.7">กลับไปที่แอปธนาคารดาวบนหน้าจอโฮมได้เลย<br>(ปิดหน้านี้ได้)</p>');
+  }).catch(function (e) { toast(e.message); closeModal(); });
 }
 </script>
 </body>

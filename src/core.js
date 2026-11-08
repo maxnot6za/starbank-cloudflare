@@ -531,6 +531,9 @@ export function createCore(S) {
       ? `${mission.base_stars} x${mission.multiplier} = ${stars} ดาว`
       : `${stars} ดาว`;
 
+    if (S.events) S.events.push({ type: 'submit', familyId: String(familyId), submissionId: submissionId, childName: childName,
+      childAvatar: childAvatar, missionTitle: mission.title, starsDisplay: starsDisplay });   // แจ้งเตือนในแอป
+
     // ส่ง LINE เฉพาะผู้ปกครองที่เปิดแจ้งเตือนส่งภารกิจ (รายคน)
     const flexMsg = makeApprovalFlex_(submissionId, childName, childAvatar, mission.title, starsDisplay);
     const parents = getAllRows_('Members').filter(m => String(m.family_id) === String(familyId) && m.role === 'parent' && m.line_user_id);
@@ -697,6 +700,7 @@ export function createCore(S) {
     // แจ้ง LINE
     const child = getMember_(childId);
     const childName = child ? child.name : 'น้อง';
+    if (S.events) S.events.push({ type: 'redeem', familyId: String(familyId), childName: childName, rewardTitle: reward.title, stars: reward.stars_cost });
     notifyParentsLine_(familyId, [{
       type: 'text',
       text: `🎁 ${childName} แลกรางวัล "${reward.title}" (${reward.stars_cost} ดาว)`

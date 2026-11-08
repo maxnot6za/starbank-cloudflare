@@ -7,6 +7,7 @@ import { createCore, PUBLIC_API } from './core.js';
 export { FamilyHub } from './hub.js';
 
 import { handleAuth, getSession } from './auth.js';
+import { notifyApp, filterLineOutbox } from './push.js';
 
 // คำสั่งที่ต้องเข้าสู่ระบบ: อาร์กิวเมนต์ตัวไหนคือ "ตัวผู้ใช้"
 // → เซิร์ฟเวอร์ใส่รหัสสมาชิกจากกุญแจเครื่อง (session) ทับเสมอ ไม่เชื่อค่าที่หน้าเว็บส่งมา
@@ -61,14 +62,16 @@ async function handleApi(fn, request, env, ctx) {
   // ถ้ามีเครื่องอื่นแก้ข้อมูลชนกัน (ไม่มีอะไรถูกบันทึก) → ลองใหม่อัตโนมัติ เหมือน LockService รอคิว
   for (let attempt = 0; ; attempt++) {
     const store = new Store(env.DB);
-    const S = { store, outbox: [], webAppUrl };
+    const S = { store, outbox: [], webAppUrl, events: [] };
     try {
       await store.load(scope);
       const core = createCore(S);
       const value = core.api[fn](...args);
       await store.flush();
       notifyFamilies(env, ctx, store.touched, request.headers.get('x-client-id'));
-      await sendLine(env, S.outbox, new URL(request.url).origin);
+      const origin = new URL(request.url).origin;
+      if (S.events.length) ctx.waitUntil(notifyApp(env, origin, S.events).catch(e => console.log('app push error', e)));
+      await sendLine(env, await filterLineOutbox(env, scope.familyIds, S.outbox), origin);
       return json({ ok: true, value: value === undefined ? null : value }, 200, extra);
     } catch (e) {
       if (e instanceof ConflictError && attempt < 2) continue;

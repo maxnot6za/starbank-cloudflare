@@ -4,10 +4,12 @@
 //   ฐานข้อมูลเก็บเฉพาะค่าแฮชของกุญแจ/รหัสใช้ครั้งเดียว ไม่เก็บค่าจริง
 import { Store } from './store.js';
 import { createCore } from './core.js';
+import { vapidKeys, notifyTest } from './push.js';
 
 const SESSION_COOKIE = 'sb_s';
 const OAUTH_COOKIE = 'sb_oauth';
 const TICKET_COOKIE = 'sb_ticket';
+const HANDOFF_COOKIE = 'sb_handoff';   // แอปบนหน้าจอโฮม (เก็บคุกกี้แยกจากเบราว์เซอร์) ขอให้เบราว์เซอร์ช่วยเข้าระบบ
 const SESSION_DAYS = 180;
 const PIN_MAX_FAILS = 5;
 const PIN_LOCK_MIN = 10;
@@ -67,6 +69,9 @@ async function hashPin(memberId, pin, salt) {
     { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt + ':' + memberId), iterations: 10000 }, key, 256));
   return salt + ':' + b64url(bits);
 }
+
+// รหัสยืนยัน 4 ตัวที่แอปและเบราว์เซอร์แสดงตรงกัน (กันคนอื่นหลอกให้กดอนุญาต)
+export function handoffCode(raw) { return String(raw).slice(0, 4).toUpperCase(); }
 
 function publicMember(m, family) {
   return m ? { memberId: m.member_id, familyId: m.family_id, name: m.name, role: m.role, avatar: m.avatar,
@@ -132,12 +137,20 @@ async function lineStart(request, env) {
   if (!lineConfigured(env)) return redirect('/?login_error=' + encodeURIComponent('ยังไม่ได้ตั้งค่า LINE Login'));
   const state = randomToken(16), nonce = randomToken(16);
   const invite = (url.searchParams.get('invite') || '').replace(/[^A-Za-z0-9_-]/g, '');
+  const handoff = (url.searchParams.get('handoff') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  const extra = [];
+  if (handoff.length >= 32) {
+    // แอปบนหน้าจอโฮมสร้างรหัสนี้เอง → จดไว้ รอให้ผู้ใช้กดยืนยันในเบราว์เซอร์หลังเข้าระบบ
+    await env.DB.prepare("INSERT OR IGNORE INTO AuthTokens (token_hash, kind, created_by, created_at, expires_at) VALUES (?, 'handoff', 'pending', ?, ?)")
+      .bind(await sha256(handoff), nowIso(), addMs(10 * 60000)).run();
+    extra.push(cookie(request, HANDOFF_COOKIE, handoff, 600));
+  }
   const q = new URLSearchParams({
     response_type: 'code', client_id: env.LINE_LOGIN_CHANNEL_ID, redirect_uri: callbackUrl(request),
     state, scope: 'profile openid', nonce,
   });
   if (env.LINE_LOGIN_BOT_PROMPT) q.set('bot_prompt', env.LINE_LOGIN_BOT_PROMPT);   // ชวนแอดเพื่อน LINE OA
-  return redirect('https://access.line.me/oauth2/v2.1/authorize?' + q, [cookie(request, OAUTH_COOKIE, [state, nonce, invite].join('.'), 600)]);
+  return redirect('https://access.line.me/oauth2/v2.1/authorize?' + q, [cookie(request, OAUTH_COOKIE, [state, nonce, invite].join('.'), 600), ...extra]);
 }
 
 async function lineCallback(request, env) {
@@ -430,6 +443,89 @@ const ACTIONS = {
       db.prepare('DELETE FROM _guard'),
     ]).catch(e => { throw new Error(/CHECK/i.test(String(e.message)) ? 'ข้อมูลเพิ่งเปลี่ยน กรุณาลองใหม่' : e.message); });
     return { value: true, touched: fid };
+  },
+
+  // ---- แจ้งเตือนในแอป ----
+  async pushInfo(request, env, [endpoint]) {
+    const s = await requireParentSession(request, env);
+    const m = await env.DB.prepare('SELECT notify_channel, line_user_id FROM Members WHERE member_id = ?').bind(s.member.member_id).first();
+    const { publicKey } = await vapidKeys(env);
+    const here = endpoint ? await env.DB.prepare('SELECT 1 AS x FROM PushSubs WHERE endpoint = ? AND member_id = ?').bind(String(endpoint), s.member.member_id).first() : null;
+    const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).first();
+    return { value: { publicKey, channel: m.notify_channel || 'line', hasLine: !!m.line_user_id, thisDevice: !!here, devices: n.n } };
+  },
+
+  async pushSubscribe(request, env, [sub]) {
+    const s = await requireParentSession(request, env);
+    const ep = sub && String(sub.endpoint || ''), keys = (sub && sub.keys) || {};
+    if (!/^https:\/\//.test(ep) || !keys.p256dh || !keys.auth) throw new Error('ข้อมูลการแจ้งเตือนไม่ถูกต้อง');
+    await env.DB.prepare(`INSERT INTO PushSubs (endpoint, member_id, family_id, p256dh, auth, device, created_at) VALUES (?,?,?,?,?,?,?)
+        ON CONFLICT(endpoint) DO UPDATE SET member_id = excluded.member_id, family_id = excluded.family_id, p256dh = excluded.p256dh, auth = excluded.auth, device = excluded.device`)
+      .bind(ep, s.member.member_id, s.member.family_id, String(keys.p256dh), String(keys.auth), deviceLabel(request), nowIso()).run();
+    // เปิดครั้งแรก: ถ้ายังใช้ค่าเดิม (LINE) → รับทั้งสองทางไปก่อน แล้วค่อยเลือกเองได้
+    await env.DB.prepare("UPDATE Members SET notify_channel = 'both' WHERE member_id = ? AND (notify_channel IS NULL OR notify_channel = 'line')").bind(s.member.member_id).run();
+    return { value: true };
+  },
+
+  async pushUnsubscribe(request, env, [endpoint]) {
+    const s = await requireParentSession(request, env);
+    await env.DB.prepare('DELETE FROM PushSubs WHERE endpoint = ? AND member_id = ?').bind(String(endpoint || ''), s.member.member_id).run();
+    const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).first();
+    if (!n.n) await env.DB.prepare("UPDATE Members SET notify_channel = 'line' WHERE member_id = ? AND notify_channel IN ('app','both')").bind(s.member.member_id).run();
+    return { value: true };
+  },
+
+  async setNotifyChannel(request, env, [ch]) {
+    const s = await requireParentSession(request, env);
+    if (!['line', 'app', 'both'].includes(ch)) throw new Error('ตัวเลือกไม่ถูกต้อง');
+    const m = await env.DB.prepare('SELECT line_user_id FROM Members WHERE member_id = ?').bind(s.member.member_id).first();
+    if (ch !== 'app' && !m.line_user_id) throw new Error('บัญชีนี้ยังไม่ผูก LINE');
+    if (ch !== 'line') {
+      const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).first();
+      if (!n.n) throw new Error('เปิดแจ้งเตือนในเครื่องนี้ก่อน');
+    }
+    await env.DB.prepare('UPDATE Members SET notify_channel = ? WHERE member_id = ?').bind(ch, s.member.member_id).run();
+    return { value: ch };
+  },
+
+  async pushTest(request, env) {
+    const s = await requireParentSession(request, env);
+    const n = await notifyTest(env, new URL(request.url).origin, s.member.member_id);
+    if (!n) throw new Error('ยังไม่มีเครื่องที่เปิดแจ้งเตือน');
+    return { value: n };
+  },
+
+  // ---- แอปบนหน้าจอโฮม: เข้าระบบผ่านเบราว์เซอร์แล้วส่งต่อมาที่แอป ----
+  // (เบราว์เซอร์ฝั่งที่เพิ่งเข้าด้วย LINE) มีคำขอรออยู่ไหม
+  async handoffInfo(request, env) {
+    const raw = getCookie(request, HANDOFF_COOKIE);
+    if (!raw) return { value: null };
+    const t = await readToken(env, 'handoff', raw);
+    const s = await getSession(request, env);
+    if (!t || t.created_by !== 'pending' || !s) return { value: null };
+    return { value: { code: handoffCode(raw), name: s.member.name, avatar: s.member.avatar } };
+  },
+  async handoffApprove(request, env) {
+    const raw = getCookie(request, HANDOFF_COOKIE);
+    const s = await getSession(request, env);
+    if (!raw || !s) throw new Error('หมดเวลา ลองกดเข้าสู่ระบบจากแอปอีกครั้ง');
+    const r = await env.DB.prepare("UPDATE AuthTokens SET member_id = ?, family_id = ?, created_by = 'approved' WHERE token_hash = ? AND kind = 'handoff' AND created_by = 'pending' AND used_at IS NULL AND expires_at > ?")
+      .bind(s.member.member_id, s.member.family_id, await sha256(raw), nowIso()).run();
+    if (!(r.meta && r.meta.changes === 1)) throw new Error('หมดเวลา ลองกดเข้าสู่ระบบจากแอปอีกครั้ง');
+    return { value: true, cookies: [clearCookie(request, HANDOFF_COOKIE)] };
+  },
+  async handoffCancel(request, env) {
+    return { value: true, cookies: [clearCookie(request, HANDOFF_COOKIE)] };
+  },
+  // (แอปบนหน้าจอโฮม) ถามว่ายืนยันแล้วหรือยัง → ได้กุญแจเครื่องของตัวเอง
+  async handoffCheck(request, env, [raw]) {
+    const t = await readToken(env, 'handoff', String(raw || ''));
+    if (!t) throw new Error('หมดเวลา กรุณากดเข้าสู่ระบบอีกครั้ง');
+    if (t.created_by !== 'approved' || !t.member_id) return { value: false };
+    if (!(await useToken(env, t))) return { value: false };
+    const m = await env.DB.prepare('SELECT * FROM Members WHERE member_id = ?').bind(t.member_id).first();
+    if (!m) throw new Error('ไม่พบสมาชิก');
+    return { value: true, cookies: [await createSession(env, request, m)] };
   },
 
   async revokeDevice(request, env, [id]) {
