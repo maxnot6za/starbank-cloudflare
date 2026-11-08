@@ -41,9 +41,31 @@ export default {
     }
     if (url.pathname === '/ws') return handleLive(url, request, env);
     if (url.pathname === '/health') return json({ ok: true, app: 'starbank' });
+    if (url.pathname === '/version') return json(appVersion(env));
+    if (url.pathname === '/' || url.pathname === '/index.html') {
+      // ฝังเวอร์ชันที่ deploy อยู่ลงในหน้าแอป → หน้าตั้งค่าเทียบกับเซิร์ฟเวอร์ได้ว่าล่าสุดหรือยัง
+      const res = await env.ASSETS.fetch(request);
+      if (!(res.headers.get('content-type') || '').includes('text/html')) return res;
+      const v = appVersion(env);
+      return new HTMLRewriter().on('head', {
+        element(el) { el.append(`<meta name="app-version" content="${v.version}" data-id="${v.id}">`, { html: true }); },
+      }).transform(res);
+    }
     return env.ASSETS.fetch(request);
   },
 };
+
+// เวอร์ชัน = เวลาที่ deploy (เวลาไทย) เช่น 2026.11.08-1315 · เปลี่ยนเองทุกครั้งที่ push ขึ้น GitHub
+function appVersion(env) {
+  const m = env.CF_VERSION_METADATA || {};
+  const id = String(m.id || 'dev').slice(0, 8);
+  let version = 'dev';
+  if (m.timestamp) {
+    const t = new Date(new Date(m.timestamp).getTime() + 7 * 3600000).toISOString();
+    version = t.slice(0, 10).replace(/-/g, '.') + '-' + t.slice(11, 16).replace(':', '');
+  }
+  return { version, id };
+}
 
 function json(obj, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(obj), {

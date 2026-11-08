@@ -1557,7 +1557,9 @@ function showSettings() {
     <button class="btn btn-outline" style="color:var(--danger);border-color:var(--danger)" onclick="doLogout()">
       🚪 ออกจากระบบ (เครื่องนี้)
     </button>
+    <div id="version-slot" style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-top:16px">เวอร์ชัน ${esc(appVersionLabel())}</div>
   `);
+  checkAppVersion();
 }
 
 function doLogout() {
@@ -3005,6 +3007,24 @@ function approveHandoff() {
   authApi('handoffApprove').then(function () {
     openModal('<h2>✅ เรียบร้อย</h2><p style="text-align:center;line-height:1.7">กลับไปที่แอปธนาคารดาวบนหน้าจอโฮมได้เลย<br>(ปิดหน้านี้ได้)</p>');
   }).catch(function (e) { toast(e.message); closeModal(); });
+}
+</script>
+
+<script>
+// ===== เวอร์ชันแอป: เทียบหน้าที่เปิดอยู่กับเวอร์ชันที่ deploy ล่าสุด =====
+function appVersionMeta() { var m = document.querySelector('meta[name="app-version"]'); return m ? { version: m.content, id: m.getAttribute('data-id') || '' } : { version: 'dev', id: '' }; }
+function appVersionLabel() { var v = appVersionMeta(); return v.version + (v.id && v.id !== 'dev' ? ' · ' + v.id.slice(0, 6) : ''); }
+function checkAppVersion() {
+  var mine = appVersionMeta();
+  fetch('/version', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (v) {
+    var el = document.getElementById('version-slot'); if (!el) return;
+    if (!v || !v.id || v.id === mine.id) {
+      el.innerHTML = 'เวอร์ชัน ' + esc(appVersionLabel()) + ' <span style="color:var(--success);font-weight:700">· ล่าสุดแล้ว ✓</span>';
+    } else {
+      el.innerHTML = 'เวอร์ชัน ' + esc(appVersionLabel()) +
+        '<br><button class="chip-btn" style="margin-top:8px;color:#fff;background:var(--primary);border-color:var(--primary)" onclick="location.reload()">🔄 มีเวอร์ชันใหม่ ' + esc(v.version) + ' · กดอัปเดต</button>';
+    }
+  }).catch(function () {});
 }
 </script>
 </body>
