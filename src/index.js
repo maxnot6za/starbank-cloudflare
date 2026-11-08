@@ -69,7 +69,7 @@ async function handleApi(fn, request, env) {
       const core = createCore(S);
       const value = core.api[fn](...args);
       await store.flush();
-      await sendLine(env, S.outbox);
+      await sendLine(env, S.outbox, new URL(request.url).origin);
       return json({ ok: true, value: value === undefined ? null : value });
     } catch (e) {
       if (e instanceof ConflictError && attempt < 2) continue;
@@ -106,7 +106,7 @@ async function handleLine(request, env) {
         await store.load({ all: true });
         createCore(S).handleLineEvent_(event);
         await store.flush();
-        await sendLine(env, S.outbox);
+        await sendLine(env, S.outbox, new URL(request.url).origin);
         break;
       } catch (e) {
         if (e instanceof ConflictError) continue;
@@ -118,10 +118,35 @@ async function handleLine(request, env) {
   return new Response('OK');
 }
 
-async function sendLine(env, outbox) {
-  // ยังไม่ได้ใส่ LINE token = ไม่ส่งข้อความ (ช่วงทดสอบคู่ขนาน จะได้ไม่รบกวน LINE ของระบบเดิม)
+// ส่ง push (แจ้งเตือนผู้ปกครอง) เฉพาะเมื่อ Webhook ใน LINE ชี้มาที่ระบบนี้แล้ว
+// → ช่วงทดสอบคู่ขนานจะไม่ส่ง LINE จริง · วันย้ายแค่เปลี่ยน Webhook ระบบนี้ก็เริ่มส่งเอง
+// ถ้าเช็กไม่ได้ (LINE ล่ม) = ไม่ส่ง (ปลอดภัยกว่าส่งผิดระบบ)
+let webhookCache = { at: 0, url: '', ok: false };
+async function webhookPointsHere(env, origin) {
+  const expected = origin + '/line';
+  if (Date.now() - webhookCache.at < 60000 && webhookCache.url === expected) return webhookCache.ok;
+  let ok = false;
+  try {
+    const r = await fetch('https://api.line.me/v2/bot/channel/webhook/endpoint', {
+      headers: { authorization: 'Bearer ' + env.LINE_CHANNEL_ACCESS_TOKEN },
+    });
+    if (r.ok) {
+      const j = await r.json();
+      ok = !!j.active && String(j.endpoint || '').replace(/\/+$/, '') === expected;
+    }
+  } catch (e) { console.log('webhook check error', e); }
+  webhookCache = { at: Date.now(), url: expected, ok };
+  return ok;
+}
+
+async function sendLine(env, outbox, origin) {
   if (!outbox.length || !env.LINE_CHANNEL_ACCESS_TOKEN) return;
-  await Promise.all(outbox.map(m => fetch(
+  // reply = ตอบข้อความที่ LINE ส่งมาหาระบบนี้ (มาถึงได้ก็แปลว่า Webhook ชี้มาที่นี่) → ส่งได้เสมอ
+  let msgs = outbox;
+  if (outbox.some(m => m.kind === 'push') && !(await webhookPointsHere(env, origin))) {
+    msgs = outbox.filter(m => m.kind === 'reply');
+  }
+  await Promise.all(msgs.map(m => fetch(
     m.kind === 'reply' ? 'https://api.line.me/v2/bot/message/reply' : 'https://api.line.me/v2/bot/message/push',
     {
       method: 'POST',
