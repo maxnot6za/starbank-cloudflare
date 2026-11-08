@@ -750,10 +750,21 @@ export function createCore(S) {
   // ==========================================
   // STAR BALANCE
   // ==========================================
+  // ยอดภารกิจของเด็ก: ใช้ยอดสรุปจากฐานข้อมูล (เร็ว ไม่ต้องอ่านทุกแถว) ถ้ามี ไม่งั้นบวกเองแบบเดิม
+  function subAgg_(childId) {
+    var a = S.store && S.store.childAgg ? S.store.childAgg(childId) : null;
+    if (a) return a;
+    const mine = getAllRows_('Submissions').filter(s => String(s.child_id) === String(childId));
+    const approved = mine.filter(s => s.status === 'approved');
+    return {
+      earned: approved.reduce((sum, s) => sum + Number(s.stars_earned || 0), 0),
+      approved: approved.length,
+      pending: mine.filter(s => s.status === 'pending').length
+    };
+  }
+
   function getStarBalance_(childId) {
-    const earned = getAllRows_('Submissions')
-      .filter(s => String(s.child_id) === String(childId) && s.status === 'approved')
-      .reduce((sum, s) => sum + Number(s.stars_earned || 0), 0);
+    const earned = subAgg_(childId).earned;
     const spent = getAllRows_('Redemptions')
       .filter(r => String(r.child_id) === String(childId))
       .reduce((sum, r) => sum + Number(r.stars_spent || 0), 0);
@@ -761,16 +772,15 @@ export function createCore(S) {
   }
 
   function getChildStats_(childId) {
-    const mine = getAllRows_('Submissions').filter(s => String(s.child_id) === String(childId));
-    const approved = mine.filter(s => s.status === 'approved');
+    const agg = subAgg_(childId);
     const wheelStars = getWheelStars_(childId);
-    const totalEarned = approved.reduce((sum, s) => sum + Number(s.stars_earned || 0), 0) + wheelStars;
+    const totalEarned = agg.earned + wheelStars;
     const totalSpent = getAllRows_('Redemptions').filter(r => String(r.child_id) === String(childId))
       .reduce((sum, r) => sum + Number(r.stars_spent || 0), 0);
     return {
       balance: totalEarned - totalSpent, totalEarned, totalSpent, wheelStars,
-      missionsCompleted: approved.length,
-      pendingCount: mine.filter(s => s.status === 'pending').length
+      missionsCompleted: agg.approved,
+      pendingCount: agg.pending
     };
   }
 

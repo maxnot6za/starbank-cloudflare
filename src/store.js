@@ -20,6 +20,29 @@ const NUM_COLS = new Set(['base_stars','multiplier','stars_earned','stars_cost',
 
 export class ConflictError extends Error {}
 
+// วันแรกที่กงล้อต้องใช้ข้อมูล (เวลา UTC เผื่อ 1 วัน) — คิดแบบเดียวกับ computeWheelProgress_ ใน core.js
+function thaiKey(d) { const t = new Date(d); return isNaN(t) ? '' : new Date(t.getTime() + 7 * 3600000).toISOString().slice(0, 10); }
+function wheelCutoff(fam, kids, spins) {
+  const on = fam.wheel_enabled === true || String(fam.wheel_enabled).toUpperCase() === 'TRUE';
+  const raw = fam.wheel_started_at;
+  const started = raw ? new Date(raw) : null;
+  if (!on || !started || isNaN(started)) return null;
+  const startedAt = started.toISOString().replace(/\.\d{3}Z$/, 'Z');
+  let earliest = null;
+  for (const k of kids) {
+    let lastEnd = '';
+    for (const s of spins) {
+      if (String(s.child_id) !== String(k.member_id)) continue;
+      const p = String(s.round_key || '').split('|');
+      if (p[0] === startedAt && p[1] > lastEnd) lastEnd = p[1];
+    }
+    const from = lastEnd || thaiKey(started);
+    if (!earliest || from < earliest) earliest = from;
+  }
+  if (!earliest) earliest = thaiKey(started);
+  return new Date(new Date(earliest + 'T00:00:00Z').getTime() - 7 * 3600000 - 86400000).toISOString();
+}
+
 // ค่าจากหน้าโค้ด → ค่าที่เก็บใน D1
 export function toDb(table, col, v) {
   if (v === undefined || v === null || v === '') return null;
@@ -51,8 +74,14 @@ export class Store {
   }
 
   // scope: { all: true } | { familyIds: [...] }  — LineState โหลดเมื่อ withLineState
+  // scope: { all: true } | { familyIds: [...] }  — LineState โหลดเมื่อ withLineState
+  // opts.subIds: รหัสภารกิจที่คำสั่งนี้อ้างถึง (ต้องโหลดแม้เก่า)
   async load(scope, opts = {}) {
     const stmts = [], names = [];
+    const ids = (scope.familyIds || []).filter(Boolean).map(String);
+    const q = ids.map(() => '?').join(',');
+    // โหมดครอบครัว: Submissions (ตารางเดียวที่โตเร็ว) โหลดเฉพาะส่วนที่ต้องใช้ — ดู _loadSubmissions
+    this.subWindowed = !scope.all;
     for (const [name, t] of Object.entries(TABLES)) {
       if (name === 'DailyLog') { this.rows[name] = []; continue; }      // ใช้แค่เขียน
       if (t.global) {
@@ -61,17 +90,90 @@ export class Store {
         continue;
       }
       if (scope.all) { stmts.push(this.db.prepare(`SELECT * FROM ${name} ORDER BY rowid`)); names.push(name); continue; }
-      const ids = (scope.familyIds || []).filter(Boolean).map(String);
+      if (name === 'Submissions') continue;
       if (!ids.length) { this.rows[name] = []; continue; }
-      const q = ids.map(() => '?').join(',');
       stmts.push(this.db.prepare(`SELECT * FROM ${name} WHERE family_id IN (${q}) ORDER BY rowid`).bind(...ids));
       names.push(name);
+    }
+    if (this.subWindowed && ids.length) {
+      stmts.push(this.db.prepare(`SELECT cs.* FROM ChildStats cs JOIN Members m ON m.member_id = cs.child_id WHERE m.family_id IN (${q})`).bind(...ids));
+      names.push('__ChildStats');
     }
     const results = stmts.length ? await this.db.batch(stmts) : [];
     results.forEach((r, i) => {
       const name = names[i];
+      if (name === '__ChildStats') {
+        this.childStats = new Map((r.results || []).map(x => [String(x.child_id), x]));
+        return;
+      }
       this.rows[name] = (r.results || []).map(dbRow => this._wrap(name, dbRow));
     });
+    if (this.subWindowed) {
+      this.childStats = this.childStats || new Map();
+      this.rows.Submissions = ids.length ? await this._loadSubmissions(ids, opts.subIds || [], opts.fn) : [];
+    }
+  }
+
+  // โหลดเฉพาะภารกิจที่ตรรกะเดิมต้องใช้ (ผลลัพธ์เหมือนโหลดทั้งหมดทุกประการ):
+  //   รออนุมัติทั้งหมด · ส่ง/ตรวจภายใน 62 วัน (สรุปรายวันสูงสุด 60 วัน) · ช่วงที่กงล้อกำลังนับ
+  //   20 รายการตรวจล่าสุดของครอบครัว · 20 รายการล่าสุดของเด็กแต่ละคน · รายการที่คำสั่งอ้างถึง
+  // ยอดดาว/จำนวนรวมใช้ตาราง ChildStats (trigger ในฐานข้อมูลดูแล) แทนการบวกทุกแถว
+  // fn = คำสั่งที่กำลังทำ → โหลดเฉพาะส่วนที่คำสั่งนั้นใช้ (ไม่รู้จัก = โหลดครบทุกส่วนไว้ก่อน)
+  async _loadSubmissions(ids, subIds, fn) {
+    const db = this.db, q = ids.map(() => '?').join(',');
+    const known = !!fn;
+    const needSummary = !known || fn === 'getDailySummary';         // สรุปรายวันย้อนหลังสูงสุด 60 วัน
+    const needReviews = !known || fn === 'getParentDashboard';      // ประวัติการตรวจ 20 รายการล่าสุด
+    const needChildRecent = !known || fn === 'getChildDashboard';   // ประวัติของเด็ก 20 รายการล่าสุด
+    // 2 วันล่าสุดเสมอ: เผื่อผู้ปกครองเพิ่งเปิดกงล้อในคำสั่งนี้ (เริ่มนับวันนี้)
+    const recent = new Date(Date.now() - (needSummary ? 62 : 2) * 86400000).toISOString();
+    let cutoff = recent;
+    const kids = this.all('Members').filter(m => m.role === 'child');
+    for (const fam of this.all('Families')) {
+      const w = wheelCutoff(fam, kids.filter(k => String(k.family_id) === String(fam.family_id)), this.all('Spins'));
+      if (w && w < cutoff) cutoff = w;
+    }
+    const sel = 'SELECT rowid AS _rid, * FROM Submissions';
+    const st = [
+      db.prepare(`${sel} WHERE family_id IN (${q}) AND status = 'pending'`).bind(...ids),
+      db.prepare(`${sel} WHERE family_id IN (${q}) AND submitted_at >= ?`).bind(...ids, cutoff),
+      ...(needSummary ? [db.prepare(`${sel} WHERE family_id IN (${q}) AND reviewed_at >= ?`).bind(...ids, recent)] : []),
+      ...(needReviews ? ids.map(f => db.prepare(`${sel} WHERE family_id = ? AND reviewed_at > '' ORDER BY reviewed_at DESC LIMIT 25`).bind(f)) : []),
+      ...(needChildRecent ? kids.map(k => db.prepare(`${sel} WHERE child_id = ? ORDER BY rowid DESC LIMIT 20`).bind(String(k.member_id))) : []),
+    ];
+    const extra = subIds.filter(Boolean).map(String).slice(0, 20);
+    if (extra.length) st.push(db.prepare(`${sel} WHERE family_id IN (${q}) AND submission_id IN (${extra.map(() => '?').join(',')})`).bind(...ids, ...extra));
+    const res = await db.batch(st);
+    const byId = new Map();
+    res.forEach(r => (r.results || []).forEach(row => byId.set(String(row.submission_id), row)));
+    const rows = [...byId.values()].sort((a, b) => a._rid - b._rid);
+    this.subOrig = new Map();
+    return rows.map(row => {
+      const obj = this._wrap('Submissions', row);
+      this.subOrig.set(obj, { child: String(row.child_id), status: row.status, stars: Number(row.stars_earned || 0) });
+      return obj;
+    });
+  }
+
+  // ยอดของเด็ก 1 คน = ยอดในฐานข้อมูล − ส่วนของแถวที่โหลดมา (ค่าตอนโหลด) + ส่วนของแถวเดียวกันตอนนี้
+  // (รวมการแก้/เพิ่มในคำขอนี้ที่ยังไม่บันทึก) · โหมดโหลดทั้งหมดคืน null ให้ตรรกะเดิมบวกเอง
+  childAgg(childId) {
+    if (!this.subWindowed) return null;
+    const id = String(childId);
+    const base = this.childStats.get(id) || { earned: 0, approved: 0, pending: 0 };
+    let earned = Number(base.earned || 0), approved = Number(base.approved || 0), pending = Number(base.pending || 0);
+    for (const row of this.all('Submissions')) {
+      const o = this.subOrig && this.subOrig.get(row);
+      if (o && o.child === id) {
+        if (o.status === 'approved') { earned -= o.stars; approved--; }
+        else if (o.status === 'pending') pending--;
+      }
+      if (String(row.child_id) === id) {
+        if (row.status === 'approved') { earned += Number(row.stars_earned || 0); approved++; }
+        else if (row.status === 'pending') pending++;
+      }
+    }
+    return { earned, approved, pending };
   }
 
   _wrap(name, dbRow) {

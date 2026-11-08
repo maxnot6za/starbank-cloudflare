@@ -90,7 +90,7 @@ async function handleApi(fn, request, env, ctx) {
     const store = new Store(env.DB);
     const S = { store, outbox: [], webAppUrl, events: [] };
     try {
-      await store.load(scope);
+      await store.load(scope, { fn, subIds: (fn === 'reviewSubmission' || fn === 'checkRejectImpact') ? [args[0]] : [] });
       const core = createCore(S);
       const value = core.api[fn](...args);
       await store.flush();
