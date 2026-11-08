@@ -1,0 +1,2353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>⭐ ธนาคารดาว</title>
+  <meta charset="utf-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600;700&display=swap">
+  <style>
+    /* === RESET & BASE === */
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    :root {
+      /* Snowy Mint — สดใส น่ารัก คริสต์มาส */
+      --primary: #FF6B6B;
+      --primary-light: #FF8E8E;
+      --primary-dark: #E5484D;
+      --gold: #FFC24B;
+      --gold-dark: #A86E00;
+      --gold-light: #FFF4D6;
+      --mint: #3BB08F;
+      --mint-dark: #2A9479;
+      --success: #3BB08F;
+      --danger: #E5484D;
+      --warning: #FF9F43;
+      --bg: #EEF8F4;
+      --card: rgba(255,255,255,0.94);
+      --card-light: #E6F4EF;
+      --text: #1F3B35;
+      --text-muted: #5C7C74;
+      --border: #CDE9E1;
+      --radius: 18px;
+      --shadow: 0 4px 16px rgba(31,59,53,0.08);
+    }
+    html { font-size: 16px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+    button {
+      font-family: inherit; font-size: inherit; border: none;
+      cursor: pointer; border-radius: var(--radius);
+      transition: transform 0.1s, opacity 0.15s;
+    }
+    button:active { transform: scale(0.96); }
+    input, select {
+      font-family: inherit; font-size: 1rem; border: 2px solid var(--border);
+      border-radius: 12px; padding: 12px 16px; width: 100%;
+      background: var(--card); color: var(--text);
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+
+    /* === SCREENS === */
+    .screen { display:none; padding:20px; max-width:480px; margin:0 auto; padding-bottom:100px; }
+    .screen.active { display:block; }
+
+    /* === HEADER === */
+    .app-header {
+      text-align:center; padding:24px 0 16px;
+    }
+    .app-header .logo { font-size:3rem; line-height:1; }
+    .app-header h1 { font-size:1.5rem; color:var(--gold); margin-top:4px; }
+    .app-header .subtitle { color:var(--text-muted); font-size:0.875rem; }
+
+    /* === CARDS === */
+    .card {
+      background:var(--card); border-radius:var(--radius); padding:20px;
+      box-shadow:var(--shadow); margin-bottom:16px;
+    }
+    .card h3 { font-size:1rem; margin-bottom:12px; color:var(--gold); }
+
+    /* === STAR DISPLAY === */
+    .star-hero {
+      text-align:center; padding:24px; background:linear-gradient(135deg,#3BB08F,#2A9479);
+      border-radius:22px; color:#FFFFFF; margin-bottom:20px;
+      box-shadow:0 8px 24px rgba(59,176,143,0.3);
+      position:relative; overflow:hidden;
+    }
+    .star-hero::before {
+      content:'❄'; position:absolute; top:8px; left:14px; font-size:1.1rem; opacity:0.7;
+    }
+    .star-hero::after {
+      content:'❄'; position:absolute; top:8px; right:14px; font-size:1.1rem; opacity:0.7;
+    }
+    .star-hero .star-count { font-size:3.5rem; font-weight:800; line-height:1.1; }
+    .star-hero .star-label { font-size:0.9rem; opacity:0.85; margin-top:4px; }
+
+    /* === BUTTONS === */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding:14px 24px; font-size:1rem; font-weight:600; width:100%;
+    }
+    .btn-primary { background:var(--primary); color:#fff; }
+    .btn-primary:hover { background:var(--primary-dark); }
+    .btn-gold { background:linear-gradient(135deg,#FF6B6B,#E5484D); color:#FFFFFF; }
+    .btn-success { background:var(--success); color:#fff; }
+    .btn-danger { background:var(--danger); color:#fff; }
+    .btn-outline {
+      background:transparent; color:var(--primary); border:2px solid var(--primary);
+    }
+    .btn-sm { padding:10px 16px; font-size:0.875rem; width:auto; }
+    .btn-icon { width:44px; height:44px; padding:0; border-radius:12px; flex-shrink:0; }
+
+    /* === MISSION ITEM === */
+    .mission-item {
+      display:flex; align-items:center; gap:12px; padding:14px;
+      background:var(--card); border-radius:var(--radius); margin-bottom:10px;
+      box-shadow:var(--shadow); position:relative; overflow:hidden;
+    }
+    .mission-item .stars-badge {
+      background:#FFF4D6;
+      color:var(--gold-dark); font-weight:800; font-size:1rem;
+      min-width:58px; height:58px; border-radius:16px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      line-height:1; flex-shrink:0; position:relative;
+      border:1px solid #FFE3A3;
+    }
+    .mission-item .stars-badge .star-icon {
+      width:22px; height:22px; margin-bottom:1px; filter:drop-shadow(0 1px 2px rgba(225,112,85,0.4));
+    }
+    .mission-item .stars-badge small { font-size:0.6rem; font-weight:600; color:var(--gold-dark); }
+    .mission-item .mi-info { flex:1; min-width:0; }
+    .mission-item .mi-title { font-weight:600; font-size:0.95rem; }
+    .mission-item .mi-desc { color:var(--text-muted); font-size:0.8rem; margin-top:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .mission-item .multiplier-badge {
+      position:absolute; top:-2px; right:-2px; background:var(--danger); color:#fff;
+      font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:0 var(--radius) 0 10px;
+    }
+
+    /* === REWARD ITEM === */
+    .reward-item {
+      display:flex; align-items:center; gap:12px; padding:14px;
+      background:var(--card); border-radius:var(--radius); margin-bottom:10px;
+      box-shadow:var(--shadow);
+    }
+    .reward-item .ri-icon {
+      width:52px; height:52px; border-radius:14px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.5rem; flex-shrink:0; background:var(--card-light);
+    }
+    .reward-item .ri-info { flex:1; min-width:0; }
+    .reward-item .ri-title { font-weight:600; font-size:0.95rem; }
+    .reward-item .ri-cost { color:var(--gold-dark); font-weight:700; font-size:0.85rem; }
+    .reward-item .ri-qty { color:var(--text-muted); font-size:0.8rem; }
+
+    /* === TABS (BOTTOM NAV) === */
+    .bottom-nav {
+      position:fixed; bottom:0; left:0; right:0; background:#FFFFFF;
+      border-top:1px solid var(--border); display:flex; padding:8px 0;
+      padding-bottom:max(8px, env(safe-area-inset-bottom));
+      z-index:100;
+    }
+    .bottom-nav button {
+      flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+      padding:6px 4px; background:none; color:var(--text-muted); font-size:0.7rem;
+      border-radius:0; font-weight:500;
+    }
+    .bottom-nav button.active { color:var(--primary-dark); font-weight:700; }
+    .bottom-nav button .nav-icon { font-size:1.4rem; line-height:1; color:inherit; }
+    .nav-badge {
+      background:var(--danger); color:#fff; font-size:0.6rem; font-weight:700;
+      min-width:16px; height:16px; border-radius:8px; display:inline-flex;
+      align-items:center; justify-content:center; padding:0 4px;
+      position:relative; top:-2px;
+    }
+    @keyframes pulse-border {
+      0%, 100% { border-color: var(--gold); box-shadow: 0 0 0 0 rgba(253,203,110,0.4); }
+      50% { border-color: var(--gold-dark); box-shadow: 0 0 12px 2px rgba(253,203,110,0.3); }
+    }
+    .redemption-item {
+      display:flex; align-items:center; gap:10px; padding:8px 0;
+      border-bottom:1px solid var(--border);
+    }
+    .redemption-item:last-child { border-bottom:none; }
+
+    /* === MODAL === */
+    .modal-overlay {
+      display:none; position:fixed; inset:0; background:rgba(31,59,53,0.35);
+      z-index:200; align-items:flex-end; justify-content:center;
+    }
+    .modal-overlay.show { display:flex; }
+    .modal {
+      background:var(--card); border-radius:24px 24px 0 0; width:100%;
+      max-width:480px; max-height:85vh; overflow-y:auto;
+      padding:24px 20px; padding-bottom:max(24px, env(safe-area-inset-bottom));
+    }
+    .modal h2 { font-size:1.2rem; margin-bottom:16px; text-align:center; }
+
+    /* === FORM === */
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-weight:600; font-size:0.875rem; margin-bottom:6px; color:var(--text); }
+    .form-group .hint { font-size:0.75rem; color:var(--text-muted); margin-top:4px; }
+
+    /* === PENDING ITEM === */
+    .pending-item {
+      padding:16px; background:var(--card); border-radius:var(--radius);
+      margin-bottom:10px; box-shadow:var(--shadow);
+    }
+    .pending-item .pi-top { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .pending-item .pi-child { font-weight:600; }
+    .pending-item .pi-mission { color:var(--text-muted); font-size:0.85rem; }
+    .pending-item .pi-time { font-size:0.75rem; color:var(--text-muted); }
+    .pending-item .pi-actions { display:flex; gap:8px; }
+
+    /* === MISC === */
+    .empty-state { text-align:center; padding:28px 20px; color:var(--text-muted); background:rgba(255,255,255,0.88); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .empty-state .es-icon { font-size:3rem; margin-bottom:8px; }
+    .divider { height:1px; background:var(--border); margin:16px 0; }
+    .avatar-pick { display:flex; gap:8px; flex-wrap:wrap; }
+    .avatar-pick button {
+      width:48px; height:48px; font-size:1.5rem; border-radius:14px;
+      background:var(--card-light); border:2px solid transparent;
+    }
+    .avatar-pick button.selected { border-color:var(--mint); background:#E3F6EE; }
+    .tag { display:inline-block; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; }
+    .tag-pending { background:#FFF4D6; color:#A86E00; }
+    .tag-approved { background:#E3F6EE; color:#1E7A60; }
+    .tag-rejected { background:#FFE8E8; color:#C73A3F; }
+    .section-title { font-size:1.1rem; font-weight:700; margin:20px 0 12px; background:rgba(255,255,255,0.85); border-radius:14px; padding:6px 12px; box-shadow:var(--shadow); }
+    /* กล่องขาวรองรายการประวัติ ให้อ่านง่ายบนพื้นหลังลายการ์ตูน */
+    #review-history-list:not(:empty), #parent-redemption-history:not(:empty) {
+      background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:2px 14px;
+    }
+    #review-history-list > div:last-child, #parent-redemption-history > div:last-child { border-bottom:none !important; }
+    #review-history-list .empty-state, #parent-redemption-history .empty-state { box-shadow:none; background:none; }
+    .loading { background:rgba(255,255,255,0.85); border-radius:var(--radius); }
+    .info-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:0.9rem; }
+    .info-row:last-child { border-bottom:none; }
+    .toast {
+      position:fixed; top:20px; left:50%; transform:translateX(-50%);
+      background:#1F3B35; color:#FFFFFF; padding:12px 24px; border-radius:30px;
+      border:1px solid var(--border);
+      font-size:0.9rem; font-weight:500; z-index:999; opacity:0;
+      transition:opacity 0.3s; pointer-events:none;
+    }
+    .toast.show { opacity:1; }
+    .loading { text-align:center; padding:40px; color:var(--text-muted); }
+    .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+    .stat-card { background:var(--bg); border-radius:12px; padding:14px; text-align:center; }
+    .stat-card .stat-val { font-size:1.3rem; font-weight:700; color:var(--gold); }
+    .stat-card .stat-label { font-size:0.75rem; color:var(--text-muted); }
+    .secret-reveal {
+      background:#FFF8E6; border:2px dashed var(--gold); border-radius:12px;
+      padding:16px; text-align:center; margin:16px 0;
+    }
+    .secret-reveal code {
+      display:block; font-size:1.3rem; font-weight:700; color:var(--gold);
+      margin:8px 0; letter-spacing:2px; word-break:break-all;
+    }
+    /* === ICON PICKER === */
+    .icon-picker { display:flex; flex-wrap:wrap; gap:6px; max-height:180px; overflow-y:auto; padding:4px; }
+    .icon-picker button {
+      width:42px; height:42px; font-size:1.3rem; border-radius:10px;
+      background:var(--bg); border:2px solid transparent; display:flex;
+      align-items:center; justify-content:center;
+    }
+    .icon-picker button.selected { border-color:var(--mint); background:#E3F6EE; }
+    /* === AUTH TABS === */
+    .auth-tabs { display:flex; gap:0; margin-bottom:16px; border-radius:12px; overflow:hidden; border:2px solid var(--border); }
+    .auth-tabs button { flex:1; padding:12px; background:var(--card); font-weight:600; font-size:0.9rem; border-radius:0; color:var(--text-muted); }
+    .auth-tabs button.active { background:var(--primary); color:#FFFFFF; }
+
+    /* === CHRISTMAS SCENE (full-screen background - AI generated image) === */
+    .xmas-scene {
+      position:fixed; top:0; left:0; width:100%; height:100vh; height:100dvh;
+      pointer-events:none; z-index:-1;
+    }
+    .xmas-scene img {
+      display:block; width:100%; height:100%; object-fit:cover; object-position:center bottom;
+    }
+    .xmas-scene::after {
+      content:""; position:absolute; inset:0;
+      background:linear-gradient(to bottom, rgba(255,255,255,0.25), rgba(255,255,255,0) 45%);
+    }
+
+    /* === MUSIC TOGGLE === */
+    .music-btn {
+      width:38px; height:38px; border-radius:50%; padding:0; flex-shrink:0;
+      background:rgba(255,255,255,0.9); border:1px solid var(--border);
+      font-size:1.15rem; line-height:1; z-index:150;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .music-btn.music-float { position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); right:calc(10px + env(safe-area-inset-right, 0px)); }
+    .music-btn.muted { opacity:0.55; }
+
+    /* === SNOWFALL === */
+    .snowfall { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:50; overflow:hidden; }
+    .snowflake {
+      position:absolute; top:-10px; color:#9CCFE0; font-size:1rem;
+      opacity:0.7; animation:snowfall linear infinite;
+    }
+    @keyframes snowfall {
+      0% { transform:translateY(-10px) rotate(0deg); }
+      100% { transform:translateY(105vh) rotate(360deg); }
+    }
+
+    /* === MODAL DARK FIX === */
+    .modal-overlay { background:rgba(31,59,53,0.35); }
+
+    /* === HEADER STRIP (อ่านง่ายบนพื้นหลังลายการ์ตูน) === */
+    .top-strip { background:rgba(255,255,255,0.82); border-radius:18px; padding:6px 8px 6px 12px; box-shadow:var(--shadow); }
+    .app-header { background:rgba(255,255,255,0.7); border-radius:24px; padding:16px 0 14px; }
+
+    /* === FONT: Mali สำหรับหัวข้อ ตัวเลข ปุ่ม (ข้อความยาวใช้ฟอนต์ระบบให้อ่านง่าย) === */
+    h1, h2, .section-title, .star-hero .star-count, .star-hero .star-label, .btn, .tree-count, .sr-big,
+    .wheel-live, .wheel-spin-btn, .wheel-go, .wr-title, .stat-card .stat-val, .mi-title, .auth-tabs button {
+      font-family:'Mali', -apple-system, 'Noto Sans Thai', sans-serif;
+    }
+    .star-hero .star-count, .tree-count, .sr-big, .stat-card .stat-val { font-weight:700; }
+    .stat-card .stat-val { color:var(--gold-dark); }
+
+    /* === ICONS: 3D (Fluent) แทนอีโมจิ + ไอคอนเส้นที่เมนู/ปุ่ม === */
+    img.fe { width:1.25em; height:1.25em; vertical-align:-0.25em; object-fit:contain; display:inline-block; }
+    svg.li { width:1.5rem; height:1.5rem; display:block; }
+    .bottom-nav button .nav-icon { display:flex; justify-content:center; }
+    .bottom-nav button .nav-icon svg.li { width:26px; height:26px; }
+    .hdr-btn { width:44px; height:44px; border-radius:50%; background:#FFFFFF; border:1px solid var(--border); color:var(--mint-dark); display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer; flex-shrink:0; }
+    .hdr-btn svg.li { width:24px; height:24px; }
+    .music-btn svg.li { width:22px; height:22px; color:var(--mint-dark); }
+
+    /* === ANIMATIONS === */
+    .btn, .bottom-nav button, .hdr-btn, .music-btn, .step-btn, .wheel-go, .wheel-spin-btn, .wheel-back, .btn-icon, .mission-item button, .reward-item button {
+      transition:transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .btn:active, .bottom-nav button:active, .hdr-btn:active, .music-btn:active, .step-btn:active, .wheel-go:active, .wheel-back:active, .btn-icon:active, .mission-item button:active, .reward-item button:active { transform:scale(0.94); }
+    .wheel-spin-btn:not(:disabled):active { transform:scale(0.95); }
+    @keyframes starPop { 0%{transform:scale(1)} 30%{transform:scale(1.35) rotate(-12deg)} 55%{transform:scale(0.9) rotate(6deg)} 80%{transform:scale(1.08)} 100%{transform:scale(1)} }
+    @keyframes plusFloat { 0%{opacity:0;transform:translateY(0) scale(0.6)} 20%{opacity:1;transform:translateY(-8px) scale(1.1)} 100%{opacity:0;transform:translateY(-60px)} }
+    .star-hero { position:relative; }
+    .star-pop { display:inline-block; animation:starPop 0.7s ease-out; }
+    .plus-float { position:absolute; right:28px; top:20px; font-family:'Mali',sans-serif; font-weight:700; font-size:1.6rem; color:#FFE38A; pointer-events:none; animation:plusFloat 1.3s ease-out forwards; }
+    @keyframes ornSway { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+    @keyframes ornDrop { 0%{transform:translateY(-70px)} 45%{transform:translateY(0)} 60%{transform:rotate(16deg)} 75%{transform:rotate(-10deg)} 88%{transform:rotate(5deg)} 100%{transform:rotate(0)} }
+    .orn { transform-box:fill-box; transform-origin:50% -40%; animation:ornSway 2.6s ease-in-out infinite; }
+    .orn.drop { animation:ornDrop 0.9s ease-out, ornSway 2.6s ease-in-out 0.9s infinite; }
+    @keyframes confettiFly { 0%{opacity:1;transform:translate(0,0) scale(0.4) rotate(0)} 100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1) rotate(260deg)} }
+    .confetti-layer { position:fixed; inset:0; pointer-events:none; z-index:400; overflow:hidden; }
+    .confetti-bit { position:absolute; width:9px; height:13px; border-radius:2px; animation:confettiFly 1.1s cubic-bezier(.2,.7,.3,1) forwards; }
+    @media (prefers-reduced-motion: reduce) {
+      .orn, .orn.drop, .star-pop, .plus-float, .confetti-bit, .bulb { animation:none !important; }
+    }
+
+    /* === LUCKY STAR WHEEL (กงล้อดาวนำโชค) === */
+    .tree-card { display:flex; gap:14px; align-items:center; }
+    .tree-card svg { flex-shrink:0; }
+    .tree-count { font-size:1.9rem; font-weight:800; color:var(--primary-dark); line-height:1; }
+    .tree-count small { font-size:0.95rem; color:var(--text-muted); font-weight:600; }
+    .tree-legend { display:flex; flex-direction:column; gap:3px; font-size:0.78rem; color:var(--text-muted); }
+    .tree-msg { font-size:0.88rem; color:var(--text-muted); line-height:1.55; margin-top:10px; }
+    .wheel-ready { background:linear-gradient(135deg,#FFD66B,#FFC24B); color:#4A3300; border-radius:22px; padding:16px; margin-bottom:16px; box-shadow:0 8px 24px rgba(255,194,75,0.4); }
+    .wheel-ready .wr-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .wheel-ready .wr-title { font-weight:800; font-size:1.1rem; }
+    .wheel-go { width:100%; height:52px; border-radius:16px; background:linear-gradient(135deg,#FF6B6B,#E5484D); color:#fff; font-size:1.05rem; font-weight:800; }
+    .wheel-back { width:44px; height:44px; border-radius:50%; background:#fff; border:1px solid var(--border); font-size:1.2rem; color:var(--text); flex-shrink:0; }
+    .wheel-left { background:#FFF4D6; color:#A86E00; border:1px solid #FFC24B; border-radius:999px; padding:4px 12px; font-weight:700; font-size:0.85rem; white-space:nowrap; }
+    .wheel-stage { display:flex; flex-direction:column; align-items:center; gap:14px; padding-top:4px; }
+    .wheel-live { min-width:130px; height:58px; padding:0 22px; border-radius:18px; background:#FFF4E0; color:#C2303A; display:flex; align-items:center; justify-content:center; gap:6px; font-size:1.9rem; font-weight:800; box-shadow:0 4px 16px rgba(31,59,53,0.15); }
+    .wheel-box { position:relative; width:min(86vw, 340px); height:min(86vw, 340px); margin-top:22px; }
+    .wheel-pointer { position:absolute; left:50%; top:-24px; transform:translateX(-50%); width:42px; height:48px; z-index:2; filter:drop-shadow(0 3px 3px rgba(0,0,0,0.3)); }
+    .wheel-rot { width:100%; height:100%; will-change:transform; }
+    .wheel-rot svg { width:100%; height:100%; display:block; }
+    .wheel-spin-btn { width:min(80vw, 280px); height:62px; border-radius:31px; background:linear-gradient(135deg,#FF6B6B,#E5484D); color:#fff; font-size:1.3rem; font-weight:800; box-shadow:0 6px 20px rgba(229,72,77,0.35); }
+    .wheel-spin-btn:disabled { opacity:0.6; }
+    .wheel-hint { font-size:0.85rem; color:var(--text-muted); background:rgba(255,255,255,0.75); padding:4px 12px; border-radius:999px; }
+    @keyframes bulbGlow { 0%,100% { opacity:0.45; } 50% { opacity:1; } }
+    .bulb { animation:bulbGlow 1.1s ease-in-out infinite; }
+    .bulb.alt { animation-delay:0.55s; }
+    @keyframes popIn { 0% { transform:scale(0.6); opacity:0; } 70% { transform:scale(1.06); opacity:1; } 100% { transform:scale(1); } }
+    .spin-result { text-align:center; animation:popIn 0.45s ease-out; display:flex; flex-direction:column; gap:10px; }
+    .spin-result .sr-big { font-size:3.2rem; font-weight:800; color:#A86E00; line-height:1.1; }
+    .prize-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .prize-cell { display:flex; align-items:center; gap:6px; background:var(--bg); border-radius:14px; padding:5px 6px 5px 8px; border:2px solid transparent; }
+    .prize-cell.hl { border-color:var(--gold); }
+    .prize-cell .pdot { width:22px; height:22px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px var(--border); flex-shrink:0; }
+    .prize-cell .pval { flex:1; text-align:center; font-weight:800; font-size:1.2rem; white-space:nowrap; }
+    .step-btn { width:44px; height:44px; border-radius:12px; background:#E6F4EF; color:var(--text); font-size:1.4rem; font-weight:800; padding:0; flex-shrink:0; }
+    .pill { display:inline-block; background:var(--card-light); border-radius:999px; padding:4px 12px; font-size:0.82rem; }
+    .wheel-toggle { position:relative; display:inline-block; width:52px; height:30px; cursor:pointer; flex-shrink:0; }
+    .wheel-toggle input { opacity:0; width:0; height:0; }
+    .wheel-toggle .trk { position:absolute; inset:0; border-radius:30px; transition:0.3s; }
+    .wheel-toggle .knb { position:absolute; top:4px; width:22px; height:22px; background:#fff; border-radius:50%; transition:0.3s; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+
+    /* === STAR COUNT GOLD === */
+    .star-hero .star-count { color:#FFFFFF; text-shadow:0 2px 0 rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body>
+
+<!-- ==================== CHRISTMAS SCENE ==================== -->
+<div class="xmas-scene"><img src="https://cdn.jsdelivr.net/gh/maxnot6za/starbank-assets@7e64891/xmas-bg-hd.jpg" alt=""></div>
+
+<!-- ==================== SNOWFALL ==================== -->
+<div class="snowfall" id="snowfall"></div>
+
+<!-- ==================== TOAST ==================== -->
+<div id="toast" class="toast"></div>
+
+<!-- ==================== WELCOME SCREEN ==================== -->
+<div id="screen-welcome" class="screen active">
+  <button type="button" class="music-btn music-float" data-no-fe onclick="toggleMusic()" aria-label="เปิด/ปิดเพลง">🔔</button>
+  <div class="app-header">
+    <div class="logo"><img src="https://cdn.jsdelivr.net/gh/maxnot6za/starbank-assets@7976267/star-logo-clear.png" alt="⭐" style="width:120px;height:120px;display:block;margin:0 auto -6px"></div>
+    <div style="font-size:0.85rem;margin-top:2px;opacity:0.6;letter-spacing:2px">🎄✨🎁✨🎄</div>
+    <h1>ธนาคารดาว</h1>
+    <p class="subtitle">สะสมดาว แลกรางวัล</p>
+  </div>
+
+  <div class="auth-tabs" style="margin-top:20px">
+    <button class="active" id="tab-join" onclick="authTab('join')">🧒 เข้าร่วมครอบครัว</button>
+    <button id="tab-register" onclick="authTab('register')">👨‍👩‍👧 สร้างครอบครัวใหม่</button>
+  </div>
+
+  <!-- TAB: เข้าร่วมด้วยรหัส -->
+  <div id="auth-join" class="card">
+    <h3>กรอกรหัสครอบครัว</h3>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px">สำหรับเด็กหรือผู้ปกครองที่เปลี่ยนเครื่อง</p>
+    <div class="form-group">
+      <input type="text" id="join-code-input" placeholder="กรอกรหัส 6 หลัก" maxlength="6"
+        style="text-transform:uppercase; text-align:center; letter-spacing:6px; font-size:1.3rem; font-weight:700">
+    </div>
+    <button class="btn btn-primary" onclick="handleJoinLookup()">เข้าร่วม</button>
+  </div>
+
+  <!-- TAB: สมัครครอบครัวใหม่ -->
+  <div id="auth-register" class="card" style="display:none">
+    <h3>สร้างครอบครัวใหม่</h3>
+    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px">สำหรับผู้ปกครองที่ต้องการเริ่มใช้งาน</p>
+    <div class="form-group">
+      <label>ชื่อครอบครัว</label>
+      <input type="text" id="reg-family-name" placeholder='เช่น "บ้านสุขสันต์"'>
+    </div>
+    <div class="form-group">
+      <label>ชื่อของคุณ (ผู้ปกครอง)</label>
+      <input type="text" id="reg-parent-name" placeholder="ชื่อเล่น">
+    </div>
+    <div class="form-group">
+      <label>เลือกอวาตาร์</label>
+      <div class="avatar-pick" id="reg-avatar-pick"></div>
+    </div>
+    <button class="btn btn-primary" onclick="handleRegister()">สร้างครอบครัว</button>
+  </div>
+
+  <!-- ผู้ปกครองที่มาจาก link LINE: auto-login -->
+  <div id="auto-login-status" style="display:none;text-align:center;padding:20px;color:var(--text-muted)">
+    ⏳ กำลังเข้าสู่ระบบ...
+  </div>
+</div>
+
+<!-- ==================== PROFILE SETUP ==================== -->
+<div id="screen-profile" class="screen">
+  <div class="app-header">
+    <div class="logo">👤</div>
+    <h1>สร้างโปรไฟล์</h1>
+    <p class="subtitle" id="profile-family-label"></p>
+  </div>
+
+  <div class="card">
+    <div class="form-group">
+      <label>ชื่อของคุณ</label>
+      <input type="text" id="profile-name" placeholder="ชื่อเล่น">
+    </div>
+
+    <div class="form-group">
+      <label>คุณเป็น...</label>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-outline" style="flex:1" id="role-child-btn" onclick="selectRole('child')">
+          🧒 เด็ก
+        </button>
+        <button class="btn btn-outline" style="flex:1" id="role-parent-btn" onclick="selectRole('parent')">
+          👨‍👩‍👧 ผู้ปกครอง
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>เลือกอวาตาร์</label>
+      <div class="avatar-pick" id="avatar-pick"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="handleSaveProfile()" style="margin-top:8px">เริ่มใช้งาน</button>
+  </div>
+</div>
+
+<!-- ==================== CHILD: HOME ==================== -->
+<div id="screen-child-home" class="screen">
+  <div class="top-strip" style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div id="child-avatar" style="font-size:2rem"></div>
+    <div style="flex:1">
+      <div id="child-name" style="font-weight:700;font-size:1.1rem"></div>
+      <div id="child-family-name" style="color:var(--text-muted);font-size:0.85rem"></div>
+    </div>
+    <button type="button" class="hdr-btn" onclick="loadChildDashboard()" title="รีเฟรช" aria-label="รีเฟรช" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M216,128a88,88,0,1,1-88-88A88,88,0,0,1,216,128Z" opacity="0.2"/><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg></button>
+    <button type="button" class="music-btn" data-no-fe onclick="toggleMusic()" aria-label="เปิด/ปิดเพลง">🔔</button>
+  </div>
+
+  <div class="star-hero">
+    <div class="star-count" id="child-star-count">0</div>
+    <div class="star-label">⭐ ดาวสะสม</div>
+  </div>
+
+  <div id="child-wheel-card"></div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-val" id="child-earned">0</div>
+      <div class="stat-label">ดาวที่ได้รับ</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="child-completed">0</div>
+      <div class="stat-label">ภารกิจสำเร็จ</div>
+    </div>
+  </div>
+
+  <div class="section-title">📋 ภารกิจรอส่ง</div>
+  <div id="child-missions-list"></div>
+</div>
+
+<!-- ==================== CHILD: LUCKY WHEEL ==================== -->
+<div id="screen-child-wheel" class="screen">
+  <div class="top-strip" style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <button type="button" class="wheel-back" onclick="closeWheel()" aria-label="กลับหน้าหลัก">←</button>
+    <div style="flex:1;font-weight:800;font-size:1.1rem">กงล้อดาวนำโชค 🎡</div>
+    <div class="wheel-left" id="wheel-spins-left">เหลือ 0 ครั้ง</div>
+  </div>
+  <div class="wheel-stage">
+    <div class="wheel-live" aria-live="polite"><span id="wheel-live-num">–</span><span style="font-size:1.4rem">⭐</span></div>
+    <div class="wheel-box">
+      <svg class="wheel-pointer" viewBox="0 0 42 48" aria-hidden="true"><path d="M4 4 H38 L21 44 Z" fill="#FFF4E0" stroke="#E5484D" stroke-width="5" stroke-linejoin="round"/></svg>
+      <div class="wheel-rot" id="wheel-rot"></div>
+    </div>
+    <button type="button" class="wheel-spin-btn" id="wheel-spin-btn" onclick="doSpin()">หมุนเลย!</button>
+    <div class="wheel-hint">ลุ้นเลย! ช่องทองคือรางวัลใหญ่</div>
+  </div>
+</div>
+
+<!-- ==================== CHILD: REWARDS ==================== -->
+<div id="screen-child-rewards" class="screen">
+  <div class="section-title">🎁 แลกรางวัล</div>
+  <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px">ดาวของฉัน: <strong id="reward-balance">0</strong> ⭐</p>
+  <div id="child-rewards-list"></div>
+</div>
+
+<!-- ==================== CHILD: HISTORY ==================== -->
+<div id="screen-child-history" class="screen">
+  <div class="section-title">📜 ประวัติภารกิจ</div>
+  <div id="child-history-list"></div>
+
+  <div class="section-title" style="margin-top:20px">🎁 ประวัติแลกรางวัล</div>
+  <div id="child-redemption-list"></div>
+
+  <div id="child-wheel-history"></div>
+</div>
+
+<!-- ==================== PARENT: HOME ==================== -->
+<div id="screen-parent-home" class="screen">
+  <div class="top-strip" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div id="parent-avatar" style="font-size:2rem"></div>
+      <div>
+        <div id="parent-name" style="font-weight:700;font-size:1.1rem"></div>
+        <div id="parent-family-name" style="color:var(--text-muted);font-size:0.85rem"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button type="button" class="hdr-btn" onclick="loadParentDashboard()" title="รีเฟรช" aria-label="รีเฟรช" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M216,128a88,88,0,1,1-88-88A88,88,0,0,1,216,128Z" opacity="0.2"/><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg></button>
+      <button type="button" class="music-btn" data-no-fe onclick="toggleMusic()" aria-label="เปิด/ปิดเพลง">🔔</button>
+      <button type="button" class="hdr-btn" onclick="showSettings()" aria-label="ตั้งค่า" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M230.1,108.76,198.25,90.62c-.64-1.16-1.31-2.29-2-3.41l-.12-36A104.61,104.61,0,0,0,162,32L130,49.89c-1.34,0-2.69,0-4,0L94,32A104.58,104.58,0,0,0,59.89,51.25l-.16,36c-.7,1.12-1.37,2.26-2,3.41l-31.84,18.1a99.15,99.15,0,0,0,0,38.46l31.85,18.14c.64,1.16,1.31,2.29,2,3.41l.12,36A104.61,104.61,0,0,0,94,224l32-17.87c1.34,0,2.69,0,4,0L162,224a104.58,104.58,0,0,0,34.08-19.25l.16-36c.7-1.12,1.37-2.26,2-3.41l31.84-18.1A99.15,99.15,0,0,0,230.1,108.76ZM128,168a40,40,0,1,1,40-40A40,40,0,0,1,128,168Z" opacity="0.2"/><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm109.94-52.79a8,8,0,0,0-3.89-5.4l-29.83-17-.12-33.62a8,8,0,0,0-2.83-6.08,111.91,111.91,0,0,0-36.72-20.67,8,8,0,0,0-6.46.59L128,41.85,97.88,25a8,8,0,0,0-6.47-.6A111.92,111.92,0,0,0,54.73,45.15a8,8,0,0,0-2.83,6.07l-.15,33.65-29.83,17a8,8,0,0,0-3.89,5.4,106.47,106.47,0,0,0,0,41.56,8,8,0,0,0,3.89,5.4l29.83,17,.12,33.63a8,8,0,0,0,2.83,6.08,111.91,111.91,0,0,0,36.72,20.67,8,8,0,0,0,6.46-.59L128,214.15,158.12,231a7.91,7.91,0,0,0,3.9,1,8.09,8.09,0,0,0,2.57-.42,112.1,112.1,0,0,0,36.68-20.73,8,8,0,0,0,2.83-6.07l.15-33.65,29.83-17a8,8,0,0,0,3.89-5.4A106.47,106.47,0,0,0,237.94,107.21Zm-15,34.91-28.57,16.25a8,8,0,0,0-3,3c-.58,1-1.19,2.06-1.81,3.06a7.94,7.94,0,0,0-1.22,4.21l-.15,32.25a95.89,95.89,0,0,1-25.37,14.3L134,199.13a8,8,0,0,0-3.91-1h-.19c-1.21,0-2.43,0-3.64,0a8.1,8.1,0,0,0-4.1,1l-28.84,16.1A96,96,0,0,1,67.88,201l-.11-32.2a8,8,0,0,0-1.22-4.22c-.62-1-1.23-2-1.8-3.06a8.09,8.09,0,0,0-3-3.06l-28.6-16.29a90.49,90.49,0,0,1,0-28.26L61.67,97.63a8,8,0,0,0,3-3c.58-1,1.19-2.06,1.81-3.06a7.94,7.94,0,0,0,1.22-4.21l.15-32.25a95.89,95.89,0,0,1,25.37-14.3L122,56.87a8,8,0,0,0,4.1,1c1.21,0,2.43,0,3.64,0a8,8,0,0,0,4.1-1l28.84-16.1A96,96,0,0,1,188.12,55l.11,32.2a8,8,0,0,0,1.22,4.22c.62,1,1.23,2,1.8,3.06a8.09,8.09,0,0,0,3,3.06l28.6,16.29A90.49,90.49,0,0,1,222.9,142.12Z"/></svg></button>
+    </div>
+  </div>
+
+  <div class="section-title">👧 สมาชิกเด็ก</div>
+  <div id="parent-children-list"></div>
+
+  <div id="redemption-alert-box" style="display:none;background:#FFF8E6;border:2px solid var(--gold);border-radius:var(--radius);padding:16px;margin-bottom:16px;animation:pulse-border 2s ease-in-out infinite">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:1.4rem">🎁</span>
+      <span style="font-weight:700;color:var(--gold-dark);font-size:1rem">มีเด็กแลกรางวัล!</span>
+      <span class="nav-badge" id="redemption-count-badge" style="background:var(--gold-dark)"></span>
+    </div>
+    <div id="redemption-alert-list"></div>
+    <button onclick="doAcknowledgeRedemptions()" style="margin-top:12px;width:100%;padding:10px;background:var(--gold-dark);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer">✅ รับทราบแล้ว</button>
+  </div>
+
+  <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+    <span>⏳ รออนุมัติ</span>
+    <span class="nav-badge" id="pending-count-home" style="display:none"></span>
+  </div>
+  <div id="parent-pending-home"></div>
+</div>
+
+<!-- ==================== PARENT: MISSIONS ==================== -->
+<div id="screen-parent-missions" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div class="section-title" style="margin:0">📋 จัดการภารกิจ</div>
+    <button class="btn btn-sm btn-primary" onclick="showAddMission()">+ เพิ่ม</button>
+  </div>
+  <div id="parent-missions-list"></div>
+</div>
+
+<!-- ==================== PARENT: APPROVALS ==================== -->
+<div id="screen-parent-approvals" class="screen">
+  <div class="section-title">✅ อนุมัติภารกิจ</div>
+  <div id="parent-pending-list"></div>
+  <div class="section-title" style="margin-top:24px">📜 ประวัติการอนุมัติ <span style="font-weight:400;font-size:0.8rem;color:var(--text-muted)">(20 รายการล่าสุด)</span></div>
+  <div id="review-history-list"></div>
+</div>
+
+<!-- ==================== PARENT: REWARDS ==================== -->
+<div id="screen-parent-rewards" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div class="section-title" style="margin:0">🎁 จัดการรางวัล</div>
+    <button class="btn btn-sm btn-primary" onclick="showAddReward()">+ เพิ่ม</button>
+  </div>
+  <div id="parent-rewards-list"></div>
+  <div class="section-title" style="margin-top:24px">🧾 ประวัติแลกรางวัล <span style="font-weight:400;font-size:0.8rem;color:var(--text-muted)">(20 รายการล่าสุด)</span></div>
+  <div id="parent-redemption-history"></div>
+</div>
+
+<!-- ==================== BOTTOM NAV: CHILD ==================== -->
+<div id="nav-child" class="bottom-nav" style="display:none">
+  <button onclick="childNav('home')" id="cnav-home" class="active">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M216,120v96H152V152H104v64H40V120a8,8,0,0,1,2.34-5.66l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,216,120Z" opacity="0.2"/><path d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z"/></svg></span> หน้าหลัก
+  </button>
+  <button onclick="childNav('rewards')" id="cnav-rewards">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M208,128v72a8,8,0,0,1-8,8H56a8,8,0,0,1-8-8V128Z" opacity="0.2"/><path d="M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08a13.69,13.69,0,0,1-4.5,10c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51Zm-64.09.36A16.63,16.63,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92-9.72-1-25.44-4-34.92-12.39a13.69,13.69,0,0,1-4.5-10A16.6,16.6,0,0,1,84.87,36.87ZM40,88h80v32H40Zm16,48h64v64H56Zm144,64H136V136h64Zm16-80H136V88h80v32Z"/></svg></span> รางวัล
+  </button>
+  <button onclick="childNav('history')" id="cnav-history">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M200,176H104s8,6,8,16a24,24,0,0,1-48,0V64A24,24,0,0,0,40,40H176a24,24,0,0,1,24,24Z" opacity="0.2"/><path d="M96,104a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H104A8,8,0,0,1,96,104Zm8,40h64a8,8,0,0,0,0-16H104a8,8,0,0,0,0,16Zm128,48a32,32,0,0,1-32,32H88a32,32,0,0,1-32-32V64a16,16,0,0,0-32,0c0,5.74,4.83,9.62,4.88,9.66h0A8,8,0,0,1,24,88a7.89,7.89,0,0,1-4.79-1.61h0C18.05,85.54,8,77.61,8,64A32,32,0,0,1,40,32H176a32,32,0,0,1,32,32V168h8a8,8,0,0,1,4.8,1.6C222,170.46,232,178.39,232,192ZM96.26,173.48A8.07,8.07,0,0,1,104,168h88V64a16,16,0,0,0-16-16H67.69A31.71,31.71,0,0,1,72,64V192a16,16,0,0,0,32,0c0-5.74-4.83-9.62-4.88-9.66A7.82,7.82,0,0,1,96.26,173.48ZM216,192a12.58,12.58,0,0,0-3.23-8h-94a26.92,26.92,0,0,1,1.21,8,31.82,31.82,0,0,1-4.29,16H200A16,16,0,0,0,216,192Z"/></svg></span> ประวัติ
+  </button>
+</div>
+
+<!-- ==================== BOTTOM NAV: PARENT ==================== -->
+<div id="nav-parent" class="bottom-nav" style="display:none">
+  <button onclick="parentNav('home')" id="pnav-home" class="active">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M216,120v96H152V152H104v64H40V120a8,8,0,0,1,2.34-5.66l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,216,120Z" opacity="0.2"/><path d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z"/></svg></span> หน้าหลัก
+  </button>
+  <button onclick="parentNav('missions')" id="pnav-missions">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M208,48V216a8,8,0,0,1-8,8H56a8,8,0,0,1-8-8V48a8,8,0,0,1,8-8H96a39.83,39.83,0,0,0-8,24v8h80V64a39.83,39.83,0,0,0-8-24h40A8,8,0,0,1,208,48Z" opacity="0.2"/><path d="M168,152a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,152Zm-8-40H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm56-64V216a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V48A16,16,0,0,1,56,32H92.26a47.92,47.92,0,0,1,71.48,0H200A16,16,0,0,1,216,48ZM96,64h64a32,32,0,0,0-64,0ZM200,48H173.25A47.93,47.93,0,0,1,176,64v8a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V64a47.93,47.93,0,0,1,2.75-16H56V216H200Z"/></svg></span> ภารกิจ
+  </button>
+  <button onclick="parentNav('approvals')" id="pnav-approvals">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg></span> อนุมัติ
+    <span class="nav-badge" id="pending-badge" style="display:none"></span>
+  </button>
+  <button onclick="parentNav('rewards')" id="pnav-rewards">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M208,128v72a8,8,0,0,1-8,8H56a8,8,0,0,1-8-8V128Z" opacity="0.2"/><path d="M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08a13.69,13.69,0,0,1-4.5,10c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51Zm-64.09.36A16.63,16.63,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92-9.72-1-25.44-4-34.92-12.39a13.69,13.69,0,0,1-4.5-10A16.6,16.6,0,0,1,84.87,36.87ZM40,88h80v32H40Zm16,48h64v64H56Zm144,64H136V136h64Zm16-80H136V88h80v32Z"/></svg></span> รางวัล
+  </button>
+  <button onclick="parentNav('summary')" id="pnav-summary">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M208,40V208H152V40Z" opacity="0.2"/><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></svg></span> สรุป
+  </button>
+</div>
+
+<!-- ==================== PARENT: DAILY SUMMARY ==================== -->
+<div id="screen-parent-summary" class="screen">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div class="section-title" style="margin:0">📊 สรุปประจำวัน</div>
+    <select id="summary-days" onchange="loadDailySummary()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:0.85rem">
+      <option value="7">7 วัน</option>
+      <option value="14">14 วัน</option>
+      <option value="30">30 วัน</option>
+    </select>
+  </div>
+  <div id="daily-summary-list"><div class="loading">⏳ กำลังโหลด...</div></div>
+</div>
+
+<!-- ==================== MODALS ==================== -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+// === STATE ===
+let currentMember = null;
+let dashboardData = null;
+
+// === INIT ===
+// ---- Cloudflare: แทน google.script.run ด้วยการเรียก /api/<ชื่อฟังก์ชัน> (โค้ดส่วนอื่นไม่ต้องแก้) ----
+(function () {
+  function runner(ok, fail) {
+    return new Proxy({}, { get: function (_, name) {
+      if (name === 'withSuccessHandler') return function (h) { return runner(h, fail); };
+      if (name === 'withFailureHandler') return function (h) { return runner(ok, h); };
+      if (name === 'withUserObject') return function () { return runner(ok, fail); };
+      if (typeof name !== 'string' || name === 'then') return undefined;
+      return function () {
+        var args = Array.prototype.slice.call(arguments);
+        fetch('/api/' + name, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ args: args }) })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j && j.ok) { if (ok) ok(j.value); }
+            else if (fail) fail(new Error((j && j.error) || 'เกิดข้อผิดพลาด'));
+          }, function () { if (fail) fail(new Error('เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง')); });
+      };
+    } });
+  }
+  window.google = { script: { run: runner(null, null) } };
+})();
+const AUTO_TOKEN = new URLSearchParams(location.search).get('auto') || '';
+const WEB_APP_URL = location.origin + '/';
+
+function initApp() {
+  // รอจน google.script.run พร้อม (GAS inject ช้ากว่า DOM)
+  if (typeof google === 'undefined' || !google.script) {
+    setTimeout(initApp, 100);
+    return;
+  }
+
+  if (AUTO_TOKEN) {
+    document.getElementById('auto-login-status').style.display = 'block';
+    google.script.run
+      .withSuccessHandler(member => {
+        if (member) {
+          currentMember = {
+            memberId: member.member_id, familyId: member.family_id,
+            name: member.name, role: member.role, avatar: member.avatar
+          };
+          localStorage.setItem('starbank_member', JSON.stringify(currentMember));
+          toast('🎉 ยินดีต้อนรับ ' + member.name + '!');
+          if (member.role === 'child') loadChildDashboard();
+          else loadParentDashboard();
+        } else {
+          document.getElementById('auto-login-status').style.display = 'none';
+          toast('ลิงก์ไม่ถูกต้อง กรุณากรอกรหัสครอบครัว');
+        }
+      })
+      .withFailureHandler(e => {
+        document.getElementById('auto-login-status').style.display = 'none';
+        toast('เข้าสู่ระบบไม่สำเร็จ: ' + (e ? e.message : 'ลองใหม่'));
+      })
+      .getMemberByWebToken(AUTO_TOKEN);
+    return;
+  }
+
+  // Normal: check localStorage
+  const saved = localStorage.getItem('starbank_member');
+  if (saved) {
+    try {
+      currentMember = JSON.parse(saved);
+      if (currentMember.role === 'child') loadChildDashboard();
+      else loadParentDashboard();
+    } catch(e) { localStorage.removeItem('starbank_member'); }
+  }
+}
+
+window.addEventListener('DOMContentLoaded', initApp);
+
+// === NAVIGATION ===
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + id);
+  if (el) el.classList.add('active');
+}
+
+function childNav(tab) {
+  document.querySelectorAll('#nav-child button').forEach(b => b.classList.remove('active'));
+  document.getElementById('cnav-' + tab).classList.add('active');
+  showScreen('child-' + tab);
+}
+
+function parentNav(tab) {
+  document.querySelectorAll('#nav-parent button').forEach(b => b.classList.remove('active'));
+  document.getElementById('pnav-' + tab).classList.add('active');
+  showScreen('parent-' + tab);
+  if (tab === 'summary') loadDailySummary();
+}
+
+// === TOAST ===
+function toast(msg, duration) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration || 2500);
+}
+
+// === MODAL ===
+function openModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+// === FAMILY JOIN (เด็ก / ผู้ปกครองย้ายเครื่อง) ===
+function handleJoinLookup() {
+  const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+  if (code.length !== 6) return toast('กรุณากรอกรหัส 6 หลัก');
+  toast('กำลังค้นหา...', 5000);
+  google.script.run
+    .withSuccessHandler(result => {
+      toast('พบครอบครัว "' + result.family_name + '"!');
+      if (result.children.length > 0) {
+        // มีเด็กอยู่แล้ว → ให้เลือกโปรไฟล์เดิมหรือสร้างใหม่
+        showPickProfile(result);
+      } else {
+        // ยังไม่มีเด็ก → ไปสร้างโปรไฟล์เลย
+        goToProfile(result.family_id, result.family_name);
+      }
+    })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด: ' + e.message))
+    .webLookupFamily(code);
+}
+
+function showPickProfile(familyData) {
+  let childCards = familyData.children.map(c =>
+    `<div class="card" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;border:2px solid var(--border);transition:border-color 0.2s"
+          onclick="this.style.borderColor='var(--primary)';doReconnect('${c.member_id}')"
+          ontouchstart="this.style.borderColor='var(--primary-light)'">
+      <div style="font-size:2rem">${c.avatar}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:1rem">${esc(c.name)}</div>
+        <div style="color:var(--gold-dark);font-weight:600;font-size:0.9rem">⭐ ${c.stars} ดาว</div>
+      </div>
+      <span style="color:var(--primary);font-size:1.3rem">›</span>
+    </div>`
+  ).join('');
+
+  openModal(`
+    <h2>👋 เลือกโปรไฟล์</h2>
+    <p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:16px">
+      ครอบครัว "${esc(familyData.family_name)}"
+    </p>
+    <div class="section-title" style="margin-top:0">🧒 เด็กในครอบครัว</div>
+    <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:12px">เลือกชื่อของคุณเพื่อเข้าใช้งานต่อ (ดาวเดิมจะอยู่ครบ)</p>
+    ${childCards}
+    <div class="divider"></div>
+    <button class="btn btn-outline" onclick="closeModal();goToProfile('${familyData.family_id}','${escJs(familyData.family_name)}')" style="margin-bottom:10px">
+      ➕ ฉันเป็นสมาชิกใหม่
+    </button>
+  `);
+}
+
+function doReconnect(memberId) {
+  closeModal();
+  toast('กำลังเชื่อมต่อ...', 5000);
+  google.script.run
+    .withSuccessHandler(member => {
+      currentMember = member;
+      localStorage.setItem('starbank_member', JSON.stringify(member));
+      toast('🎉 ยินดีต้อนรับกลับ ' + member.name + '!');
+      if (member.role === 'child') loadChildDashboard();
+      else loadParentDashboard();
+    })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด: ' + e.message))
+    .webReconnect(memberId);
+}
+
+// === PROFILE SETUP ===
+let selectedRole = '';
+let selectedAvatar = '';
+let profileFamilyId = '';
+
+const AVATARS_CHILD = ['🧒','👧','👦','🐱','🐶','🦊','🐰','🐻','🦁','🐼','🐸','🦄'];
+const AVATARS_PARENT = ['👨','👩','👴','👵','🧑','👨‍👩‍👧','👨‍👩‍👦','🏠'];
+
+function goToProfile(familyId, familyName) {
+  profileFamilyId = familyId;
+  document.getElementById('profile-family-label').textContent = 'ครอบครัว: ' + familyName;
+  showScreen('profile');
+  renderAvatars(AVATARS_CHILD, 'avatar-pick');
+}
+
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('role-child-btn').style.background = role === 'child' ? '#E3F6EE' : '';
+  document.getElementById('role-child-btn').style.borderColor = role === 'child' ? 'var(--primary)' : '';
+  document.getElementById('role-parent-btn').style.background = role === 'parent' ? '#E3F6EE' : '';
+  document.getElementById('role-parent-btn').style.borderColor = role === 'parent' ? 'var(--primary)' : '';
+  renderAvatars(role === 'child' ? AVATARS_CHILD : AVATARS_PARENT, 'avatar-pick');
+}
+
+function handleSaveProfile() {
+  const name = document.getElementById('profile-name').value.trim();
+  if (!name) return toast('กรุณากรอกชื่อ');
+  if (!selectedRole) return toast('กรุณาเลือกว่าคุณเป็นเด็กหรือผู้ปกครอง');
+  toast('กำลังบันทึก...', 5000);
+  google.script.run
+    .withSuccessHandler(member => {
+      currentMember = member;
+      localStorage.setItem('starbank_member', JSON.stringify(member));
+      toast('ยินดีต้อนรับ ' + name + '!');
+      if (member.role === 'child') loadChildDashboard();
+      else loadParentDashboard();
+    })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด: ' + e.message))
+    .joinFamily(profileFamilyId, name, selectedRole, selectedAvatar);
+}
+
+// ===================================================================
+// CHILD VIEWS
+// ===================================================================
+function loadChildDashboard() {
+  showScreen('child-home');
+  document.getElementById('nav-child').style.display = 'flex';
+  document.getElementById('nav-parent').style.display = 'none';
+  document.getElementById('child-missions-list').innerHTML = '<div class="loading">⏳ กำลังโหลด...</div>';
+
+  google.script.run
+    .withSuccessHandler(data => {
+      dashboardData = data;
+      renderChildHome(data);
+      renderChildRewards(data);
+      renderChildHistory(data);
+    })
+    .withFailureHandler(e => toast('โหลดข้อมูลไม่สำเร็จ'))
+    .getChildDashboard(currentMember.memberId);
+}
+
+function renderChildHome(d) {
+  document.getElementById('child-avatar').textContent = d.member.avatar;
+  document.getElementById('child-name').textContent = d.member.name;
+  document.getElementById('child-family-name').textContent = d.family.family_name;
+  showStarCount(document.getElementById('child-star-count'), d.stats.balance, d.member.member_id);
+  document.getElementById('child-earned').textContent = d.stats.totalEarned;
+  document.getElementById('child-completed').textContent = d.stats.missionsCompleted;
+  renderWheelCard(d);
+
+  const list = document.getElementById('child-missions-list');
+  if (!d.missions.length) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">📭</div>ยังไม่มีภารกิจ</div>';
+    return;
+  }
+  list.innerHTML = d.missions.map(m => {
+    const stars = Number(m.base_stars) * Number(m.multiplier || 1);
+    const mult = Number(m.multiplier) > 1 ? `<div class="multiplier-badge">x${m.multiplier}</div>` : '';
+    const icon = m.icon || '⭐';
+    return `
+      <div class="mission-item">
+        ${mult}
+        <div class="stars-badge"><span style="font-size:1.4rem">${icon}</span>${stars}<small>ดาว</small></div>
+        <div class="mi-info">
+          <div class="mi-title">${esc(m.title)}</div>
+          <div class="mi-desc">${esc(m.description || '')}</div>
+        </div>
+        <button class="btn btn-sm btn-gold" onclick="submitMission('${m.mission_id}')">ส่ง!</button>
+      </div>`;
+  }).join('');
+}
+
+function submitMission(missionId) {
+  // ป้องกันกดซ้ำ — disable ปุ่มทั้งหมดระหว่างส่ง
+  var btns = document.querySelectorAll('.btn-gold');
+  btns.forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+  toast('⏳ กำลังส่งภารกิจ...', 8000);
+  google.script.run
+    .withSuccessHandler(() => {
+      toast('🎉 ส่งภารกิจแล้ว! รอผู้ปกครองอนุมัติ');
+      loadChildDashboard();
+    })
+    .withFailureHandler(e => {
+      toast('ส่งไม่สำเร็จ: ' + e.message);
+      btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; });
+    })
+    .submitMission(missionId, currentMember.memberId, currentMember.familyId);
+}
+
+function renderChildRewards(d) {
+  document.getElementById('reward-balance').textContent = d.stats.balance;
+  const list = document.getElementById('child-rewards-list');
+  if (!d.rewards.length) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">🎁</div>ยังไม่มีรางวัล</div>';
+    return;
+  }
+  list.innerHTML = d.rewards.map(r => {
+    const canRedeem = d.stats.balance >= Number(r.stars_cost) && Number(r.quantity) > 0;
+    const icon = r.icon || (r.type === 'digital' ? '🎮' : '🎁');
+    return `
+      <div class="reward-item">
+        <div class="ri-icon">${icon}</div>
+        <div class="ri-info">
+          <div class="ri-title">${esc(r.title)}</div>
+          <div class="ri-cost">⭐ ${r.stars_cost} ดาว</div>
+          <div class="ri-qty">เหลือ ${r.quantity} ชิ้น</div>
+        </div>
+        <button class="btn btn-sm ${canRedeem ? 'btn-success' : 'btn-outline'}"
+          ${canRedeem ? '' : 'disabled style="opacity:0.4"'}
+          onclick="confirmRedeem('${r.reward_id}','${escJs(r.title)}',${Number(r.stars_cost) || 0})">
+          แลก
+        </button>
+      </div>`;
+  }).join('');
+}
+
+function confirmRedeem(rewardId, title, cost) {
+  openModal(`
+    <h2>🎁 แลกรางวัล</h2>
+    <p style="text-align:center;margin-bottom:8px;font-size:1.1rem;font-weight:600">${esc(title)}</p>
+    <p style="text-align:center;color:var(--gold-dark);font-size:1.2rem;font-weight:700;margin-bottom:20px">⭐ ${cost} ดาว</p>
+    <p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:20px">ยืนยันแลกรางวัลนี้?<br>ดาวจะถูกหักทันที</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline" onclick="closeModal()" style="flex:1">ยกเลิก</button>
+      <button class="btn btn-success" onclick="doRedeem('${rewardId}')" style="flex:1">ยืนยันแลก</button>
+    </div>
+  `);
+}
+
+function doRedeem(rewardId) {
+  closeModal();
+  toast('กำลังแลกรางวัล...', 5000);
+  google.script.run
+    .withSuccessHandler(result => {
+      confetti();
+      if (result.secretToReveal) {
+        openModal(`
+          <h2>🎉 แลกสำเร็จ!</h2>
+          <p style="text-align:center">${esc(result.rewardTitle)}</p>
+          <div class="secret-reveal">
+            <p style="font-size:0.85rem;color:var(--text-muted)">รหัสของคุณ:</p>
+            <code>${esc(result.secretToReveal)}</code>
+            <p style="font-size:0.75rem;color:var(--text-muted)">จดรหัสนี้ไว้แล้วนำไปเติม</p>
+          </div>
+          <button class="btn btn-primary" onclick="closeModal();loadChildDashboard()">เข้าใจแล้ว</button>
+        `);
+      } else {
+        toast('🎉 แลกสำเร็จ! ไปรับรางวัลจากผู้ปกครอง');
+        loadChildDashboard();
+      }
+    })
+    .withFailureHandler(e => toast('แลกไม่สำเร็จ: ' + e.message))
+    .redeemReward(rewardId, currentMember.memberId, currentMember.familyId);
+}
+
+function renderChildHistory(d) {
+  renderWheelHistory(d);
+  const list = document.getElementById('child-history-list');
+  const items = d.recentSubmissions || [];
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">📜</div>ยังไม่มีประวัติภารกิจ</div>';
+  } else {
+    list.innerHTML = items.map(s => {
+      const tagClass = s.status === 'approved' ? 'tag-approved' : s.status === 'rejected' ? 'tag-rejected' : 'tag-pending';
+      const tagText = s.status === 'approved' ? '✅ อนุมัติ' : s.status === 'rejected' ? '❌ ไม่อนุมัติ' : '⏳ รอ';
+      const starsText = s.status === 'approved' && s.stars_earned ? ` (+${s.stars_earned} ⭐)` : '';
+      const timeStr = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+      return `
+        <div class="mission-item">
+          <div class="mi-info" style="flex:1">
+            <div class="mi-title">${esc(s.mission_title)}${starsText}</div>
+            <div class="mi-desc">${timeStr}</div>
+          </div>
+          <span class="tag ${tagClass}">${tagText}</span>
+        </div>`;
+    }).join('');
+  }
+
+  // ประวัติแลกรางวัล
+  const rList = document.getElementById('child-redemption-list');
+  const redemptions = d.recentRedemptions || [];
+  if (!redemptions.length) {
+    rList.innerHTML = '<div class="empty-state"><div class="es-icon">🎁</div>ยังไม่เคยแลกรางวัล</div>';
+  } else {
+    rList.innerHTML = redemptions.map(function(r) {
+      var timeStr = new Date(r.redeemed_at).toLocaleDateString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      return '<div class="mission-item">' +
+        '<div class="mi-info" style="flex:1">' +
+          '<div class="mi-title">🎁 ' + esc(r.reward_title) + '</div>' +
+          '<div class="mi-desc">' + timeStr + '</div>' +
+        '</div>' +
+        '<span class="tag tag-approved">-' + r.stars_spent + ' ⭐</span>' +
+      '</div>';
+    }).join('');
+  }
+}
+
+// ===================================================================
+// PARENT VIEWS
+// ===================================================================
+function loadParentDashboard() {
+  showScreen('parent-home');
+  document.getElementById('nav-parent').style.display = 'flex';
+  document.getElementById('nav-child').style.display = 'none';
+  document.getElementById('parent-children-list').innerHTML = '<div class="loading">⏳ กำลังโหลด...</div>';
+
+  google.script.run
+    .withSuccessHandler(data => {
+      dashboardData = data;
+      renderParentHome(data);
+      renderRedemptionAlerts(data);
+      renderParentMissions(data);
+      renderParentPending(data);
+      renderReviewHistory(data);
+      renderParentRewards(data);
+      renderParentRedemptionHistory(data);
+    })
+    .withFailureHandler(e => toast('โหลดข้อมูลไม่สำเร็จ'))
+    .getParentDashboard(currentMember.memberId);
+}
+
+function renderParentHome(d) {
+  document.getElementById('parent-avatar').textContent = d.member.avatar;
+  document.getElementById('parent-name').textContent = d.member.name;
+  document.getElementById('parent-family-name').textContent = d.family.family_name;
+
+  // children stars
+  const cl = document.getElementById('parent-children-list');
+  if (!d.children.length) {
+    cl.innerHTML = '<div class="empty-state"><div class="es-icon">👧</div>ยังไม่มีสมาชิกเด็ก</div>';
+  } else {
+    cl.innerHTML = d.children.map(c => `
+      <div class="card" style="padding:14px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:1.8rem">${c.avatar}</div>
+        <div style="flex:1">
+          <div style="font-weight:600">${esc(c.name)}</div>
+          <div style="color:var(--gold-dark);font-weight:700">⭐ ${c.stats.balance} ดาว</div>
+          ${(function(){ var wc = d.wheel && d.wheel.enabled ? wheelChildInfo(c.member_id) : null;
+            return wc ? '<div style="font-size:0.8rem;color:var(--mint-dark);font-weight:600">🎄 ' + wc.run + '/5' + (wc.spins ? ' · 🎡 หมุนได้ ' + wc.spins : '') + '</div>' : ''; })()}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div style="font-size:0.8rem;color:var(--text-muted)">
+            ได้รับ ${c.stats.totalEarned} · ใช้ไป ${c.stats.totalSpent}
+          </div>
+          <button onclick="copyChildLink('${c.member_id}','${escJs(c.name)}')" style="font-size:0.75rem;padding:4px 10px;border:1px solid var(--gold);background:var(--gold-light);color:var(--gold-dark);border-radius:12px;cursor:pointer;white-space:nowrap">📎 ลิงก์เข้าเร็ว</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // pending preview
+  const badge = document.getElementById('pending-count-home');
+  const ph = document.getElementById('parent-pending-home');
+  if (d.pending.length) {
+    badge.style.display = 'inline-flex';
+    badge.textContent = d.pending.length;
+    ph.innerHTML = d.pending.slice(0, 3).map(s => renderPendingItem(s)).join('');
+    if (d.pending.length > 3) ph.innerHTML += `<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-top:8px">+ อีก ${d.pending.length - 3} รายการ</p>`;
+  } else {
+    badge.style.display = 'none';
+    ph.innerHTML = '<div class="empty-state" style="padding:20px"><div class="es-icon">✅</div>ไม่มีรายการรออนุมัติ</div>';
+  }
+
+  // pending nav badge
+  const nb = document.getElementById('pending-badge');
+  if (d.pending.length) { nb.style.display = 'inline-flex'; nb.textContent = d.pending.length; }
+  else nb.style.display = 'none';
+}
+
+function renderRedemptionAlerts(d) {
+  const box = document.getElementById('redemption-alert-box');
+  const list = document.getElementById('redemption-alert-list');
+  const badge = document.getElementById('redemption-count-badge');
+  const items = d.recentRedemptions || [];
+
+  if (items.length === 0) {
+    box.style.display = 'none';
+    return;
+  }
+
+  box.style.display = 'block';
+  badge.textContent = items.length;
+
+  list.innerHTML = items.map(function(r) {
+    var timeStr = new Date(r.redeemed_at).toLocaleString('th-TH', {hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
+    return '<div class="redemption-item">' +
+      '<span style="font-size:1.3rem">' + r.child_avatar + '</span>' +
+      '<div style="flex:1">' +
+        '<div style="font-weight:600">' + esc(r.child_name) + ' แลก "' + esc(r.reward_title) + '"</div>' +
+        '<div style="font-size:0.8rem;color:var(--text-muted)">⭐ ' + r.stars_spent + ' ดาว · ' + timeStr + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function doAcknowledgeRedemptions() {
+  google.script.run
+    .withSuccessHandler(function() {
+      document.getElementById('redemption-alert-box').style.display = 'none';
+      toast('✅ รับทราบแล้ว');
+    })
+    .withFailureHandler(function(e) { toast('เกิดข้อผิดพลาด'); })
+    .acknowledgeRedemptions(currentMember.familyId, currentMember.memberId);
+}
+
+function renderPendingItem(s) {
+  const child = dashboardData.members.find(m => m.member_id === s.child_id);
+  const childName = child ? child.name : '?';
+  const childAvatar = child ? child.avatar : '👤';
+  const timeStr = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  return `
+    <div class="pending-item">
+      <div class="pi-top">
+        <span style="font-size:1.3rem">${childAvatar}</span>
+        <div style="flex:1">
+          <div class="pi-child">${esc(childName)}</div>
+          <div class="pi-mission">${esc(s.mission_title)}</div>
+          <div class="pi-time">${timeStr}</div>
+        </div>
+      </div>
+      <div class="pi-actions">
+        <button class="btn btn-sm btn-success" style="flex:1" onclick="doReview('${s.submission_id}','approved')">✅ อนุมัติ</button>
+        <button class="btn btn-sm btn-danger" style="flex:1" onclick="doReview('${s.submission_id}','rejected')">❌ ไม่อนุมัติ</button>
+      </div>
+    </div>`;
+}
+
+function doReview(subId, status) {
+  if (status !== 'rejected') return reallyReview(subId, status);
+  // ไม่อนุมัติ: เช็กก่อนว่าจะทำให้ต้นคริสต์มาสของลูกเริ่มนับใหม่ไหม
+  toast('กำลังตรวจสอบ...', 5000);
+  google.script.run
+    .withSuccessHandler(function(imp) {
+      if (!imp || !imp.warn) return reallyReview(subId, status);
+      openModal('<h2>ต้นคริสต์มาสจะเริ่มใหม่</h2>' +
+        '<p style="text-align:center;color:var(--text-muted);line-height:1.6;margin-bottom:18px">ถ้าไม่อนุมัติภารกิจนี้ ต้นคริสต์มาสของ <strong style="color:var(--text)">' + esc(imp.childName) + '</strong> ' +
+        '(แขวนแล้ว ' + imp.run + '/5 ลูก' + (imp.pending ? ' · รออนุมัติอีก ' + imp.pending + ' วัน' : '') + ') จะกลับไปเริ่มนับใหม่<br>ลองให้ลูกทำใหม่แทนไหม?</p>' +
+        '<div style="display:flex;gap:10px"><button type="button" class="btn btn-outline" style="flex:1" onclick="closeModal()">กลับไปก่อน</button>' +
+        '<button type="button" class="btn btn-danger" style="flex:1" onclick="closeModal();reallyReview(\'' + subId + '\',\'rejected\')">ไม่อนุมัติ</button></div>');
+    })
+    .withFailureHandler(function() { reallyReview(subId, status); })
+    .checkRejectImpact(subId, currentMember.memberId);
+}
+
+function reallyReview(subId, status) {
+  toast('กำลังบันทึก...', 5000);
+  google.script.run
+    .withSuccessHandler(result => {
+      toast(status === 'approved' ? '✅ อนุมัติแล้ว! +' + result.starsEarned + ' ดาว' : '❌ ปฏิเสธแล้ว');
+      loadParentDashboard();
+    })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด: ' + e.message))
+    .reviewSubmission(subId, status, currentMember.memberId);
+}
+
+function renderReviewHistory(d) {
+  var list = document.getElementById('review-history-list');
+  var items = d.reviewHistory || [];
+  if (items.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div>ยังไม่มีประวัติ</div>';
+    return;
+  }
+  list.innerHTML = items.map(function(r) {
+    var timeStr = new Date(r.reviewed_at).toLocaleString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    var statusIcon = r.status === 'approved' ? '✅' : '❌';
+    var statusText = r.status === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ';
+    var starText = r.status === 'approved' && r.stars_earned ? ' +' + r.stars_earned + '⭐' : '';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="font-size:1.3rem">' + r.child_avatar + '</span>' +
+      '<div style="flex:1">' +
+        '<div style="font-weight:600">' + esc(r.child_name) + ' — ' + esc(r.mission_title) + '</div>' +
+        '<div style="font-size:0.8rem;color:var(--text-muted)">' +
+          statusIcon + ' ' + statusText + starText +
+          ' · โดย ' + r.reviewer_avatar + ' ' + esc(r.reviewer_name) +
+          ' · ' + timeStr +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderParentMissions(d) {
+  const list = document.getElementById('parent-missions-list');
+  if (!d.missions.length) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div>ยังไม่มีภารกิจ</div>';
+    return;
+  }
+  list.innerHTML = d.missions.map(m => {
+    const mult = Number(m.multiplier) > 1 ? `<div class="multiplier-badge">x${m.multiplier}</div>` : '';
+    const icon = m.icon || '⭐';
+    return `
+      <div class="mission-item" style="cursor:pointer" onclick="showEditMission('${m.mission_id}')">
+        ${mult}
+        <div class="stars-badge"><span style="font-size:1.4rem">${icon}</span>${m.base_stars}<small>ดาว</small></div>
+        <div class="mi-info">
+          <div class="mi-title">${esc(m.title)}</div>
+          <div class="mi-desc">${esc(m.description || 'ไม่มีรายละเอียด')}</div>
+        </div>
+        <span style="color:var(--text-muted);font-size:1.2rem">›</span>
+      </div>`;
+  }).join('');
+}
+
+function renderParentPending(d) {
+  const list = document.getElementById('parent-pending-list');
+  if (!d.pending.length) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div>ไม่มีรายการรออนุมัติ</div>';
+    return;
+  }
+  list.innerHTML = d.pending.map(s => renderPendingItem(s)).join('');
+}
+
+function renderParentRewards(d) {
+  const list = document.getElementById('parent-rewards-list');
+  if (!d.rewards.length) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">🎁</div>ยังไม่มีรางวัล</div>';
+    return;
+  }
+  list.innerHTML = d.rewards.map(r => {
+    const icon = r.icon || (r.type === 'digital' ? '🎮' : '🎁');
+    return `
+      <div class="reward-item" style="cursor:pointer" onclick="showEditReward('${r.reward_id}')">
+        <div class="ri-icon">${icon}</div>
+        <div class="ri-info">
+          <div class="ri-title">${esc(r.title)}</div>
+          <div class="ri-cost">⭐ ${r.stars_cost} ดาว | เหลือ ${r.quantity} ชิ้น</div>
+          ${r.secret_data ? '<div class="ri-qty" style="color:var(--success)">🔑 มีรหัสแนบ</div>' : ''}
+        </div>
+        <span style="color:var(--text-muted);font-size:1.2rem">›</span>
+      </div>`;
+  }).join('');
+}
+
+function renderParentRedemptionHistory(d) {
+  var list = document.getElementById('parent-redemption-history');
+  var items = d.redemptionHistory || [];
+  if (items.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">🧾</div>ยังไม่มีประวัติ</div>';
+    return;
+  }
+  list.innerHTML = items.map(function(r) {
+    var timeStr = new Date(r.redeemed_at).toLocaleString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    var ackText = r.acknowledged_at ? '✅ รับทราบโดย ' + esc(r.acknowledged_name || '?') : '🕐 ยังไม่รับทราบ';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="font-size:1.3rem">' + r.child_avatar + '</span>' +
+      '<div style="flex:1">' +
+        '<div style="font-weight:600">' + esc(r.child_name) + ' แลก "' + esc(r.reward_title) + '"</div>' +
+        '<div style="font-size:0.8rem;color:var(--text-muted)">⭐ ' + r.stars_spent + ' ดาว · ' + timeStr + ' · ' + ackText + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// === ADD / EDIT MISSION ===
+function showAddMission() {
+  openModal(`
+    <h2>➕ เพิ่มภารกิจ</h2>
+    <div class="form-group"><label>ชื่อภารกิจ</label><input type="text" id="m-title" placeholder="เช่น อ่านหนังสือ 30 นาที"></div>
+    <div class="form-group"><label>รายละเอียด (ไม่บังคับ)</label><input type="text" id="m-desc" placeholder="คำอธิบายเพิ่มเติม"></div>
+    <div class="form-group"><label>จำนวนดาว</label><input type="number" id="m-stars" min="1" max="100" value="1"></div>
+    <div class="form-group"><label>ไอคอน</label><div class="icon-picker" id="m-icon-pick"></div></div>
+    <button class="btn btn-primary" onclick="doAddMission()">บันทึก</button>
+  `);
+  renderIconPicker('m-icon-pick', MISSION_ICONS, '⭐');
+}
+
+function doAddMission() {
+  const title = document.getElementById('m-title').value.trim();
+  const desc = document.getElementById('m-desc').value.trim();
+  const stars = Number(document.getElementById('m-stars').value) || 1;
+  const icon = getSelectedIcon('m-icon-pick') || '⭐';
+  if (!title) return toast('กรุณากรอกชื่อภารกิจ');
+  closeModal();
+  toast('กำลังบันทึก...', 5000);
+  google.script.run
+    .withSuccessHandler(() => { toast('เพิ่มภารกิจสำเร็จ!'); loadParentDashboard(); })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด'))
+    .webSaveMission(currentMember.familyId, currentMember.memberId, { title, description: desc, base_stars: stars, icon });
+}
+
+function showEditMission(missionId) {
+  const m = dashboardData.missions.find(x => x.mission_id === missionId);
+  if (!m) return;
+  openModal(`
+    <h2>✏️ แก้ไขภารกิจ</h2>
+    <div class="form-group"><label>ชื่อ</label><input type="text" id="em-title" value="${esc(m.title)}"></div>
+    <div class="form-group"><label>รายละเอียด</label><input type="text" id="em-desc" value="${esc(m.description || '')}"></div>
+    <div class="form-group"><label>ดาว</label><input type="number" id="em-stars" value="${m.base_stars}" min="1" max="100"></div>
+    <div class="form-group">
+      <label>ตัวคูณ Event (ปกติ = 1)</label>
+      <select id="em-mult">
+        <option value="1" ${m.multiplier==1?'selected':''}>x1 (ปกติ)</option>
+        <option value="2" ${m.multiplier==2?'selected':''}>x2 ดาวสองเท่า!</option>
+        <option value="3" ${m.multiplier==3?'selected':''}>x3 ดาวสามเท่า!</option>
+        <option value="5" ${m.multiplier==5?'selected':''}>x5 พิเศษสุด!</option>
+      </select>
+    </div>
+    <div class="form-group"><label>ไอคอน</label><div class="icon-picker" id="em-icon-pick"></div></div>
+    <button class="btn btn-primary" onclick="doEditMission('${missionId}')" style="margin-bottom:10px">บันทึก</button>
+    <button class="btn btn-outline" style="color:var(--danger);border-color:var(--danger)" onclick="doDeleteMission('${missionId}')">🗑 ลบภารกิจ</button>
+  `);
+  renderIconPicker('em-icon-pick', MISSION_ICONS, m.icon || '⭐');
+}
+
+function doEditMission(id) {
+  const data = {
+    mission_id: id,
+    title: document.getElementById('em-title').value.trim(),
+    description: document.getElementById('em-desc').value.trim(),
+    base_stars: Number(document.getElementById('em-stars').value) || 1,
+    multiplier: Number(document.getElementById('em-mult').value) || 1,
+    // ไม่ได้เลือกไอคอนใหม่ (เช่นไอคอนเดิมไม่อยู่ในรายการ) → เก็บไอคอนเดิมไว้
+    icon: getSelectedIcon('em-icon-pick') || ((dashboardData.missions || []).find(x => String(x.mission_id) === String(id)) || {}).icon || '⭐'
+  };
+  if (!data.title) return toast('กรุณากรอกชื่อ');
+  closeModal(); toast('กำลังบันทึก...', 5000);
+  google.script.run
+    .withSuccessHandler(() => { toast('บันทึกสำเร็จ!'); loadParentDashboard(); })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด'))
+    .webSaveMission(currentMember.familyId, currentMember.memberId, data);
+}
+
+function doDeleteMission(id) {
+  closeModal(); toast('กำลังลบ...', 5000);
+  google.script.run
+    .withSuccessHandler(() => { toast('ลบภารกิจแล้ว'); loadParentDashboard(); })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด'))
+    .webDeleteMission(id, currentMember.memberId);
+}
+
+// === ADD / EDIT REWARD ===
+function showAddReward() {
+  openModal(`
+    <h2>➕ เพิ่มรางวัล</h2>
+    <div class="form-group"><label>ชื่อรางวัล</label><input type="text" id="r-title" placeholder="เช่น บัตร Roblox 200 บาท"></div>
+    <div class="form-group"><label>รายละเอียด</label><input type="text" id="r-desc" placeholder="คำอธิบาย"></div>
+    <div class="form-group"><label>ราคา (ดาว)</label><input type="number" id="r-cost" min="1" value="10"></div>
+    <div class="form-group"><label>จำนวน</label><input type="number" id="r-qty" min="1" value="1"></div>
+    <div class="form-group">
+      <label>ประเภท</label>
+      <select id="r-type" onchange="document.getElementById('r-secret-group').style.display=this.value==='digital'?'block':'none'">
+        <option value="physical">🎁 ของจริง (รับจากผู้ปกครอง)</option>
+        <option value="digital">🎮 ดิจิทัล (มีรหัสแนบ)</option>
+      </select>
+    </div>
+    <div class="form-group" id="r-secret-group" style="display:none">
+      <label>รหัส/โค้ด</label>
+      <input type="text" id="r-secret" placeholder="เช่น เลขบัตร Roblox">
+      <div class="hint">เด็กจะเห็นรหัสนี้เมื่อกดแลกสำเร็จ</div>
+    </div>
+    <div class="form-group"><label>ไอคอน</label><div class="icon-picker" id="r-icon-pick"></div></div>
+    <button class="btn btn-primary" onclick="doAddReward()">บันทึก</button>
+  `);
+  renderIconPicker('r-icon-pick', REWARD_ICONS, '🎁');
+}
+
+function doAddReward() {
+  const title = document.getElementById('r-title').value.trim();
+  const desc = document.getElementById('r-desc').value.trim();
+  const cost = Number(document.getElementById('r-cost').value) || 10;
+  const qty = Number(document.getElementById('r-qty').value) || 1;
+  const type = document.getElementById('r-type').value;
+  const secret = type === 'digital' ? document.getElementById('r-secret').value.trim() : '';
+  const icon = getSelectedIcon('r-icon-pick') || '🎁';
+  if (!title) return toast('กรุณากรอกชื่อรางวัล');
+  closeModal(); toast('กำลังบันทึก...', 5000);
+  google.script.run
+    .withSuccessHandler(() => { toast('เพิ่มรางวัลสำเร็จ!'); loadParentDashboard(); })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด'))
+    .webSaveReward(currentMember.familyId, currentMember.memberId, { title, description: desc, stars_cost: cost, type, secret_data: secret, quantity: qty, icon });
+}
+
+function showEditReward(rewardId) {
+  const r = dashboardData.rewards.find(x => x.reward_id === rewardId);
+  if (!r) return;
+  openModal(`
+    <h2>✏️ แก้ไขรางวัล</h2>
+    <div class="form-group"><label>ชื่อ</label><input type="text" id="er-title" value="${esc(r.title)}"></div>
+    <div class="form-group"><label>รายละเอียด</label><input type="text" id="er-desc" value="${esc(r.description || '')}"></div>
+    <div class="form-group"><label>ราคา (ดาว)</label><input type="number" id="er-cost" value="${r.stars_cost}" min="1"></div>
+    <div class="form-group"><label>จำนวน</label><input type="number" id="er-qty" value="${r.quantity}" min="0"></div>
+    <div class="form-group">
+      <label>ประเภท</label>
+      <select id="er-type" onchange="document.getElementById('er-secret-group').style.display=this.value==='digital'?'block':'none'">
+        <option value="physical" ${r.type!=='digital'?'selected':''}>🎁 ของจริง</option>
+        <option value="digital" ${r.type==='digital'?'selected':''}>🎮 ดิจิทัล</option>
+      </select>
+    </div>
+    <div class="form-group" id="er-secret-group" style="display:${r.type==='digital'?'block':'none'}">
+      <label>รหัส/โค้ด</label>
+      <input type="text" id="er-secret" value="${esc(r.secret_data || '')}">
+    </div>
+    <div class="form-group"><label>ไอคอน</label><div class="icon-picker" id="er-icon-pick"></div></div>
+    <button class="btn btn-primary" onclick="doEditReward('${rewardId}')" style="margin-bottom:10px">บันทึก</button>
+    <button class="btn btn-outline" style="color:var(--danger);border-color:var(--danger)" onclick="doDeleteReward('${rewardId}')">🗑 ลบรางวัล</button>
+  `);
+  renderIconPicker('er-icon-pick', REWARD_ICONS, r.icon || '🎁');
+}
+
+function doEditReward(id) {
+  const data = {
+    reward_id: id,
+    title: document.getElementById('er-title').value.trim(),
+    description: document.getElementById('er-desc').value.trim(),
+    stars_cost: Number(document.getElementById('er-cost').value) || 10,
+    quantity: Number(document.getElementById('er-qty').value) || 0,
+    type: document.getElementById('er-type').value,
+    secret_data: document.getElementById('er-type').value === 'digital' ? document.getElementById('er-secret').value.trim() : '',
+    icon: getSelectedIcon('er-icon-pick') || ((dashboardData.rewards || []).find(x => String(x.reward_id) === String(id)) || {}).icon || '🎁'
+  };
+  if (!data.title) return toast('กรุณากรอกชื่อ');
+  closeModal(); toast('กำลังบันทึก...', 5000);
+  google.script.run
+    .withSuccessHandler(() => { toast('บันทึกสำเร็จ!'); loadParentDashboard(); })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด'))
+    .webSaveReward(currentMember.familyId, currentMember.memberId, data);
+}
+
+function doDeleteReward(id) {
+  closeModal(); toast('กำลังลบ...', 5000);
+  google.script.run
+    .withSuccessHandler(() => { toast('ลบรางวัลแล้ว'); loadParentDashboard(); })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด'))
+    .webDeleteReward(id, currentMember.memberId);
+}
+
+// === SETTINGS ===
+function toggleNotifySub(enabled) {
+  var knob = document.getElementById('toggle-knob-sub');
+  var track = knob.parentElement.previousElementSibling;
+  // pseudo-track via sibling span
+  var trackSpan = document.querySelector('#toggle-notify-submission + span');
+  if (enabled) {
+    trackSpan.style.background = 'var(--success)';
+    knob.style.left = '25px';
+  } else {
+    trackSpan.style.background = '#CDE9E1';
+    knob.style.left = '3px';
+  }
+  google.script.run
+    .withSuccessHandler(function() {
+      toast(enabled ? '🔔 เปิดแจ้งเตือนส่งภารกิจ' : '🔕 ปิดแจ้งเตือนส่งภารกิจ');
+      if (dashboardData && dashboardData.member) dashboardData.member.notify_submission = enabled;
+    })
+    .withFailureHandler(function() { toast('เกิดข้อผิดพลาด'); })
+    .toggleSubmissionNotify(currentMember.memberId, enabled);
+}
+
+function showSettings() {
+  const d = dashboardData;
+  // ดึงสถานะกงล้อล่าสุด เผื่อผู้ปกครองอีกคนเพิ่งเปิด/ปิด
+  google.script.run.withSuccessHandler(function(info) {
+    if (!info) return;
+    dashboardData.wheel = info;
+    var slot = document.getElementById('wheel-settings-slot');
+    if (slot) slot.innerHTML = wheelSettingsCard();
+  }).getWheelStatus(currentMember.memberId);
+  const joinCode = d.family.join_code || '???';
+  var notifySub = d.member.notify_submission;
+  var isSubOn = (notifySub !== false && notifySub !== 'false' && notifySub !== 'FALSE');
+  openModal(`
+    <h2>⚙️ ตั้งค่า</h2>
+    <div class="card" style="box-shadow:none;background:var(--bg)">
+      <h3>🏠 ครอบครัว: ${esc(d.family.family_name)}</h3>
+      <div class="info-row"><span>รหัสเข้าร่วม</span><strong style="letter-spacing:3px">${joinCode}</strong></div>
+      <div class="info-row"><span>สมาชิกทั้งหมด</span><span>${d.members.length} คน</span></div>
+    </div>
+    <div class="divider"></div>
+    <div id="wheel-settings-slot">${wheelSettingsCard()}</div>
+    <div class="divider"></div>
+    <div class="card" style="box-shadow:none;background:var(--bg)">
+      <h3>🔔 การแจ้งเตือน LINE</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-weight:600;font-size:0.9rem">📋 เด็กส่งภารกิจ</div>
+          <div style="font-size:0.8rem;color:var(--text-muted)">แจ้งเตือน + ปุ่มอนุมัติใน LINE</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:50px;height:28px;cursor:pointer">
+          <input type="checkbox" id="toggle-notify-submission" ${isSubOn ? 'checked' : ''} onchange="toggleNotifySub(this.checked)" style="opacity:0;width:0;height:0">
+          <span style="position:absolute;inset:0;background:${isSubOn ? 'var(--success)' : '#CDE9E1'};border-radius:28px;transition:0.3s"></span>
+          <span style="position:absolute;left:${isSubOn ? '25px' : '3px'};top:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.2)" id="toggle-knob-sub"></span>
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
+        <div>
+          <div style="font-weight:600;font-size:0.9rem">🎁 เด็กแลกรางวัล</div>
+          <div style="font-size:0.8rem;color:var(--text-muted)">แจ้งเตือนเสมอ (ปิดไม่ได้)</div>
+        </div>
+        <span style="color:var(--success);font-weight:700;font-size:0.9rem">เปิด ✓</span>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px">
+        💡 ปิดแจ้งเตือนส่งภารกิจเพื่อประหยัดโควต้า LINE<br>
+        ยังอนุมัติได้จากในแอพตามปกติ
+      </p>
+    </div>
+    <div class="divider"></div>
+    <button class="btn btn-outline" style="color:var(--danger);border-color:var(--danger)" onclick="doLogout()">
+      🚪 ออกจากระบบ (เครื่องนี้)
+    </button>
+  `);
+}
+
+function doLogout() {
+  localStorage.removeItem('starbank_member');
+  currentMember = null;
+  dashboardData = null;
+  document.getElementById('nav-child').style.display = 'none';
+  document.getElementById('nav-parent').style.display = 'none';
+  closeModal();
+  showScreen('welcome');
+}
+
+// === AUTH TABS ===
+function authTab(tab) {
+  document.getElementById('tab-join').classList.toggle('active', tab === 'join');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('auth-join').style.display = tab === 'join' ? 'block' : 'none';
+  document.getElementById('auth-register').style.display = tab === 'register' ? 'block' : 'none';
+  if (tab === 'register' && !document.getElementById('reg-avatar-pick').innerHTML) {
+    renderAvatars(AVATARS_PARENT, 'reg-avatar-pick');
+    selectedAvatar = AVATARS_PARENT[0];
+  }
+}
+
+function renderAvatars(list, containerId) {
+  containerId = containerId || 'avatar-pick';
+  const el = document.getElementById(containerId);
+  el.innerHTML = list.map(a =>
+    `<button onclick="pickAvatar(this,'${a}','${containerId}')" ${a === selectedAvatar ? 'class="selected"' : ''}>${a}</button>`
+  ).join('');
+  if (!selectedAvatar || !list.includes(selectedAvatar)) {
+    selectedAvatar = list[0];
+    el.querySelector('button').classList.add('selected');
+  }
+}
+
+function pickAvatar(btn, avatar, containerId) {
+  containerId = containerId || 'avatar-pick';
+  document.querySelectorAll('#' + containerId + ' button').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedAvatar = avatar;
+}
+
+function handleRegister() {
+  const familyName = document.getElementById('reg-family-name').value.trim();
+  const parentName = document.getElementById('reg-parent-name').value.trim();
+  if (!familyName) return toast('กรุณากรอกชื่อครอบครัว');
+  if (!parentName) return toast('กรุณากรอกชื่อผู้ปกครอง');
+  const avatar = selectedAvatar || '👨';
+  toast('กำลังสร้างครอบครัว...', 5000);
+  google.script.run
+    .withSuccessHandler(result => {
+      currentMember = {
+        memberId: result.memberId, familyId: result.familyId,
+        name: result.name, role: result.role, avatar: result.avatar
+      };
+      localStorage.setItem('starbank_member', JSON.stringify(currentMember));
+      toast('🎉 สร้างครอบครัวสำเร็จ! รหัส: ' + result.joinCode, 4000);
+      loadParentDashboard();
+    })
+    .withFailureHandler(e => toast('เกิดข้อผิดพลาด: ' + e.message))
+    .webRegister(familyName, parentName, avatar);
+}
+
+// === ICON PICKER ===
+const MISSION_ICONS = ['⭐','📚','🧹','🏃','✏️','🎵','🧮','🛏️','🦷','🍽️','🐕','💪','🧘','🎨','🔬','🌱','💻','🚿','👕','🤝'];
+const REWARD_ICONS = ['🎁','🍦','🎮','🎬','🛍️','🍕','🎠','📱','🧸','🎪','🏊','⚽','🎳','🎲','🍰','🌟','👑','💎','🎧','🎭'];
+
+function renderIconPicker(containerId, icons, selected) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = icons.map(ic =>
+    `<button type="button" data-icon="${ic}" onclick="pickIcon(this,'${containerId}')" ${ic === selected ? 'class="selected"' : ''}>${ic}</button>`
+  ).join('');
+}
+
+function pickIcon(btn, containerId) {
+  document.querySelectorAll('#' + containerId + ' button').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function getSelectedIcon(containerId) {
+  const sel = document.querySelector('#' + containerId + ' button.selected');
+  // อ่านจาก data-icon ไม่ใช่ตัวหนังสือบนปุ่ม (ปุ่มแสดงเป็นภาพ 3D แล้ว ตัวหนังสือจะว่าง)
+  return sel ? (sel.getAttribute('data-icon') || sel.textContent) : '';
+}
+
+// === HELPERS ===
+// === DAILY SUMMARY ===
+function loadDailySummary() {
+  var days = Number(document.getElementById('summary-days').value) || 7;
+  var container = document.getElementById('daily-summary-list');
+  container.innerHTML = '<div class="loading">⏳ กำลังโหลด...</div>';
+  google.script.run
+    .withSuccessHandler(function(data) { renderDailySummary(data); })
+    .withFailureHandler(function(e) { container.innerHTML = '<div class="empty-state"><div class="es-icon">❌</div>โหลดไม่สำเร็จ</div>'; })
+    .getDailySummary(currentMember.familyId, days, currentMember.memberId);
+}
+
+function renderDailySummary(data) {
+  var container = document.getElementById('daily-summary-list');
+  if (!data || !data.length) {
+    container.innerHTML = '<div class="empty-state"><div class="es-icon">📊</div>ยังไม่มีข้อมูล</div>';
+    return;
+  }
+  var thaiDays = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  var thaiMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  var html = '';
+  data.forEach(function(day, idx) {
+    var d = new Date(day.date + 'T00:00:00');
+    var dayLabel = idx === 0 ? 'วันนี้' : idx === 1 ? 'เมื่อวาน' : thaiDays[d.getDay()] + ' ' + d.getDate() + ' ' + thaiMonths[d.getMonth()];
+    var totalEarned = day.children.reduce(function(s, c) { return s + c.earned; }, 0);
+
+    html += '<div class="card" style="padding:14px;margin-bottom:10px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    html += '<div style="font-weight:700;font-size:0.95rem">' + dayLabel + '</div>';
+    html += '<div style="font-size:0.8rem;color:var(--text-muted)">' + day.date + '</div>';
+    html += '</div>';
+
+    if (totalEarned === 0 && day.children.every(function(c) { return c.missions === 0; })) {
+      html += '<div style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:8px 0">😴 ไม่มีกิจกรรม</div>';
+    } else {
+      day.children.forEach(function(child) {
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--border)">';
+        html += '<div style="font-size:1.3rem">' + child.avatar + '</div>';
+        html += '<div style="flex:1">';
+        html += '<div style="font-weight:600;font-size:0.9rem">' + esc(child.name) + '</div>';
+        if (child.earned > 0) {
+          html += '<div style="color:var(--gold-dark);font-size:0.85rem">⭐ +' + child.earned + ' ดาว (' + child.missions + ' ภารกิจ)</div>';
+        }
+        if (child.spent > 0) {
+          html += '<div style="color:#C66B56;font-size:0.85rem">🎁 -' + child.spent + ' ดาว (แลกรางวัล)</div>';
+        }
+        if (child.earned === 0 && child.spent === 0) {
+          html += '<div style="color:var(--text-muted);font-size:0.85rem">— ไม่มีกิจกรรม</div>';
+        }
+        html += '</div>';
+        html += '<div style="text-align:right;font-size:0.8rem;font-weight:700;color:var(--gold-dark)">💰 ' + child.balance + '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function copyChildLink(memberId, childName) {
+  const link = WEB_APP_URL + '?auto=' + memberId;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(() => {
+      toast('📎 คัดลอกลิงก์ของ ' + childName + ' แล้ว!');
+    }).catch(() => {
+      prompt('คัดลอกลิงก์นี้ส่งให้เด็ก:', link);
+    });
+  } else {
+    prompt('คัดลอกลิงก์นี้ส่งให้เด็ก:', link);
+  }
+}
+
+// สำหรับข้อความที่อยู่ใน onclick="fn('...')" — กันชื่อที่มี ' หรือ " ทำปุ่มพัง
+function escJs(s) {
+  return esc(String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' ')).replace(/"/g, '&quot;');
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+// ===================================================================
+// LUCKY STAR WHEEL (กงล้อดาวนำโชค)
+// ===================================================================
+var WHEEL_FILLS = ['#E05A5A', '#FFF4E0', '#3FA36B', '#FFF4E0'];
+var WHEEL_INKS = ['#FFFFFF', '#C2303A', '#FFFFFF', '#2A8A6E'];
+var ORN_COLORS = ['#E05A5A', '#FFC24B', '#7CC6E8', '#E05A5A', '#FFC24B'];
+
+function sliceStyle(prizes, i) {
+  var top = Math.max.apply(null, prizes);
+  if (prizes[i] === top) return { fill: '#FFC24B', ink: '#7A4B00' };
+  return { fill: WHEEL_FILLS[i % 4], ink: WHEEL_INKS[i % 4] };
+}
+
+// กงล้อเป็น SVG (เลขดาวอยู่ในแต่ละช่อง) · hl = ช่องที่จะทำไฮไลต์
+function wheelSVG(prizes, hl) {
+  var cx = 150, cy = 150, r = 138, n = prizes.length, step = 360 / n, o = [];
+  o.push('<svg viewBox="0 0 300 300" role="img" aria-label="กงล้อ ' + n + ' ช่อง">');
+  o.push('<circle cx="150" cy="150" r="149" fill="#FFC24B"/><circle cx="150" cy="150" r="141" fill="#FFF4E0"/>');
+  prizes.forEach(function(v, i) {
+    var a0 = (-90 - step / 2 + i * step) * Math.PI / 180, a1 = (-90 + step / 2 + i * step) * Math.PI / 180;
+    var am = -90 + i * step, rad = am * Math.PI / 180, st = sliceStyle(prizes, i);
+    var lx = (cx + r * 0.68 * Math.cos(rad)).toFixed(1), ly = (cy + r * 0.68 * Math.sin(rad)).toFixed(1);
+    var sx = (cx + r * 0.43 * Math.cos(rad)).toFixed(1), sy = (cy + r * 0.43 * Math.sin(rad)).toFixed(1);
+    o.push('<path d="M150 150 L' + (cx + r * Math.cos(a0)).toFixed(1) + ' ' + (cy + r * Math.sin(a0)).toFixed(1) +
+      ' A' + r + ' ' + r + ' 0 0 1 ' + (cx + r * Math.cos(a1)).toFixed(1) + ' ' + (cy + r * Math.sin(a1)).toFixed(1) +
+      ' Z" fill="' + st.fill + '" stroke="' + (hl === i ? '#FFC24B' : '#FFF4E0') + '" stroke-width="' + (hl === i ? 9 : 3.5) + '" stroke-linejoin="round"/>');
+    o.push('<text x="' + lx + '" y="' + ly + '" fill="' + st.ink + '" font-size="' + (v >= 10 ? 36 : 42) + '" font-weight="800" text-anchor="middle" dominant-baseline="central" transform="rotate(' + (am + 90) + ' ' + lx + ' ' + ly + ')">' + v + '</text>');
+    o.push('<text x="' + sx + '" y="' + sy + '" fill="' + st.ink + '" font-size="18" text-anchor="middle" dominant-baseline="central" transform="rotate(' + (am + 90) + ' ' + sx + ' ' + sy + ')">★</text>');
+  });
+  for (var b = 0; b < 16; b++) {
+    var ba = (b * 22.5 - 90 + 11.25) * Math.PI / 180;
+    o.push('<circle class="bulb' + (b % 2 ? ' alt' : '') + '" cx="' + (150 + 145 * Math.cos(ba)).toFixed(1) + '" cy="' + (150 + 145 * Math.sin(ba)).toFixed(1) + '" r="3.6" fill="#FFFBEA"/>');
+  }
+  o.push('<circle cx="150" cy="150" r="30" fill="#FFC24B" stroke="#FFF4E0" stroke-width="6"/><text x="150" y="151" fill="#FFF4E0" font-size="32" text-anchor="middle" dominant-baseline="central">★</text>');
+  o.push('</svg>');
+  return o.join('');
+}
+
+// ต้นคริสต์มาส 5 ลูกบอล · states: done | pending | today | empty
+function treeSVG(states, lit, w, h, dropIdx) {
+  var pos = [[50, 140], [110, 140], [60, 99], [100, 99], [80, 62]], o = [];
+  var done = states.filter(function(x) { return x === 'done'; }).length;
+  o.push('<svg width="' + w + '" height="' + h + '" viewBox="0 0 160 186" role="img" aria-label="ต้นคริสต์มาส แขวนแล้ว ' + done + ' จาก 5 ลูก">');
+  o.push('<rect x="70" y="160" width="20" height="20" rx="3" fill="#A0673C"/>');
+  o.push('<polygon points="80,24 128,92 104,92 146,160 14,160 56,92 32,92" fill="#3BB08F" stroke="#2A9479" stroke-width="3" stroke-linejoin="round"/>');
+  o.push('<path d="M38 128 Q80 146 124 120" stroke="#FFFFFF" stroke-opacity=".5" stroke-width="3" fill="none" stroke-dasharray="2 6" stroke-linecap="round"/>');
+  o.push('<path d="M54 84 Q80 98 108 80" stroke="#FFFFFF" stroke-opacity=".5" stroke-width="3" fill="none" stroke-dasharray="2 6" stroke-linecap="round"/>');
+  states.forEach(function(s, i) {
+    var x = pos[i][0], y = pos[i][1];
+    o.push('<line x1="' + x + '" y1="' + (y - 16) + '" x2="' + x + '" y2="' + (y - 11) + '" stroke="#E6F4EF" stroke-width="2"/>');
+    if (s === 'done') {
+      o.push('<g class="orn' + (i === dropIdx ? ' drop' : '') + '" style="animation-delay:' + (i === dropIdx ? '0s' : (i * 0.35) + 's') + '">');
+      o.push('<circle cx="' + x + '" cy="' + y + '" r="12" fill="' + ORN_COLORS[i] + '"/><rect x="' + (x - 4) + '" y="' + (y - 15) + '" width="8" height="5" rx="1" fill="#C9962E"/><circle cx="' + (x - 4) + '" cy="' + (y - 4) + '" r="3.5" fill="#FFFFFF" fill-opacity=".7"/></g>');
+    } else if (s === 'pending') {
+      o.push('<circle cx="' + x + '" cy="' + y + '" r="12" fill="#FFFFFF" stroke="#FFC24B" stroke-width="3"/><text x="' + x + '" y="' + (y + 1) + '" font-size="13" text-anchor="middle" dominant-baseline="central">⏳</text>');
+    } else if (s === 'today') {
+      o.push('<circle cx="' + x + '" cy="' + y + '" r="12" fill="#FFFFFF" stroke="#FFC24B" stroke-width="3"/><text x="' + x + '" y="' + (y + 1) + '" fill="#A86E00" font-size="20" font-weight="800" text-anchor="middle" dominant-baseline="central">+</text>');
+    } else {
+      o.push('<circle cx="' + x + '" cy="' + y + '" r="11" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-dasharray="4 4"/>');
+    }
+  });
+  var star = 'M80 2 L85 14 L98 15 L88 23 L91 36 L80 29 L69 36 L72 23 L62 15 L75 14 Z';
+  if (lit) o.push('<circle cx="80" cy="20" r="22" fill="#FFC24B" fill-opacity=".35"/><path d="' + star + '" fill="#FFC24B" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>');
+  else o.push('<path d="' + star + '" fill="#E6F4EF" stroke="#B7CFC7" stroke-width="2" stroke-linejoin="round"/>');
+  o.push('</svg>');
+  return o.join('');
+}
+
+function renderWheelCard(d) {
+  var el = document.getElementById('child-wheel-card');
+  var w = d.wheel;
+  if (!el) return;
+  if (!w || !w.enabled) { el.innerHTML = ''; return; }
+  var html = '';
+  if (w.spins > 0) {
+    html += '<div class="wheel-ready"><div class="wr-top">' + treeSVG(['done','done','done','done','done'], true, 64, 74) +
+      '<div><div class="wr-title">ต้นไม้ครบ 5 ลูก ดาวสว่างแล้ว!</div><div style="font-weight:600">หมุนกงล้อได้ <strong style="font-size:1.2rem">' + w.spins + '</strong> ครั้ง</div></div></div>' +
+      '<button type="button" class="wheel-go" onclick="openWheel()">ไปหมุนกงล้อ →</button></div>';
+  }
+  var run = Math.min(w.run, 5), pend = Math.min(w.pendingCount, 5 - run);
+  var states = [];
+  for (var i = 0; i < 5; i++) states.push(i < run ? 'done' : (i < run + pend ? 'pending' : 'empty'));
+  if (w.todayStatus === 'none' && run + pend < 5) states[run + pend] = 'today';
+  var left = 5 - run, msg;
+  if (w.broke && run === 0 && pend === 0) msg = 'เมื่อวานพักไปวันนึง ไม่เป็นไรนะ 💪 ต้นใหม่รอแล้ว ส่งภารกิจวันนี้ แขวนลูกแรกได้เลย!';
+  else if (w.todayStatus === 'pending') msg = 'ส่งภารกิจวันนี้แล้ว <strong style="color:#A86E00">รอพ่อแม่อนุมัติ</strong> · แขวนอีก ' + left + ' ลูก ได้หมุนกงล้อ!';
+  else if (w.todayStatus === 'approved') msg = 'วันนี้แขวนแล้ว เก่งมาก! พรุ่งนี้มาแขวนต่อนะ · อีก ' + left + ' ลูก';
+  else msg = 'ส่งภารกิจวันนี้ เพื่อแขวนลูกบอลลูกต่อไป! · อีก ' + left + ' ลูก ได้หมุนกงล้อ';
+  // ลูกบอลลูกใหม่ (เพิ่งได้ตั้งแต่เปิดครั้งก่อน) ตกลงมาแขวน
+  var runKey = 'starbank_last_run_' + d.member.member_id, prevRun = Number(memoGet(runKey));
+  var dropIdx = (memoGet(runKey) !== null && !isNaN(prevRun) && run > prevRun) ? run - 1 : -1;
+  memoSet(runKey, run);
+  html += '<div class="card"><div class="tree-card">' + treeSVG(states, false, 110, 128, dropIdx) +
+    '<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div style="font-weight:800">🎄 ต้นคริสต์มาสของหนู</div>' +
+    '<div class="tree-count">' + run + '<small> / 5 ลูก</small></div>' +
+    '<div class="tree-legend"><span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#E05A5A;vertical-align:middle"></span> แขวนแล้ว</span><span>⏳ รออนุมัติ</span><span><span style="color:#A86E00;font-weight:800">+</span> ส่งวันนี้</span></div></div></div>' +
+    '<div class="tree-msg">' + msg + '</div></div>';
+  el.innerHTML = html;
+}
+
+// ---------- wheel screen ----------
+var wheelState = { prizes: [], angle: 0, spinning: false, reqId: null, raf: 0, live: -1 };
+
+function openWheel() {
+  var w = dashboardData && dashboardData.wheel;
+  if (!w || !w.enabled) return;
+  wheelState.prizes = w.prizes.slice();
+  showScreen('child-wheel');
+  document.getElementById('wheel-rot').innerHTML = wheelSVG(wheelState.prizes, -1);
+  setWheelAngle(wheelState.angle);
+  updateWheelLeft(w.spins);
+  window.scrollTo(0, 0);
+}
+
+function closeWheel() {
+  if (wheelState.spinning) return;
+  childNav('home');
+  loadChildDashboard();
+}
+
+function updateWheelLeft(n) {
+  document.getElementById('wheel-spins-left').textContent = 'เหลือ ' + n + ' ครั้ง';
+  var btn = document.getElementById('wheel-spin-btn');
+  btn.disabled = n < 1 || wheelState.spinning;
+  btn.textContent = n < 1 ? 'ใช้สิทธิ์หมดแล้ว' : 'หมุนเลย!';
+}
+
+function sliceAtAngle(deg) {
+  var n = wheelState.prizes.length, step = 360 / n;
+  return ((Math.round(-deg / step) % n) + n) % n;
+}
+
+function setWheelAngle(deg) {
+  wheelState.angle = deg;
+  document.getElementById('wheel-rot').style.transform = 'rotate(' + deg + 'deg)';
+  var idx = sliceAtAngle(deg);
+  if (idx !== wheelState.live) {
+    wheelState.live = idx;
+    document.getElementById('wheel-live-num').textContent = wheelState.prizes[idx];
+    if (wheelState.spinning) wheelTick();
+  }
+}
+
+function wheelTick() {
+  try {
+    if (musicMuted() || !musicCtx || musicCtx.state !== 'running') return;
+    var o = musicCtx.createOscillator(), g = musicCtx.createGain(), t = musicCtx.currentTime;
+    o.type = 'triangle'; o.frequency.value = 1800;
+    g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+    o.connect(g); g.connect(musicCtx.destination); o.start(t); o.stop(t + 0.05);
+  } catch (e) {}
+}
+
+function doSpin() {
+  if (wheelState.spinning) return;
+  var w = dashboardData.wheel;
+  if (!w || w.spins < 1) return;
+  wheelState.spinning = true;
+  updateWheelLeft(w.spins);
+  if (!wheelState.reqId) wheelState.reqId = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  document.getElementById('wheel-rot').innerHTML = wheelSVG(wheelState.prizes, -1);
+
+  // 1) หมุนทันทีด้วยความเร็วคงที่ ระหว่างรอผลจากเซิร์ฟเวอร์
+  var SPEED = 900;                       // องศา/วินาที
+  var started = performance.now(), last = started, result = null, failed = null;
+  function cruise(now) {
+    var dt = (now - last) / 1000; last = now;
+    setWheelAngle(wheelState.angle + SPEED * dt);
+    if (failed) return stopOnError(failed);
+    if (result && now - started > 700) return landOn(result);
+    wheelState.raf = requestAnimationFrame(cruise);
+  }
+  wheelState.raf = requestAnimationFrame(cruise);
+
+  google.script.run
+    .withSuccessHandler(function(res) { result = res; })
+    .withFailureHandler(function(e) { failed = e || { message: '' }; })
+    .spinWheel(currentMember.memberId, wheelState.reqId);
+
+  // 2) ผ่อนความเร็วลงไปหยุดที่ช่องที่เซิร์ฟเวอร์สุ่มได้ (ความเร็วต่อเนื่อง ไม่กระตุก)
+  function landOn(res) {
+    if (res.prizes && res.prizes.join() !== wheelState.prizes.join()) {
+      wheelState.prizes = res.prizes.slice();
+      document.getElementById('wheel-rot').innerHTML = wheelSVG(wheelState.prizes, -1);
+    }
+    var step = 360 / wheelState.prizes.length;
+    var from = wheelState.angle;
+    var jitter = (Math.random() - 0.5) * step * 0.6;
+    var target = -res.index * step + jitter;
+    var minEnd = from + 360 * 3;
+    target += Math.ceil((minEnd - target) / 360) * 360;
+    var extra = target - from;
+    var dur = 3 * extra / SPEED * 1000;   // ease-out cubic ที่เริ่มด้วยความเร็วเดิม
+    var t0 = performance.now();
+    function ease(now) {
+      var t = Math.min(1, (now - t0) / dur);
+      setWheelAngle(from + extra * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) { wheelState.raf = requestAnimationFrame(ease); return; }
+      finish(res);
+    }
+    wheelState.raf = requestAnimationFrame(ease);
+  }
+
+  function finish(res) {
+    wheelState.reqId = null;
+    document.getElementById('wheel-rot').innerHTML = wheelSVG(wheelState.prizes, res.index);
+    document.getElementById('wheel-live-num').textContent = res.stars;
+    w.spins = res.spinsLeft;
+    if (dashboardData.stats) dashboardData.stats.balance = res.balance;
+    setTimeout(function() {
+      wheelState.spinning = false;
+      updateWheelLeft(w.spins);
+      showSpinResult(res);
+    }, 700);
+  }
+
+  function stopOnError(err) {
+    var from = wheelState.angle, t0 = performance.now();
+    function slow(now) {
+      var t = Math.min(1, (now - t0) / 900);
+      setWheelAngle(from + 300 * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) { wheelState.raf = requestAnimationFrame(slow); return; }
+      wheelState.spinning = false;
+      var msg = String(err.message || '');
+      if (/สิทธิ์|ปิดอยู่/.test(msg)) {         // ปัญหาจริง ไม่ใช่เน็ต → ล้าง requestId
+        wheelState.reqId = null;
+        toast(msg);
+        loadChildDashboard();
+      } else {
+        toast('📶 เชื่อมต่อไม่ได้ สิทธิ์หมุนยังอยู่นะ ลองกดอีกครั้ง', 4000);
+        updateWheelLeft(w.spins);
+      }
+    }
+    wheelState.raf = requestAnimationFrame(slow);
+  }
+}
+
+function showSpinResult(res) {
+  setTimeout(function() { confetti(); }, 150);
+  var name = currentMember && currentMember.name ? currentMember.name : '';
+  var more = res.spinsLeft > 0
+    ? '<button type="button" class="btn btn-gold" onclick="closeModal();doSpin()">หมุนต่อเลย! (เหลือ ' + res.spinsLeft + ' ครั้ง)</button>'
+    : '';
+  openModal('<div class="spin-result">' +
+    '<div style="font-size:3.2rem;line-height:1">🎉</div>' +
+    '<div style="color:var(--text-muted)">ยินดีด้วย ' + esc(name) + '!</div>' +
+    '<div class="sr-big">+' + res.stars + ' ดาว</div>' +
+    '<div style="color:var(--text-muted);font-size:0.9rem">เข้ากระเป๋าแล้ว · ตอนนี้มี ' + res.balance + ' ดาว</div>' +
+    more +
+    '<button type="button" class="btn btn-outline" onclick="closeModal();closeWheel()">🏠 กลับหน้าแรก</button>' +
+    '</div>');
+}
+
+function renderWheelHistory(d) {
+  var el = document.getElementById('child-wheel-history');
+  if (!el) return;
+  var items = (d.wheel && d.wheel.history) || [];
+  if (!items.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="section-title" style="margin-top:20px">🎡 ประวัติกงล้อ</div>' + items.map(function(h) {
+    var t = new Date(h.used_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return '<div class="mission-item"><div class="mi-info" style="flex:1"><div class="mi-title">🎡 หมุนกงล้อ</div><div class="mi-desc">' + t + '</div></div>' +
+      '<span class="tag tag-approved">+' + h.stars + ' ⭐</span></div>';
+  }).join('');
+}
+
+// ---------- parent: settings card, prize editor, on/off ----------
+function wheelChildInfo(memberId) {
+  var w = dashboardData && dashboardData.wheel;
+  if (!w || !w.children) return null;
+  return w.children.find(function(c) { return String(c.member_id) === String(memberId); }) || null;
+}
+
+function wheelSettingsCard() {
+  var w = (dashboardData && dashboardData.wheel) || { enabled: false, prizes: [1,2,3,2,5,1,3,10], children: [] };
+  var on = !!w.enabled;
+  var since = w.startedAt ? new Date(w.startedAt).toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+  var head = '<div style="display:flex;align-items:center;gap:12px">' +
+    '<div style="flex:1"><div style="font-weight:700;color:var(--gold-dark)">🎡 กงล้อดาวนำโชค</div>' +
+    '<div style="font-size:0.8rem;color:' + (on ? 'var(--mint-dark)' : 'var(--text-muted)') + '">' + (on ? 'เปิดอยู่ · เริ่มนับ ' + since : 'ปิดอยู่') + '</div></div>' +
+    '<label class="wheel-toggle" aria-label="เปิด/ปิดกิจกรรมกงล้อ"><input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="' + (on ? 'confirmWheelOff()' : 'openPrizeSheet(\'enable\')') + '">' +
+    '<span class="trk" style="background:' + (on ? 'var(--success)' : '#CDE9E1') + '"></span><span class="knb" style="left:' + (on ? '26px' : '4px') + '"></span></label></div>';
+  if (!on) {
+    return '<div class="card" style="box-shadow:none;background:var(--bg)">' + head +
+      '<p style="font-size:0.82rem;color:var(--text-muted);margin-top:10px;line-height:1.6">ลูกที่ทำภารกิจ (ผ่านการอนุมัติ) ทุกวันติดกัน <strong>5 วัน</strong> ได้หมุนกงล้อรับดาวโบนัส 1 ครั้ง เริ่มนับตั้งแต่วันที่เปิด ปิดเมื่อไหร่ก็ได้</p></div>';
+  }
+  var kids = (w.children || []).map(function(c) {
+    var last = c.lastPrize ? 'หมุนล่าสุด +' + c.lastPrize.stars + ' ดาว' : 'ยังไม่เคยหมุน';
+    return '<div style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:8px 10px;margin-top:8px">' +
+      '<div style="font-size:1.5rem">' + c.avatar + '</div><div style="flex:1"><div style="font-weight:700">' + esc(c.name) + '</div>' +
+      '<div style="font-size:0.75rem;color:var(--text-muted)">' + last + '</div></div>' +
+      '<div style="text-align:right"><div style="font-weight:800;color:var(--primary-dark)">🎄 ' + c.run + '/5</div><div style="font-size:0.75rem;color:var(--text-muted)">สิทธิ์ค้าง ' + c.spins + '</div></div></div>';
+  }).join('');
+  var chips = w.prizes.map(function(v) { return '<span class="pill" style="font-weight:700;padding:2px 9px">' + v + '</span>'; }).join(' ');
+  return '<div class="card" style="box-shadow:none;background:var(--bg);border:2px solid var(--gold)">' + head + kids +
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px"><div style="display:flex;flex-wrap:wrap;gap:4px;min-width:0;flex:1">' + chips + '</div>' +
+    '<button type="button" class="btn btn-sm btn-outline" style="min-height:44px;white-space:nowrap;flex-shrink:0" onclick="openPrizeSheet(\'edit\')">แก้ดาว</button></div></div>';
+}
+
+var prizeEdit = { mode: 'enable', vals: [], hl: -1 };
+
+function openPrizeSheet(mode) {
+  var w = (dashboardData && dashboardData.wheel) || {};
+  prizeEdit = { mode: mode, vals: (w.prizes || [1,2,3,2,5,1,3,10]).slice(), hl: -1 };
+  renderPrizeSheet();
+}
+
+function renderPrizeSheet() {
+  var v = prizeEdit.vals, sum = v.reduce(function(a, b) { return a + b; }, 0);
+  var today = new Date().toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });
+  var cells = v.map(function(x, i) {
+    return '<div class="prize-cell' + (prizeEdit.hl === i ? ' hl' : '') + '"><span class="pdot" style="background:' + sliceStyle(v, i).fill + '"></span>' +
+      '<button type="button" class="step-btn" aria-label="ลดดาวช่อง ' + (i + 1) + '" onclick="stepPrize(' + i + ',-1)">−</button>' +
+      '<span class="pval">' + x + '<span style="font-size:0.8rem;color:var(--gold-dark)"> ⭐</span></span>' +
+      '<button type="button" class="step-btn" aria-label="เพิ่มดาวช่อง ' + (i + 1) + '" onclick="stepPrize(' + i + ',1)">+</button></div>';
+  }).join('');
+  var enable = prizeEdit.mode === 'enable';
+  openModal('<h2>' + (enable ? 'เปิดกงล้อดาวนำโชค 🎡' : 'แก้ดาวในกงล้อ 🎡') + '</h2>' +
+    (enable ? '<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px"><span class="pill">📅 เริ่มนับวันนี้ ' + today + '</span><span class="pill">🎄 ครบ 5 วัน = หมุน 1 ครั้ง</span></div>' : '') +
+    '<div style="position:relative;width:200px;height:212px;margin:0 auto">' +
+      '<svg viewBox="0 0 42 48" style="position:absolute;left:84px;top:0;width:32px;height:36px;z-index:2" aria-hidden="true"><path d="M4 4 H38 L21 44 Z" fill="#FFF4E0" stroke="#E5484D" stroke-width="5" stroke-linejoin="round"/></svg>' +
+      '<div style="position:absolute;top:12px;left:0;width:200px;height:200px">' + wheelSVG(v, prizeEdit.hl) + '</div></div>' +
+    '<div style="text-align:center;margin:8px 0 12px"><span class="pill">หมุน 1 ครั้งได้เฉลี่ย <strong style="color:var(--gold-dark)">' + (sum / v.length).toFixed(1) + ' ⭐</strong></span></div>' +
+    '<div class="prize-grid">' + cells + '</div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 14px">' +
+      '<span style="font-size:0.78rem;color:var(--text-muted)">ช่องดาวมากสุดเป็นสีทอง · ' + (enable ? 'แก้ทีหลังได้' : 'ใช้กับการหมุนครั้งถัดไป') + '</span>' +
+      '<button type="button" style="background:none;color:var(--gold-dark);font-weight:700;font-size:0.85rem;min-height:44px" onclick="prizeEdit.vals=[1,2,3,2,5,1,3,10];prizeEdit.hl=-1;renderPrizeSheet()">↺ ค่าเริ่มต้น</button></div>' +
+    '<button type="button" class="btn btn-gold" id="prize-save-btn" onclick="savePrizeSheet()">' + (enable ? 'เปิดกิจกรรม 🎉' : 'บันทึก') + '</button>' +
+    '<button type="button" class="btn btn-outline" style="margin-top:10px" onclick="showSettings()">ยกเลิก</button>');
+}
+
+function stepPrize(i, d) {
+  prizeEdit.vals[i] = Math.max(1, Math.min(99, prizeEdit.vals[i] + d));
+  prizeEdit.hl = i;
+  var y = document.getElementById('modal-content').scrollTop;
+  renderPrizeSheet();
+  document.getElementById('modal-content').scrollTop = y;
+}
+
+function savePrizeSheet() {
+  var btn = document.getElementById('prize-save-btn');
+  btn.disabled = true; btn.style.opacity = '0.6';
+  var enable = prizeEdit.mode === 'enable';
+  toast('กำลังบันทึก...', 6000);
+  var run = google.script.run
+    .withSuccessHandler(function(info) {
+      dashboardData.wheel = info;
+      closeModal();
+      toast(enable ? (info.unchanged ? 'กิจกรรมเปิดอยู่แล้ว (ผู้ปกครองอีกคนเปิดไว้) · วันสะสมของลูกยังอยู่ครบ · บันทึกดาวให้แล้ว' : '🎡 เปิดกิจกรรมกงล้อแล้ว! เริ่มนับวันนี้') : '✅ บันทึกดาวในกงล้อแล้ว', enable && info.unchanged ? 4500 : undefined);
+      loadParentDashboard();
+    })
+    .withFailureHandler(function(e) { btn.disabled = false; btn.style.opacity = '1'; toast('บันทึกไม่สำเร็จ: ' + e.message); });
+  if (enable) run.setWheelEnabled(currentMember.memberId, true, prizeEdit.vals);
+  else run.setWheelPrizes(currentMember.memberId, prizeEdit.vals);
+}
+
+function confirmWheelOff() {
+  var kids = ((dashboardData.wheel && dashboardData.wheel.children) || []);
+  var spinsTxt = kids.filter(function(c) { return c.spins > 0; }).map(function(c) { return esc(c.name) + ' ' + c.spins + ' ครั้ง'; }).join(', ');
+  var runTxt = kids.filter(function(c) { return c.run > 0; }).map(function(c) { return esc(c.name) + ' ' + c.run + '/5'; }).join(', ');
+  openModal('<h2>ปิดกิจกรรมกงล้อ?</h2>' +
+    '<div style="display:flex;flex-direction:column;gap:8px;font-size:0.9rem;color:var(--text-muted);line-height:1.55;margin-bottom:18px">' +
+    '<div>• ลูกจะไม่เห็นต้นคริสต์มาส 🎄 และปุ่มกงล้อ</div>' +
+    '<div>• สิทธิ์หมุนที่เหลือ<strong style="color:var(--text)"> เก็บไว้ </strong>' + (spinsTxt ? '(' + spinsTxt + ') ' : '') + 'ใช้ได้เมื่อเปิดใหม่</div>' +
+    '<div>• วันที่สะสมอยู่' + (runTxt ? ' (' + runTxt + ')' : '') + ' จะ<strong style="color:var(--text)">เริ่มนับ 0</strong> เมื่อเปิดใหม่</div></div>' +
+    '<div style="display:flex;gap:10px"><button type="button" class="btn btn-outline" style="flex:1" onclick="showSettings()">ไม่ปิด</button>' +
+    '<button type="button" class="btn btn-danger" style="flex:1" id="wheel-off-btn" onclick="doWheelOff()">ปิดกิจกรรม</button></div>');
+}
+
+function doWheelOff() {
+  var btn = document.getElementById('wheel-off-btn');
+  btn.disabled = true; btn.style.opacity = '0.6';
+  google.script.run
+    .withSuccessHandler(function(info) {
+      dashboardData.wheel = info;
+      closeModal();
+      toast(info.unchanged ? 'กิจกรรมปิดอยู่แล้ว (ผู้ปกครองอีกคนปิดไว้)' : 'ปิดกิจกรรมกงล้อแล้ว · สิทธิ์ที่เหลือเก็บไว้ให้');
+      loadParentDashboard();
+    })
+    .withFailureHandler(function(e) { btn.disabled = false; btn.style.opacity = '1'; toast('ปิดไม่สำเร็จ: ' + e.message); })
+    .setWheelEnabled(currentMember.memberId, false);
+}
+
+// ===================================================================
+// ICONS · ANIMATIONS
+// ===================================================================
+var LINE_ICONS = {"bell": "<svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\" class=\"li\"><path d=\"M208,192H48a8,8,0,0,1-6.88-12C47.71,168.6,56,139.81,56,104a72,72,0,0,1,144,0c0,35.82,8.3,64.6,14.9,76A8,8,0,0,1,208,192Z\" opacity=\"0.2\"/><path d=\"M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z\"/></svg>", "bellOff": "<svg viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\" class=\"li\"><path d=\"M208,192H48a8,8,0,0,1-6.88-12C47.71,168.6,56,139.81,56,104a72,72,0,0,1,144,0c0,35.82,8.3,64.6,14.9,76A8,8,0,0,1,208,192Z\" opacity=\"0.2\"/><path d=\"M53.92,34.62A8,8,0,1,0,42.08,45.38L58.82,63.8A79.59,79.59,0,0,0,48,104c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.8a40,40,0,0,0,78.4,0h15.44l19.44,21.38a8,8,0,1,0,11.84-10.76ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a63.65,63.65,0,0,1,6.26-27.62L168.09,184Zm166-4.73a8.13,8.13,0,0,1-2.93.55,8,8,0,0,1-7.44-5.08C196.35,156.19,192,129.75,192,104A64,64,0,0,0,96.43,48.31a8,8,0,0,1-7.9-13.91A80,80,0,0,1,208,104c0,35.35,8.05,58.59,10.52,64.88A8,8,0,0,1,214,179.25Z\"/></svg>"};
+// อีโมจิ → ไอคอน 3D (Microsoft Fluent Emoji, MIT) ฝากไว้ที่ GitHub starbank-assets
+var FE_BASE = 'https://cdn.jsdelivr.net/gh/maxnot6za/starbank-assets@71f14a4/fluent/';
+var FE_KEYS = {"⏳": "23f3", "⚙": "2699", "⚽": "26bd", "✅": "2705", "✨": "2728", "❌": "274c", "➕": "2795", "⭐": "2b50", "🌟": "1f31f", "🌱": "1f331", "🍕": "1f355", "🍦": "1f366", "🍰": "1f370", "🍽": "1f37d", "🎁": "1f381", "🎄": "1f384", "🎉": "1f389", "🎠": "1f3a0", "🎡": "1f3a1", "🎧": "1f3a7", "🎨": "1f3a8", "🎪": "1f3aa", "🎬": "1f3ac", "🎭": "1f3ad", "🎮": "1f3ae", "🎲": "1f3b2", "🎳": "1f3b3", "🎵": "1f3b5", "🏃": "1f3c3", "🏊": "1f3ca", "🏠": "1f3e0", "🐕": "1f415", "🐰": "1f430", "🐱": "1f431", "🐶": "1f436", "🐸": "1f438", "🐻": "1f43b", "🐼": "1f43c", "👋": "1f44b", "👑": "1f451", "👕": "1f455", "👤": "1f464", "👦": "1f466", "👧": "1f467", "👨": "1f468", "👩": "1f469", "👴": "1f474", "👵": "1f475", "💎": "1f48e", "💡": "1f4a1", "💪": "1f4aa", "💰": "1f4b0", "💻": "1f4bb", "📅": "1f4c5", "📊": "1f4ca", "📋": "1f4cb", "📎": "1f4ce", "📚": "1f4da", "📜": "1f4dc", "📭": "1f4ed", "📱": "1f4f1", "📶": "1f4f6", "🔄": "1f504", "🔑": "1f511", "🔔": "1f514", "🔕": "1f515", "🔬": "1f52c", "🕐": "1f550", "🗑": "1f5d1", "😴": "1f634", "🚪": "1f6aa", "🚿": "1f6bf", "🛍": "1f6cd", "🛏": "1f6cf", "🤝": "1f91d", "🦁": "1f981", "🦄": "1f984", "🦊": "1f98a", "🦷": "1f9b7", "🧑": "1f9d1", "🧒": "1f9d2", "🧘": "1f9d8", "🧮": "1f9ee", "🧸": "1f9f8", "🧹": "1f9f9", "🧾": "1f9fe", "✏": "270f"};
+var FE_RE = (function() {
+  var parts = Object.keys(FE_KEYS).sort(function(a, b) { return b.length - a.length; }).map(function(e) {
+    return Array.from(e).map(function(ch) { return ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '️?'; }).join('');
+  });
+  var zwj = '(?:\\p{Extended_Pictographic}\\uFE0F?(?:\\u200D\\p{Extended_Pictographic}\\uFE0F?)+)';
+  try { return new RegExp('(' + zwj + '|' + parts.join('|') + ')', 'gu'); }
+  catch (e) { return new RegExp('(' + parts.join('|') + ')', 'g'); }   // เบราว์เซอร์เก่า
+})();
+var FE_SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, OPTION: 1, INPUT: 1, TITLE: 1, CODE: 1 };
+
+function feImg(emoji) {
+  var key = FE_KEYS[emoji.replace(/️/g, '')];
+  if (!key) return null;
+  var img = document.createElement('img');
+  img.className = 'fe'; img.alt = emoji; img.draggable = false; img.decoding = 'async';
+  img.onerror = function() { this.replaceWith(document.createTextNode(this.alt)); };  // โหลดไม่ได้ → กลับเป็นอีโมจิ
+  img.src = FE_BASE + key + '.png';
+  return img;
+}
+
+function feReplace(root) {
+  if (!root) return;
+  var start = root.nodeType === 3 ? root.parentNode : root;
+  if (!start || !start.isConnected || (start.closest && start.closest('[data-no-fe], svg'))) return;
+  var walker = document.createTreeWalker(start, NodeFilter.SHOW_TEXT, {
+    acceptNode: function(n) {
+      var p = n.parentNode;
+      if (!p || FE_SKIP[p.nodeName] || (p.closest && p.closest('[data-no-fe], svg'))) return NodeFilter.FILTER_REJECT;
+      FE_RE.lastIndex = 0;
+      return FE_RE.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    }
+  });
+  var nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(function(n) {
+    if (!n.parentNode) return;
+    var text = n.nodeValue, frag = document.createDocumentFragment(), last = 0, m;
+    FE_RE.lastIndex = 0;
+    while ((m = FE_RE.exec(text))) {
+      if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+      frag.appendChild(feImg(m[0]) || document.createTextNode(m[0]));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    n.parentNode.replaceChild(frag, n);
+  });
+}
+
+(function() {
+  var pending = [], scheduled = false;
+  function flush() { scheduled = false; var list = pending; pending = []; list.forEach(feReplace); }
+  new MutationObserver(function(muts) {
+    muts.forEach(function(m) {
+      if (m.type === 'characterData') pending.push(m.target);
+      else m.addedNodes.forEach(function(n) { if (n.nodeType === 1 || n.nodeType === 3) pending.push(n); });
+    });
+    if (!scheduled && pending.length) { scheduled = true; requestAnimationFrame(flush); }
+  }).observe(document.body, { childList: true, subtree: true, characterData: true });
+  feReplace(document.body);
+})();
+
+function memoGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function memoSet(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {} }
+
+// 1) ดาวเด้ง + ตัวเลขนับขึ้น เมื่อดาวเพิ่มขึ้นจากครั้งก่อนที่เปิด
+var _countTimer = null;
+function showStarCount(el, value, memberId) {
+  var key = 'starbank_last_balance_' + memberId, saved = memoGet(key), prev = Number(saved);
+  memoSet(key, value);
+  clearInterval(_countTimer);
+  if (saved === null || isNaN(prev) || prev >= value || value - prev > 500) { el.textContent = value; return; }
+  var diff = value - prev, cur = prev, step = Math.max(1, Math.round(diff / 20));
+  el.textContent = cur;
+  var hero = el.closest('.star-hero');
+  if (hero) {
+    var star = hero.querySelector('.star-label img.fe') || hero.querySelector('.star-label');
+    if (star) { star.classList.remove('star-pop'); void star.offsetWidth; star.classList.add('star-pop'); }
+    var f = document.createElement('div'); f.className = 'plus-float'; f.textContent = '+' + diff;
+    hero.appendChild(f); setTimeout(function() { f.remove(); }, 1400);
+  }
+  _countTimer = setInterval(function() {
+    cur = Math.min(value, cur + step); el.textContent = cur;
+    if (cur >= value) clearInterval(_countTimer);
+  }, 60);
+}
+
+// 4) กระดาษสีกระจาย
+function confetti(x, y) {
+  var layer = document.createElement('div'); layer.className = 'confetti-layer';
+  var cols = ['#FF6B6B', '#FFC24B', '#3BB08F', '#7CC6E8', '#F7A8B8'];
+  x = x == null ? window.innerWidth / 2 : x; y = y == null ? window.innerHeight * 0.4 : y;
+  for (var i = 0; i < 26; i++) {
+    var a = Math.random() * Math.PI * 2, d = 80 + Math.random() * 120, b = document.createElement('span');
+    b.className = 'confetti-bit';
+    b.style.left = x + 'px'; b.style.top = y + 'px'; b.style.background = cols[i % cols.length];
+    b.style.setProperty('--dx', Math.round(Math.cos(a) * d) + 'px');
+    b.style.setProperty('--dy', Math.round(Math.sin(a) * d - 60) + 'px');
+    b.style.animationDelay = (Math.random() * 0.12) + 's';
+    if (i % 3 === 0) { b.style.width = '8px'; b.style.height = '8px'; b.style.borderRadius = '50%'; }
+    layer.appendChild(b);
+  }
+  document.body.appendChild(layer);
+  setTimeout(function() { layer.remove(); }, 1500);
+}
+
+// === SNOWFALL ===
+(function(){
+  var sf = document.getElementById('snowfall');
+  var flakes = ['❄','❅','❆','✦'];
+  for(var i=0; i<25; i++){
+    var s = document.createElement('div');
+    s.className = 'snowflake';
+    s.textContent = flakes[Math.floor(Math.random()*flakes.length)];
+    s.style.left = Math.random()*100 + '%';
+    s.style.fontSize = (0.5 + Math.random()*1) + 'rem';
+    s.style.opacity = 0.2 + Math.random()*0.5;
+    s.style.animationDuration = (6 + Math.random()*10) + 's';
+    s.style.animationDelay = Math.random()*10 + 's';
+    sf.appendChild(s);
+  }
+})();
+
+// === CHRISTMAS MUSIC BOX (Jingle Bells, Web Audio — no file needed) ===
+var musicCtx = null, musicMaster = null, musicLoopEnd = 0, musicTimer = null, musicStarted = false;
+var MUSIC_KEY = 'starbank_music_muted';
+function musicMuted() { try { return localStorage.getItem(MUSIC_KEY) === '1'; } catch(e) { return false; } }
+function setMusicMuted(v) { try { localStorage.setItem(MUSIC_KEY, v ? '1' : '0'); } catch(e) {} }
+
+var JB_BEAT = 0.36; // seconds per beat
+var JB_N = { C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, C6:1046.5 };
+var JB_MELODY = [
+  ['E5',1],['E5',1],['E5',2], ['E5',1],['E5',1],['E5',2], ['E5',1],['G5',1],['C5',1.5],['D5',0.5], ['E5',4],
+  ['F5',1],['F5',1],['F5',1.5],['F5',0.5], ['F5',1],['E5',1],['E5',1],['E5',0.5],['E5',0.5], ['E5',1],['D5',1],['D5',1],['E5',1], ['D5',2],['G5',2],
+  ['E5',1],['E5',1],['E5',2], ['E5',1],['E5',1],['E5',2], ['E5',1],['G5',1],['C5',1.5],['D5',0.5], ['E5',4],
+  ['F5',1],['F5',1],['F5',1.5],['F5',0.5], ['F5',1],['E5',1],['E5',1],['E5',0.5],['E5',0.5], ['G5',1],['G5',1],['F5',1],['D5',1], ['C5',4]
+];
+// one bass note per bar (16 bars)
+var JB_BASS = [130.81,130.81,130.81,130.81, 174.61,130.81,146.83,196.00, 130.81,130.81,130.81,130.81, 174.61,130.81,196.00,130.81];
+
+function musicNote(freq, t, dur, vol) {
+  // music-box tone: sine + soft high partial, quick attack, bell-like decay
+  [[1, 1], [4, 0.12]].forEach(function(p) {
+    var o = musicCtx.createOscillator(), g = musicCtx.createGain();
+    o.type = 'sine'; o.frequency.value = freq * p[0];
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol * p[1], t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(dur, 0.25) + 0.9);
+    o.connect(g); g.connect(musicMaster);
+    o.start(t); o.stop(t + Math.max(dur, 0.25) + 1);
+  });
+}
+
+function scheduleJingle(start) {
+  var t = start;
+  JB_MELODY.forEach(function(n) { musicNote(JB_N[n[0]], t, n[1] * JB_BEAT, 0.5); t += n[1] * JB_BEAT; });
+  JB_BASS.forEach(function(f, i) { musicNote(f, start + i * 4 * JB_BEAT, 2 * JB_BEAT, 0.28); });
+  musicLoopEnd = t + 3; // short pause before repeating
+}
+
+function startMusic() {
+  try {
+    if (!musicCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      musicCtx = new AC();
+      musicMaster = musicCtx.createGain();
+      musicMaster.gain.value = 0.12; // keep it soft
+      musicMaster.connect(musicCtx.destination);
+    }
+    musicCtx.resume();
+    if (!musicStarted) {
+      musicStarted = true;
+      scheduleJingle(musicCtx.currentTime + 0.1);
+      musicTimer = setInterval(function() {
+        if (musicCtx.state === 'running' && musicCtx.currentTime > musicLoopEnd - 1.5) scheduleJingle(musicLoopEnd);
+      }, 500);
+    }
+  } catch(e) {}
+  updateMusicBtn();
+}
+
+function pauseMusic() {
+  if (musicCtx && musicCtx.state === 'running') musicCtx.suspend();
+  updateMusicBtn();
+}
+
+function toggleMusic() {
+  var playing = musicCtx && musicCtx.state === 'running' && !musicMuted();
+  if (playing) { setMusicMuted(true); pauseMusic(); }
+  else { setMusicMuted(false); startMusic(); }
+}
+
+function updateMusicBtn() {
+  var muted = musicMuted();
+  document.querySelectorAll('.music-btn').forEach(function(b) {
+    b.innerHTML = muted ? LINE_ICONS.bellOff : LINE_ICONS.bell;
+    b.classList.toggle('muted', muted);
+  });
+}
+
+// Browsers block sound until the first tap — start music on the first tap anywhere
+(function() {
+  function firstTap(e) {
+    document.removeEventListener('touchend', firstTap, true);
+    document.removeEventListener('click', firstTap, true);
+    if (e.target && e.target.closest && e.target.closest('.music-btn')) return; // the button handles itself
+    if (!musicMuted()) startMusic();
+  }
+  document.addEventListener('touchend', firstTap, true);
+  document.addEventListener('click', firstTap, true);
+  // pause when the app goes to background, resume when it comes back
+  document.addEventListener('visibilitychange', function() {
+    if (!musicCtx) return;
+    if (document.hidden) musicCtx.suspend();
+    else if (!musicMuted() && musicStarted) musicCtx.resume();
+  });
+  updateMusicBtn();
+})();
+</script>
+</body>
+</html>

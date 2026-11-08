@@ -1,0 +1,1383 @@
+// ธนาคารดาว — ตรรกะหลัก พอร์ตจาก Code.gs (Google Apps Script) แบบคงพฤติกรรมเดิม
+// เปลี่ยนเฉพาะ: ที่เก็บข้อมูล (Sheet → D1 ผ่าน Store), การส่ง LINE (เข้าคิว ส่งหลังบันทึกสำเร็จ),
+// LockService (D1 ใช้ transaction + เงื่อนไขกันแก้ทับแทน), วันที่ (เวลาไทยเสมอ)
+
+const NO_LOCK = { waitLock() {}, tryLock() { return true; }, releaseLock() {} };
+
+// ฟังก์ชันที่หน้าเว็บเรียกได้ (เหมือนฟังก์ชันที่ไม่มี _ ใน Apps Script)
+export const PUBLIC_API = [
+  'getMemberByWebToken', 'webLookupFamily', 'webReconnect', 'webRegister', 'webJoinFamily',
+  'getChildDashboard', 'submitMission', 'redeemReward', 'spinWheel',
+  'getParentDashboard', 'acknowledgeRedemptions', 'checkRejectImpact', 'reviewSubmission',
+  'webSaveMission', 'webSaveReward', 'webDeleteMission', 'webDeleteReward',
+  'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus'
+];
+
+export function createCore(S) {
+  function handleLineEvent_(event) {
+    const userId = event.source && event.source.userId;
+    if (!userId) return;
+    const replyToken = event.replyToken;
+
+    switch(event.type) {
+      case 'follow':
+        handleFollow_(userId, replyToken);
+        break;
+      case 'message':
+        if (event.message.type === 'text') {
+          handleTextMessage_(userId, event.message.text.trim(), replyToken);
+        }
+        break;
+      case 'postback':
+        handlePostback_(userId, event.postback.data, replyToken);
+        break;
+    }
+  }
+
+  // --- Follow: ผู้ปกครอง add เพื่อน ---
+  function handleFollow_(userId, replyToken) {
+    lineReply_(replyToken, [
+      {
+        type: 'text',
+        text: '🌟 สวัสดีค่ะ ยินดีต้อนรับสู่ ธนาคารดาว!\n\nแอปสำหรับให้เด็กๆ ทำภารกิจ สะสมดาว แลกรางวัล'
+      },
+      makeQuickReplyMenu_('เลือกสิ่งที่ต้องการ:')
+    ]);
+  }
+
+  // --- Text message handler ---
+  function handleTextMessage_(userId, text, replyToken) {
+    const state = getUserState_(userId);
+
+    // Check state machine first
+    if (state.state === 'awaiting_family_name') {
+      return handleCreateFamilyName_(userId, text, replyToken);
+    }
+    if (state.state === 'awaiting_join_code') {
+      return handleJoinCode_(userId, text, replyToken);
+    }
+    if (state.state === 'awaiting_parent_name') {
+      return handleParentName_(userId, text, replyToken, state.data);
+    }
+
+    // Command matching
+    const t = text.toLowerCase();
+    if (t === 'สร้างครอบครัว' || t === 'สร้าง') {
+      setUserState_(userId, 'awaiting_family_name', {});
+      lineReply_(replyToken, [{
+        type: 'text',
+        text: '🏠 สร้างครอบครัวใหม่\n\nกรุณาพิมพ์ชื่อครอบครัว\nเช่น "บ้านสุขสันต์"'
+      }]);
+    }
+    else if (t === 'เข้าร่วม' || t === 'เข้าร่วมครอบครัว') {
+      setUserState_(userId, 'awaiting_join_code', {});
+      lineReply_(replyToken, [{
+        type: 'text',
+        text: '🔑 เข้าร่วมครอบครัว\n\nกรุณาพิมพ์รหัส 6 หลัก\nที่ได้จากผู้สร้างครอบครัว'
+      }]);
+    }
+    else if (t === 'ข้อมูล' || t === 'สถานะ' || t === 'ดาว') {
+      return handleStatusCheck_(userId, replyToken);
+    }
+    else if (t === 'เว็บ' || t === 'web' || t === 'เปิดเว็บ' || t === 'webapp') {
+      return handleOpenWeb_(userId, replyToken);
+    }
+    else if (t === 'เมนู' || t === 'menu' || t === 'help') {
+      lineReply_(replyToken, [makeQuickReplyMenu_('เลือกสิ่งที่ต้องการ:')]);
+    }
+    else {
+      // Unknown input — show menu
+      lineReply_(replyToken, [makeQuickReplyMenu_('พิมพ์ "เมนู" หรือเลือกจากตัวเลือก:')]);
+    }
+  }
+
+  // --- Postback handler (approve/reject buttons) ---
+  function handlePostback_(userId, data, replyToken) {
+    const parts = data.split(':');
+    const action = parts[0];
+    const subId = parts[1];
+
+    if (action === 'approve') {
+      const result = quickApprove_(subId, userId);
+      if (result.error) {
+        lineReply_(replyToken, [{ type: 'text', text: '⚠️ ' + result.error }]);
+      } else {
+        const child = getMember_(result.childId);
+        const childName = child ? child.name : 'น้อง';
+        lineReply_(replyToken, [{
+          type: 'text',
+          text: `✅ อนุมัติแล้ว!\n${childName} ได้รับ ${result.starsEarned} ดาว\nจากภารกิจ "${result.missionTitle}"`
+        }]);
+      }
+    }
+    else if (action === 'reject') {
+      var impact = { warn: false };
+      try { impact = checkRejectImpact_(subId); } catch (e) {}
+      const result = quickReject_(subId, userId);
+      if (result.error) {
+        lineReply_(replyToken, [{ type: 'text', text: '⚠️ ' + result.error }]);
+      } else {
+        lineReply_(replyToken, [{
+          type: 'text',
+          text: `❌ ปฏิเสธภารกิจ "${result.missionTitle}" แล้ว` +
+            (impact.warn ? `\n🎄 ต้นคริสต์มาสของ ${impact.childName} จะเริ่มนับใหม่` : '')
+        }]);
+      }
+    }
+  }
+
+  // ==========================================
+  // CONVERSATION STATE MACHINE
+  // ==========================================
+  function handleCreateFamilyName_(userId, familyName, replyToken) {
+    clearUserState_(userId);
+
+    if (familyName.length < 2 || familyName.length > 30) {
+      lineReply_(replyToken, [{ type: 'text', text: '❌ ชื่อต้องยาว 2-30 ตัวอักษร กรุณาลองใหม่' },
+        makeQuickReplyMenu_('เลือก:')]);
+      return;
+    }
+
+    const result = createFamily_(familyName);
+    const webAppUrl = S.webAppUrl;
+
+    // ลงทะเบียน parent ใน LINE โดยยังไม่ตั้งชื่อ → ถามชื่อก่อน
+    setUserState_(userId, 'awaiting_parent_name', { familyId: result.familyId, joinCode: result.joinCode, familyName: familyName });
+
+    lineReply_(replyToken, [
+      {
+        type: 'text',
+        text: `🎉 สร้างครอบครัว "${familyName}" สำเร็จ!\n\n🔑 รหัสเข้าร่วม: ${result.joinCode}\n(ส่งรหัสนี้ให้เด็กๆ)\n\n📱 Web App สำหรับเด็ก:\n${webAppUrl}`
+      },
+      {
+        type: 'text',
+        text: 'กรุณาพิมพ์ชื่อของคุณ (ชื่อเล่น)\nเพื่อลงทะเบียนเป็นผู้ปกครอง'
+      }
+    ]);
+  }
+
+  function handleJoinCode_(userId, code, replyToken) {
+    const cleanCode = code.toUpperCase().replace(/\s/g, '');
+    if (cleanCode.length !== 6) {
+      lineReply_(replyToken, [{ type: 'text', text: '❌ รหัสต้อง 6 หลัก กรุณาลองใหม่' }]);
+      return;
+    }
+
+    const family = getFamilyByCode_(cleanCode);
+    if (!family) {
+      clearUserState_(userId);
+      lineReply_(replyToken, [{ type: 'text', text: '❌ ไม่พบครอบครัวที่ใช้รหัสนี้ ลองตรวจสอบอีกครั้ง' },
+        makeQuickReplyMenu_('เลือก:')]);
+      return;
+    }
+
+    setUserState_(userId, 'awaiting_parent_name', { familyId: family.family_id, familyName: family.family_name });
+    lineReply_(replyToken, [
+      { type: 'text', text: `✅ พบครอบครัว "${family.family_name}"!\n\nกรุณาพิมพ์ชื่อของคุณ (ชื่อเล่น)\nเพื่อลงทะเบียนเป็นผู้ปกครอง` }
+    ]);
+  }
+
+  function handleParentName_(userId, name, replyToken, stateData) {
+    clearUserState_(userId);
+
+    if (name.length < 1 || name.length > 20) {
+      lineReply_(replyToken, [{ type: 'text', text: '❌ ชื่อต้องยาว 1-20 ตัวอักษร' }, makeQuickReplyMenu_('เลือก:')]);
+      return;
+    }
+
+    // ลงทะเบียนเป็น parent
+    const member = joinFamily(stateData.familyId, name, 'parent', '👨‍👩‍👧');
+    // บันทึก LINE userId
+    updateRow_('Members', 'member_id', member.memberId, { line_user_id: userId });
+
+    const webAppUrl = S.webAppUrl;
+    const webToken = member.memberId; // ใช้ memberId เป็น token สำหรับ auto-login
+
+    lineReply_(replyToken, [
+      {
+        type: 'text',
+        text: `🎉 ลงทะเบียนสำเร็จ!\n\n👤 ชื่อ: ${name}\n🏠 ครอบครัว: ${stateData.familyName}\n👨‍👩‍👧 บทบาท: ผู้ปกครอง\n\nเมื่อเด็กๆ ส่งภารกิจ จะมีข้อความแจ้งที่นี่\nพร้อมปุ่มอนุมัติให้กดได้เลย!`
+      },
+      {
+        type: 'text',
+        text: `📱 เปิด Web App สำหรับจัดการภารกิจ/รางวัล:\n${webAppUrl}?auto=${webToken}`,
+        quickReply: {
+          items: [
+            { type: 'action', action: { type: 'message', label: '📊 ดูสถานะ', text: 'สถานะ' }},
+            { type: 'action', action: { type: 'message', label: '📋 เมนู', text: 'เมนู' }}
+          ]
+        }
+      }
+    ]);
+  }
+
+  // ส่งลิงก์ auto-login เปิดเว็บให้ผู้ปกครอง/เด็ก
+  function handleOpenWeb_(userId, replyToken) {
+    const member = getMemberByLineId_(userId);
+    if (!member) {
+      lineReply_(replyToken, [makeQuickReplyMenu_('ยังไม่ได้ลงทะเบียน เลือก:')]);
+      return;
+    }
+    const webAppUrl = S.webAppUrl;
+    const autoUrl = webAppUrl + '?auto=' + member.member_id;
+    lineReply_(replyToken, [{
+      type: 'text',
+      text: '📱 กดลิงก์เพื่อเปิดเว็บ (เข้าได้เลยไม่ต้องกรอกรหัส):\n' + autoUrl
+    }]);
+  }
+
+  function handleStatusCheck_(userId, replyToken) {
+    const member = getMemberByLineId_(userId);
+    if (!member) {
+      lineReply_(replyToken, [makeQuickReplyMenu_('ยังไม่ได้ลงทะเบียน เลือก:')]);
+      return;
+    }
+
+    const familyId = member.family_id;
+    const children = getFamilyMembers_(familyId).filter(m => m.role === 'child');
+
+    if (!children.length) {
+      lineReply_(replyToken, [{
+        type: 'text',
+        text: `🏠 ${member.name}\n\nยังไม่มีสมาชิกเด็ก\nส่งรหัสเข้าร่วมให้เด็กๆ เพื่อเริ่มต้น`
+      }]);
+      return;
+    }
+
+    let text = `🏠 ครอบครัว: ${getFamilyInfo_(familyId).family_name}\n\n`;
+    children.forEach(c => {
+      const stats = getChildStats_(c.member_id);
+      text += `${c.avatar} ${c.name}: ⭐${stats.balance} ดาว (ได้ ${stats.totalEarned} / ใช้ ${stats.totalSpent})\n`;
+    });
+
+    const pending = getPendingSubmissions_(familyId);
+    if (pending.length) {
+      text += `\n⏳ รออนุมัติ: ${pending.length} รายการ`;
+    }
+
+    lineReply_(replyToken, [{
+      type: 'text',
+      text: text,
+      quickReply: {
+        items: [
+          { type: 'action', action: { type: 'message', label: '📋 เมนู', text: 'เมนู' }}
+        ]
+      }
+    }]);
+  }
+
+  // ==========================================
+  // LINE MESSAGING API
+  // ==========================================
+  function lineReply_(replyToken, messages) {
+    if (!replyToken) return;
+    S.outbox.push({ kind: 'reply', replyToken: replyToken, messages: messages });
+  }
+
+  function linePush_(userId, messages) {
+    if (!userId) return;
+    S.outbox.push({ kind: 'push', to: userId, messages: messages });
+  }
+
+  function makeQuickReplyMenu_(text) {
+    return {
+      type: 'text',
+      text: text,
+      quickReply: {
+        items: [
+          { type: 'action', action: { type: 'message', label: '🏠 สร้างครอบครัว', text: 'สร้างครอบครัว' }},
+          { type: 'action', action: { type: 'message', label: '🔑 เข้าร่วม', text: 'เข้าร่วมครอบครัว' }},
+          { type: 'action', action: { type: 'message', label: '📊 ดูสถานะ', text: 'สถานะ' }},
+          { type: 'action', action: { type: 'message', label: '📱 เปิดเว็บ', text: 'เว็บ' }}
+        ]
+      }
+    };
+  }
+
+  function makeApprovalFlex_(submissionId, childName, childAvatar, missionTitle, starsDisplay) {
+    return {
+      type: 'flex',
+      altText: `${childName} ส่งภารกิจ "${missionTitle}"`,
+      contents: {
+        type: 'bubble',
+        size: 'kilo',
+        header: {
+          type: 'box', layout: 'vertical',
+          backgroundColor: '#6C5CE7',
+          paddingAll: '14px',
+          contents: [
+            { type: 'text', text: '⭐ ธนาคารดาว', color: '#FFFFFF', size: 'sm', weight: 'bold' }
+          ]
+        },
+        body: {
+          type: 'box', layout: 'vertical', spacing: 'md', paddingAll: '16px',
+          contents: [
+            {
+              type: 'box', layout: 'horizontal', spacing: 'md',
+              contents: [
+                { type: 'text', text: childAvatar || '🧒', size: 'xxl', flex: 0 },
+                {
+                  type: 'box', layout: 'vertical',
+                  contents: [
+                    { type: 'text', text: childName + ' ส่งภารกิจ', weight: 'bold', size: 'md', wrap: true },
+                    { type: 'text', text: missionTitle, size: 'sm', color: '#666666', wrap: true },
+                  ]
+                }
+              ]
+            },
+            { type: 'separator' },
+            {
+              type: 'box', layout: 'horizontal', justifyContent: 'center',
+              contents: [
+                { type: 'text', text: '🌟 ' + starsDisplay, size: 'lg', weight: 'bold', color: '#E17055', align: 'center' }
+              ]
+            }
+          ]
+        },
+        footer: {
+          type: 'box', layout: 'horizontal', spacing: 'sm', paddingAll: '12px',
+          contents: [
+            {
+              type: 'button', style: 'secondary', height: 'sm',
+              action: { type: 'postback', label: '❌ ไม่อนุมัติ', data: 'reject:' + submissionId }
+            },
+            {
+              type: 'button', style: 'primary', height: 'sm', color: '#00B894',
+              action: { type: 'postback', label: '✅ อนุมัติ', data: 'approve:' + submissionId }
+            }
+          ]
+        }
+      }
+    };
+  }
+
+  // Notify all parents in family via LINE push
+  function notifyParentsLine_(familyId, messages) {
+    const members = getAllRows_('Members');
+    const parents = members.filter(m => String(m.family_id) === String(familyId) && m.role === 'parent' && m.line_user_id);
+    parents.forEach(p => {
+      try { linePush_(p.line_user_id, messages); }
+      catch(e) { console.error('Push error for ' + p.name + ': ' + e.message); }
+    });
+  }
+
+  // ==========================================
+  // USER STATE (for conversation flow)
+  // ==========================================
+  function getUserState_(userId) {
+    const row = getAllRows_('LineState').find(r => r.user_id === userId);
+    if (!row) return { state: 'idle', data: {} };
+    let data = {};
+    try { data = row.data ? JSON.parse(row.data) : {}; } catch (e) {}
+    return { state: row.state || 'idle', data: data };
+  }
+
+  function setUserState_(userId, state, data) {
+    const now = new Date().toISOString();
+    if (getAllRows_('LineState').find(r => r.user_id === userId)) {
+      updateRow_('LineState', 'user_id', userId, { state: state, data: JSON.stringify(data || {}), updated_at: now });
+      return;
+    }
+    appendRow_('LineState', { user_id: userId, state: state, data: JSON.stringify(data || {}), updated_at: now });
+  }
+
+  function clearUserState_(userId) {
+    setUserState_(userId, 'idle', {});
+  }
+
+  // ==========================================
+  // STORAGE HELPERS (D1 ผ่าน Store — ใช้งานเหมือนฟังก์ชันชีตเดิม)
+  // ==========================================
+  function getDB_() { return null; }
+  function getAllRows_(sheetName) { return S.store.all(sheetName); }
+  function clearCache_(sheetName) {}
+  function appendRow_(sheetName, obj) { S.store.append(sheetName, obj); }
+  function updateRow_(sheetName, idField, idValue, updates) { return S.store.update(sheetName, idField, idValue, updates); }
+
+  function genId_() { return crypto.randomUUID().replace(/-/g, '').substring(0, 12); }
+
+  function genJoinCode_() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  }
+
+  // ==========================================
+  // FAMILY
+  // ==========================================
+  function createFamily_(familyName) {
+    getDB_(); // ensure init
+    const familyId = genId_();
+    const joinCode = genJoinCode_();
+    appendRow_('Families', { family_id: familyId, family_name: familyName, join_code: joinCode, created_at: new Date().toISOString() });
+
+    // ภารกิจตัวอย่าง
+    [
+      { title: 'แปรงฟันเช้า-เย็น', description: 'แปรงฟันให้ครบ 2 นาที', base_stars: 1 },
+      { title: 'อ่านหนังสือ 20 นาที', description: 'อ่านหนังสืออะไรก็ได้', base_stars: 2 },
+      { title: 'เก็บที่นอน', description: 'พับผ้าห่มและจัดหมอนให้เรียบร้อย', base_stars: 1 },
+      { title: 'ทำการบ้านเสร็จ', description: 'ทำการบ้านครบทุกวิชา', base_stars: 3 },
+      { title: 'ช่วยงานบ้าน', description: 'ล้างจาน / กวาดบ้าน / รดน้ำต้นไม้', base_stars: 2 },
+    ].forEach(m => {
+      appendRow_('Missions', {
+        mission_id: genId_(), family_id: familyId, title: m.title, description: m.description,
+        base_stars: m.base_stars, multiplier: 1, is_active: true, created_by: 'system', created_at: new Date().toISOString()
+      });
+    });
+
+    return { familyId, joinCode, familyName };
+  }
+
+  function getFamilyByCode_(joinCode) {
+    return getAllRows_('Families').find(f => f.join_code === joinCode.toUpperCase()) || null;
+  }
+
+  function getFamilyInfo_(familyId) {
+    return getAllRows_('Families').find(f => String(f.family_id) === String(familyId)) || null;
+  }
+
+  // เปิด/ปิดแจ้งเตือน LINE ตอนเด็กส่งภารกิจ (รายคน)
+  function toggleSubmissionNotify(memberId, enabled) {
+    requireParent_(memberId);
+    updateRow_('Members', 'member_id', memberId, { notify_submission: enabled });
+    return { notify_submission: enabled };
+  }
+
+  // ==========================================
+  // MEMBERS
+  // ==========================================
+  function joinFamily(familyId, name, role, avatar) {
+    if (!getFamilyInfo_(familyId)) throw new Error('ไม่พบครอบครัวนี้');
+    if (role !== 'child' && role !== 'parent') throw new Error('บทบาทไม่ถูกต้อง');
+    name = String(name || '').trim().slice(0, 40);
+    if (!name) throw new Error('กรุณาใส่ชื่อ');
+    const memberId = genId_();
+    const webToken = genId_();
+    appendRow_('Members', {
+      member_id: memberId, family_id: familyId, name: name, role: role,
+      avatar: avatar || (role === 'child' ? '🧒' : '👨‍👩‍👧'),
+      line_user_id: '', web_token: webToken, created_at: new Date().toISOString()
+    });
+    return { memberId, familyId, name, role, avatar, webToken };
+  }
+
+  function getMember_(memberId) {
+    return getAllRows_('Members').find(m => String(m.member_id) === String(memberId)) || null;
+  }
+
+  function getMemberByLineId_(lineUserId) {
+    return getAllRows_('Members').find(m => m.line_user_id === lineUserId) || null;
+  }
+
+  function getMemberByWebToken(token) {
+    return publicMember_(findMemberByToken_(token));
+  }
+
+  function findMemberByToken_(token) {
+    if (!token) return null;
+    return getAllRows_('Members').find(m => String(m.member_id) === String(token) || String(m.web_token) === String(token)) || null;
+  }
+
+  function getFamilyMembers_(familyId) {
+    return getAllRows_('Members').filter(m => String(m.family_id) === String(familyId));
+  }
+
+  function updateMemberName_(memberId, newName) {
+    return updateRow_('Members', 'member_id', memberId, { name: newName });
+  }
+
+  // ==========================================
+  // MISSIONS
+  // ==========================================
+  function getMissions_(familyId) {
+    return getAllRows_('Missions').filter(m => String(m.family_id) === String(familyId) && m.is_active === true);
+  }
+
+  function createMission_(familyId, title, description, baseStars, createdBy, icon) {
+    const missionId = genId_();
+    appendRow_('Missions', {
+      mission_id: missionId, family_id: familyId, title: title, description: description || '',
+      base_stars: Number(baseStars), multiplier: 1, icon: icon || '⭐', is_active: true, created_by: createdBy, created_at: new Date().toISOString()
+    });
+    return missionId;
+  }
+
+  function updateMission_(missionId, updates) { return updateRow_('Missions', 'mission_id', missionId, updates); }
+  function deleteMission_(missionId) { return updateRow_('Missions', 'mission_id', missionId, { is_active: false }); }
+
+  // ==========================================
+  // SUBMISSIONS
+  // ==========================================
+  function submitMission(missionId, childId, familyId) {
+    const childMember = requireChild_(childId);
+    familyId = childMember.family_id;               // ใช้ครอบครัวจริงของเด็ก ไม่เชื่อค่าจากหน้าเว็บ
+    const missions = getAllRows_('Missions');
+    const mission = missions.find(m => String(m.mission_id) === String(missionId));
+    if (!mission || String(mission.family_id) !== String(familyId) || mission.is_active !== true) throw new Error('ไม่พบภารกิจนี้');
+
+    const submissionId = genId_();
+    appendRow_('Submissions', {
+      submission_id: submissionId, mission_id: missionId, child_id: childId, family_id: familyId,
+      mission_title: mission.title, status: 'pending', stars_earned: 0,
+      submitted_at: new Date().toISOString(), reviewed_by: '', reviewed_at: ''
+    });
+
+    // แจ้ง LINE ผู้ปกครอง ด้วย Flex Message + ปุ่มอนุมัติ
+    const child = getMember_(childId);
+    const childName = child ? child.name : 'น้อง';
+    const childAvatar = child ? child.avatar : '🧒';
+    const stars = Number(mission.base_stars) * Number(mission.multiplier || 1);
+    const starsDisplay = Number(mission.multiplier) > 1
+      ? `${mission.base_stars} x${mission.multiplier} = ${stars} ดาว`
+      : `${stars} ดาว`;
+
+    // ส่ง LINE เฉพาะผู้ปกครองที่เปิดแจ้งเตือนส่งภารกิจ (รายคน)
+    const flexMsg = makeApprovalFlex_(submissionId, childName, childAvatar, mission.title, starsDisplay);
+    const parents = getAllRows_('Members').filter(m => String(m.family_id) === String(familyId) && m.role === 'parent' && m.line_user_id);
+    parents.forEach(function(p) {
+      var ns = p.notify_submission;
+      if (ns !== false && ns !== 'false' && ns !== 'FALSE') {
+        try { linePush_(p.line_user_id, [flexMsg]); } catch(e) { console.error('Push error: ' + e.message); }
+      }
+    });
+
+    return submissionId;
+  }
+
+  function getPendingSubmissions_(familyId) {
+    return getAllRows_('Submissions').filter(s => String(s.family_id) === String(familyId) && s.status === 'pending');
+  }
+
+  function getChildSubmissions_(childId) {
+    return getAllRows_('Submissions').filter(s => String(s.child_id) === String(childId));
+  }
+
+  function reviewSubmission(submissionId, status, reviewerId) {
+    if (status !== 'approved' && status !== 'rejected') throw new Error('สถานะไม่ถูกต้อง');
+    const sub = getAllRows_('Submissions').find(s => String(s.submission_id) === String(submissionId));
+    if (!sub) throw new Error('ไม่พบการส่งนี้');
+    requireParent_(reviewerId, sub.family_id);
+    return reviewSubmission_(submissionId, status, reviewerId);
+  }
+
+  function reviewSubmission_(submissionId, status, reviewerId) {
+    const submissions = getAllRows_('Submissions');
+    const subId = String(submissionId);
+    const sub = submissions.find(s => String(s.submission_id) === subId);
+    if (!sub) throw new Error('ไม่พบการส่งนี้');
+    if (sub.status !== 'pending') throw new Error('ภารกิจนี้ถูกตรวจแล้ว');
+
+    let starsEarned = 0;
+    if (status === 'approved') {
+      const mission = getAllRows_('Missions').find(m => String(m.mission_id) === String(sub.mission_id));
+      if (mission) starsEarned = Number(mission.base_stars) * Number(mission.multiplier || 1);
+    }
+
+    // หาชื่อผู้ปกครองจาก reviewerId (member_id)
+    var reviewer = getMember_(reviewerId);
+    var reviewerName = reviewer ? reviewer.name : 'ผู้ปกครอง';
+
+    updateRow_('Submissions', 'submission_id', subId, {
+      status: status, stars_earned: starsEarned, reviewed_by: reviewerId, reviewed_at: new Date().toISOString()
+    });
+
+    // [ตัดออก] แจ้งผู้ปกครองคนอื่นผ่าน LINE ตอนอนุมัติ — ประหยัดโควต้า LINE ~120 msg/เดือน
+
+    return { status: status, starsEarned: starsEarned, childId: sub.child_id, missionTitle: sub.mission_title, reviewerName: reviewerName };
+  }
+
+  function quickApprove_(submissionId, lineUserId) {
+    const subId = String(submissionId);
+    const sub = getAllRows_('Submissions').find(s => String(s.submission_id) === subId);
+    if (!sub) return { error: 'ไม่พบการส่งนี้' };
+    if (sub.status !== 'pending') return { error: 'ภารกิจนี้ถูกตรวจแล้ว (' + sub.status + ')' };
+
+    // หาชื่อผู้ปกครองที่กดอนุมัติ
+    var reviewer = findParentByLineInFamily_(lineUserId, sub.family_id);
+    if (!reviewer) return { error: 'บัญชี LINE นี้ไม่ใช่ผู้ปกครองของครอบครัวนี้' };
+    var reviewerName = reviewer.name;
+    var reviewerId = reviewer.member_id;
+
+    var result = reviewSubmission_(submissionId, 'approved', reviewerId);
+    result.reviewerName = reviewerName;
+    return result;
+  }
+
+  function quickReject_(submissionId, lineUserId) {
+    const subId = String(submissionId);
+    const sub = getAllRows_('Submissions').find(s => String(s.submission_id) === subId);
+    if (!sub) return { error: 'ไม่พบการส่งนี้' };
+    if (sub.status !== 'pending') return { error: 'ภารกิจนี้ถูกตรวจแล้ว (' + sub.status + ')' };
+
+    var reviewer = findParentByLineInFamily_(lineUserId, sub.family_id);
+    if (!reviewer) return { error: 'บัญชี LINE นี้ไม่ใช่ผู้ปกครองของครอบครัวนี้' };
+    var reviewerName = reviewer.name;
+    var reviewerId = reviewer.member_id;
+
+    var result = reviewSubmission_(submissionId, 'rejected', reviewerId);
+    return { success: true, missionTitle: sub.mission_title, reviewerName: reviewerName };
+  }
+
+  // หาสมาชิกจาก LINE user ID
+  function findMemberByLineId_(lineUserId) {
+    return getAllRows_('Members').find(function(m) { return m.line_user_id === lineUserId; }) || null;
+  }
+
+  // แจ้ง LINE หาผู้ปกครองคนอื่น (ยกเว้นคนที่กดเอง)
+  function notifyOtherParents_(familyId, excludeLineUserId, messages) {
+    var members = getAllRows_('Members');
+    var otherParents = members.filter(function(m) {
+      return String(m.family_id) === String(familyId) && m.role === 'parent' && m.line_user_id && m.line_user_id !== excludeLineUserId;
+    });
+    otherParents.forEach(function(p) {
+      try { linePush_(p.line_user_id, messages); }
+      catch(e) { console.error('Push error for ' + p.name + ': ' + e.message); }
+    });
+  }
+
+  // ==========================================
+  // REWARDS
+  // ==========================================
+  function getRewards_(familyId) {
+    return getAllRows_('Rewards').filter(r => String(r.family_id) === String(familyId) && r.is_active === true);
+  }
+
+  function getRewardsForChild_(familyId) {
+    return getRewards_(familyId).map(r => ({
+      reward_id: r.reward_id, title: r.title, description: r.description,
+      stars_cost: r.stars_cost, type: r.type, quantity: r.quantity, icon: r.icon || '🎁', has_secret: !!r.secret_data
+    }));
+  }
+
+  function createReward_(familyId, title, description, starsCost, type, secretData, quantity, createdBy, icon) {
+    const rewardId = genId_();
+    appendRow_('Rewards', {
+      reward_id: rewardId, family_id: familyId, title: title, description: description || '',
+      stars_cost: Number(starsCost), type: type || 'physical', secret_data: secretData || '',
+      quantity: Number(quantity) || 1, icon: icon || '🎁', is_active: true, created_by: createdBy, created_at: new Date().toISOString()
+    });
+    return rewardId;
+  }
+
+  function updateReward_(rewardId, updates) { return updateRow_('Rewards', 'reward_id', rewardId, updates); }
+  function deleteReward_(rewardId) { return updateRow_('Rewards', 'reward_id', rewardId, { is_active: false }); }
+
+  // ==========================================
+  // REDEMPTIONS
+  // ==========================================
+  function redeemReward(rewardId, childId, familyId) {
+    // ล็อกกันกดแลกซ้ำพร้อมกัน (ไม่งั้นดาวติดลบ / จำนวนรางวัลลดเกิน)
+    const lock = NO_LOCK;
+    lock.waitLock(15000);
+    try {
+      clearCache_();
+      return redeemRewardLocked_(rewardId, childId);
+    } finally {
+      lock.releaseLock();
+    }
+  }
+
+  function redeemRewardLocked_(rewardId, childId) {
+    const childMember = requireChild_(childId);
+    const familyId = childMember.family_id;
+    const reward = getAllRows_('Rewards').find(r => String(r.reward_id) === String(rewardId));
+    if (!reward || String(reward.family_id) !== String(familyId) || reward.is_active !== true) throw new Error('ไม่พบรางวัลนี้');
+    if (Number(reward.quantity) <= 0) throw new Error('รางวัลหมดแล้ว');
+    const balance = getStarBalance_(childId);
+    if (balance < Number(reward.stars_cost)) throw new Error('ดาวไม่พอ');
+
+    const redemptionId = genId_();
+    const secretToReveal = reward.type === 'digital' && reward.secret_data ? reward.secret_data : '';
+    appendRow_('Redemptions', {
+      redemption_id: redemptionId, reward_id: rewardId, child_id: childId, family_id: familyId,
+      reward_title: reward.title, stars_spent: reward.stars_cost, secret_revealed: secretToReveal, redeemed_at: new Date().toISOString()
+    });
+    updateRow_('Rewards', 'reward_id', rewardId, { quantity: Number(reward.quantity) - 1 });
+
+    // แจ้ง LINE
+    const child = getMember_(childId);
+    const childName = child ? child.name : 'น้อง';
+    notifyParentsLine_(familyId, [{
+      type: 'text',
+      text: `🎁 ${childName} แลกรางวัล "${reward.title}" (${reward.stars_cost} ดาว)`
+    }]);
+
+    return { redemptionId, secretToReveal, rewardTitle: reward.title };
+  }
+
+  function getChildRedemptions_(childId) {
+    return getAllRows_('Redemptions').filter(r => String(r.child_id) === String(childId));
+  }
+
+  // ดึงรายการแลกรางวัลที่ยังไม่รับทราบ (สำหรับแจ้งเตือนในแอพผู้ปกครอง)
+  function getUnacknowledgedRedemptions_(familyId) {
+    var redemptions = getAllRows_('Redemptions').filter(function(r) {
+      return String(r.family_id) === String(familyId) && !r.acknowledged_at;
+    });
+    redemptions.sort(function(a, b) { return new Date(b.redeemed_at) - new Date(a.redeemed_at); });
+    return redemptions.map(function(r) {
+      var child = getMember_(r.child_id);
+      return {
+        redemption_id: r.redemption_id,
+        child_name: child ? child.name : 'น้อง',
+        child_avatar: child ? child.avatar : '👤',
+        reward_title: r.reward_title,
+        stars_spent: r.stars_spent,
+        redeemed_at: r.redeemed_at
+      };
+    });
+  }
+
+  // ผู้ปกครองกด "รับทราบแล้ว" — อัปเดต acknowledged_at ให้ทุกรายการที่ยังไม่รับทราบ
+  function acknowledgeRedemptions(familyId, parentId) {
+    familyId = requireParent_(parentId).family_id;
+    var redemptions = getAllRows_('Redemptions').filter(function(r) {
+      return String(r.family_id) === String(familyId) && !r.acknowledged_at;
+    });
+    var now = new Date().toISOString();
+    redemptions.forEach(function(r) {
+      updateRow_('Redemptions', 'redemption_id', r.redemption_id, {
+        acknowledged_at: now, acknowledged_by: parentId
+      });
+    });
+    return { acknowledged: redemptions.length };
+  }
+
+  // ==========================================
+  // STAR BALANCE
+  // ==========================================
+  function getStarBalance_(childId) {
+    const earned = getAllRows_('Submissions')
+      .filter(s => String(s.child_id) === String(childId) && s.status === 'approved')
+      .reduce((sum, s) => sum + Number(s.stars_earned || 0), 0);
+    const spent = getAllRows_('Redemptions')
+      .filter(r => String(r.child_id) === String(childId))
+      .reduce((sum, r) => sum + Number(r.stars_spent || 0), 0);
+    return earned + getWheelStars_(childId) - spent;
+  }
+
+  function getChildStats_(childId) {
+    const mine = getAllRows_('Submissions').filter(s => String(s.child_id) === String(childId));
+    const approved = mine.filter(s => s.status === 'approved');
+    const wheelStars = getWheelStars_(childId);
+    const totalEarned = approved.reduce((sum, s) => sum + Number(s.stars_earned || 0), 0) + wheelStars;
+    const totalSpent = getAllRows_('Redemptions').filter(r => String(r.child_id) === String(childId))
+      .reduce((sum, r) => sum + Number(r.stars_spent || 0), 0);
+    return {
+      balance: totalEarned - totalSpent, totalEarned, totalSpent, wheelStars,
+      missionsCompleted: approved.length,
+      pendingCount: mine.filter(s => s.status === 'pending').length
+    };
+  }
+
+  // ==========================================
+  // DASHBOARD DATA (Web App)
+  // ==========================================
+  function getChildDashboard(memberId) {
+    const member = getMember_(memberId);
+    if (!member) throw new Error('ไม่พบสมาชิก');
+    const familyId = member.family_id;
+    const family = getFamilyInfo_(familyId);
+    const wheel = syncChildWheel_(member, family);   // ก่อน stats: อาจเพิ่มสิทธิ์หมุนใหม่
+    return {
+      member, family: family, wheel: wheel, stats: getChildStats_(memberId),
+      missions: getMissions_(familyId), rewards: getRewardsForChild_(familyId),
+      recentSubmissions: getChildSubmissions_(memberId).slice(-20).reverse(),
+      recentRedemptions: getChildRedemptions_(memberId).slice(-10).reverse()
+    };
+  }
+
+  // ดึงประวัติการอนุมัติ/ปฏิเสธล่าสุด (20 รายการ)
+  function getReviewHistory_(familyId) {
+    var submissions = getAllRows_('Submissions').filter(function(s) {
+      return String(s.family_id) === String(familyId) && (s.status === 'approved' || s.status === 'rejected') && s.reviewed_at;
+    });
+    submissions.sort(function(a, b) { return new Date(b.reviewed_at) - new Date(a.reviewed_at); });
+    return submissions.slice(0, 20).map(function(s) {
+      var child = getMember_(s.child_id);
+      var reviewer = getMember_(s.reviewed_by);
+      var reviewerName = 'ผู้ปกครอง';
+      var reviewerAvatar = '👤';
+      if (s.reviewed_by === 'line-approve') {
+        reviewerName = 'อนุมัติผ่าน LINE';
+        reviewerAvatar = '💬';
+      } else if (reviewer) {
+        reviewerName = reviewer.name;
+        reviewerAvatar = reviewer.avatar || '👤';
+      }
+      return {
+        submission_id: s.submission_id,
+        mission_title: s.mission_title,
+        child_name: child ? child.name : 'น้อง',
+        child_avatar: child ? child.avatar : '👤',
+        reviewer_name: reviewerName,
+        reviewer_avatar: reviewerAvatar,
+        status: s.status,
+        stars_earned: s.stars_earned,
+        reviewed_at: s.reviewed_at
+      };
+    });
+  }
+
+  // ดึงประวัติแลกรางวัลทั้งหมดของครอบครัว (20 รายการล่าสุด)
+  function getRedemptionHistory_(familyId) {
+    var redemptions = getAllRows_('Redemptions').filter(function(r) {
+      return String(r.family_id) === String(familyId);
+    });
+    redemptions.sort(function(a, b) { return new Date(b.redeemed_at) - new Date(a.redeemed_at); });
+    return redemptions.slice(0, 20).map(function(r) {
+      var child = getMember_(r.child_id);
+      return {
+        redemption_id: r.redemption_id,
+        child_name: child ? child.name : 'น้อง',
+        child_avatar: child ? child.avatar : '👤',
+        reward_title: r.reward_title,
+        stars_spent: r.stars_spent,
+        redeemed_at: r.redeemed_at,
+        acknowledged_at: r.acknowledged_at || null,
+        acknowledged_by: r.acknowledged_by || null,
+        acknowledged_name: r.acknowledged_by ? (function() { var m = getMember_(r.acknowledged_by); return m ? m.name : '?'; })() : null
+      };
+    });
+  }
+
+  function getParentDashboard(memberId) {
+    const member = requireParent_(memberId);
+    const familyId = member.family_id;
+    const members = getFamilyMembers_(familyId);
+    const wheel = getWheelParentInfo_(familyId);
+    const children = members.filter(m => m.role === 'child').map(c => ({
+      ...c, stats: getChildStats_(c.member_id)
+    }));
+    return {
+      member, family: getFamilyInfo_(familyId), missions: getMissions_(familyId),
+      pending: getPendingSubmissions_(familyId), rewards: getRewards_(familyId), members, children,
+      recentRedemptions: getUnacknowledgedRedemptions_(familyId),
+      reviewHistory: getReviewHistory_(familyId),
+      redemptionHistory: getRedemptionHistory_(familyId),
+      wheel: wheel
+    };
+  }
+
+  // ==========================================
+  // WEB APP: REGISTRATION & AUTH
+  // ==========================================
+
+  // สร้างครอบครัวใหม่จากเว็บ + สร้างสมาชิกผู้ปกครอง
+  function webRegister(familyName, parentName, avatar) {
+    // createFamily_ / joinFamily คืนค่าเป็น object — ต้องดึง id ออกมา
+    const created = createFamily_(String(familyName || '').trim().slice(0, 60));
+    const familyId = created.familyId;
+    const family = getAllRows_('Families').find(f => String(f.family_id) === String(familyId));
+    const memberId = joinFamily(familyId, parentName, 'parent', avatar || '👨').memberId;
+    return {
+      memberId: memberId, familyId: familyId, name: parentName,
+      role: 'parent', avatar: avatar || '👨',
+      familyName: family ? family.family_name : familyName,
+      joinCode: family ? family.join_code : ''
+    };
+  }
+
+  // เข้าร่วมครอบครัวจากเว็บ (สำหรับคนที่เคยมีรหัสอยู่แล้ว)
+  function webJoinFamily(joinCode, name, role, avatar) {
+    const family = getFamilyByCode_(joinCode);
+    if (!family) throw new Error('ไม่พบครอบครัวนี้');
+    const memberId = joinFamily(family.family_id, name, role || 'child', avatar || '🧒').memberId;
+    return {
+      memberId: memberId, familyId: family.family_id, name: name,
+      role: role || 'child', avatar: avatar || '🧒',
+      familyName: family.family_name, joinCode: family.join_code
+    };
+  }
+
+  // บันทึกภารกิจจากเว็บ (เพิ่ม/แก้ไข) รองรับ icon
+  function webSaveMission(familyId, memberId, data) {
+    familyId = requireParent_(memberId).family_id;
+    if (data.mission_id) {
+      requireOwnRecord_('Missions', 'mission_id', data.mission_id, familyId);
+      // แก้ไข
+      updateMission_(data.mission_id, {
+        title: data.title, description: data.description || '',
+        base_stars: Number(data.base_stars) || 1,
+        multiplier: Number(data.multiplier) || 1,
+        icon: data.icon || '⭐'
+      });
+      return { success: true, mission_id: data.mission_id };
+    } else {
+      // สร้างใหม่
+      const id = createMission_(familyId, data.title, data.description, data.base_stars || 1, memberId, data.icon || '⭐');
+      return { success: true, mission_id: id };
+    }
+  }
+
+  // บันทึกรางวัลจากเว็บ (เพิ่ม/แก้ไข) รองรับ icon
+  function webSaveReward(familyId, memberId, data) {
+    familyId = requireParent_(memberId).family_id;
+    if (data.reward_id) {
+      requireOwnRecord_('Rewards', 'reward_id', data.reward_id, familyId);
+      // แก้ไข
+      updateReward_(data.reward_id, {
+        title: data.title, description: data.description || '',
+        stars_cost: Number(data.stars_cost) || 1,
+        type: data.type || 'physical', secret_data: data.secret_data || '',
+        quantity: Number(data.quantity) || 1, icon: data.icon || '🎁'
+      });
+      return { success: true, reward_id: data.reward_id };
+    } else {
+      // สร้างใหม่
+      const id = createReward_(familyId, data.title, data.description, data.stars_cost || 10,
+        data.type || 'physical', data.secret_data || '', data.quantity || 1, memberId, data.icon || '🎁');
+      return { success: true, reward_id: id };
+    }
+  }
+
+  // ลบภารกิจจากเว็บ
+  function webDeleteMission(missionId, memberId) {
+    requireOwnRecord_('Missions', 'mission_id', missionId, requireParent_(memberId).family_id);
+    deleteMission_(missionId);
+    return { success: true };
+  }
+
+  // ลบรางวัลจากเว็บ
+  function webDeleteReward(rewardId, memberId) {
+    requireOwnRecord_('Rewards', 'reward_id', rewardId, requireParent_(memberId).family_id);
+    deleteReward_(rewardId);
+    return { success: true };
+  }
+
+  function requireOwnRecord_(sheet, idField, id, familyId) {
+    var rec = getAllRows_(sheet).find(function(r) { return String(r[idField]) === String(id); });
+    if (!rec || String(rec.family_id) !== String(familyId)) throw new Error('ไม่พบรายการนี้');
+    return rec;
+  }
+
+  // ค้นหาครอบครัว + ลิสต์เด็กที่มีอยู่ (สำหรับเลือกโปรไฟล์เดิม)
+  function webLookupFamily(joinCode) {
+    const family = getFamilyByCode_(joinCode);
+    if (!family) throw new Error('ไม่พบครอบครัวนี้');
+    const members = getFamilyMembers_(family.family_id);
+    const children = members.filter(function(m) { return m.role === 'child'; }).map(function(c) {
+      var stats = getChildStats_(c.member_id);
+      return {
+        member_id: c.member_id,
+        name: c.name,
+        avatar: c.avatar,
+        stars: stats.balance
+      };
+    });
+    return {
+      family_id: family.family_id,
+      family_name: family.family_name,
+      join_code: family.join_code,
+      children: children
+    };
+  }
+
+  // เชื่อมต่อกลับเข้าสมาชิกเดิม (reconnect)
+  function webReconnect(memberId) {
+    var member = getMember_(memberId);
+    if (!member) throw new Error('ไม่พบสมาชิก');
+    return {
+      memberId: member.member_id,
+      familyId: member.family_id,
+      name: member.name,
+      role: member.role,
+      avatar: member.avatar
+    };
+  }
+
+  // ==========================================
+  // DAILY LOG & SUMMARY
+  // ==========================================
+
+  // เรียกจากเว็บ: ดูสรุปรายวันย้อนหลัง
+  function getDailySummary(familyId, days, memberId) {
+    familyId = requireParent_(memberId, familyId).family_id;
+    days = Math.min(Number(days) || 7, 60);
+    var members = getAllRows_('Members').filter(function(m) { return String(m.family_id) === String(familyId) && m.role === 'child'; });
+    var submissions = getAllRows_('Submissions').filter(function(s) { return String(s.family_id) === String(familyId) && s.status === 'approved'; });
+    var redemptions = getAllRows_('Redemptions').filter(function(r) { return String(r.family_id) === String(familyId); });
+
+    var now = new Date();
+    var result = [];
+
+    for (var d = 0; d < days; d++) {
+      var dateStr = addDaysKey_(thaiDateKey_(now), -d);
+
+      var dayData = { date: dateStr, children: [] };
+      members.forEach(function(child) {
+        var daySubs = submissions.filter(function(s) {
+          return String(s.child_id) === String(child.member_id) && formatDate_(new Date(s.reviewed_at)) === dateStr;
+        });
+        var dayRedeem = redemptions.filter(function(r) {
+          return String(r.child_id) === String(child.member_id) && formatDate_(new Date(r.redeemed_at)) === dateStr;
+        });
+        var daySpins = getSpinRows_().filter(function(x) {
+          return String(x.child_id) === String(child.member_id) && x.used_at && formatDate_(new Date(x.used_at)) === dateStr;
+        });
+        var earned = daySubs.reduce(function(sum, s) { return sum + Number(s.stars_earned || 0); }, 0) +
+          daySpins.reduce(function(sum, x) { return sum + Number(x.prize_stars || 0); }, 0);
+        var spent = dayRedeem.reduce(function(sum, r) { return sum + Number(r.stars_spent || 0); }, 0);
+        var stats = getChildStats_(child.member_id);
+        dayData.children.push({
+          member_id: child.member_id, name: child.name, avatar: child.avatar,
+          earned: earned, spent: spent, missions: daySubs.length,
+          balance: stats.balance
+        });
+      });
+      result.push(dayData);
+    }
+    return result;
+  }
+
+  function formatDate_(d) { return thaiDateKey_(d); }   // เวลาไทยเสมอ (Worker ใช้ UTC)
+
+  // Trigger: บันทึก snapshot ดาวประจำวัน (ตั้ง Trigger ให้รันทุกวัน)
+  function saveDailySnapshot() {
+    var today = formatDate_(new Date());
+    var families = getAllRows_('Families');
+    var allMembers = getAllRows_('Members');
+
+    families.forEach(function(fam) {
+      var children = allMembers.filter(function(m) { return String(m.family_id) === String(fam.family_id) && m.role === 'child'; });
+      children.forEach(function(child) {
+        var stats = getChildStats_(child.member_id);
+        var submissions = getAllRows_('Submissions').filter(function(s) {
+          return String(s.child_id) === String(child.member_id) && s.status === 'approved' && formatDate_(new Date(s.reviewed_at)) === today;
+        });
+        var redemptions = getAllRows_('Redemptions').filter(function(r) {
+          return String(r.child_id) === String(child.member_id) && formatDate_(new Date(r.redeemed_at)) === today;
+        });
+        var earnedToday = submissions.reduce(function(sum, s) { return sum + Number(s.stars_earned || 0); }, 0);
+        var spentToday = redemptions.reduce(function(sum, r) { return sum + Number(r.stars_spent || 0); }, 0);
+
+        appendRow_('DailyLog', {
+          log_id: 'log-' + today + '-' + child.member_id,
+          family_id: fam.family_id,
+          date: today,
+          child_id: child.member_id,
+          child_name: child.name,
+          stars_earned_today: earnedToday,
+          stars_spent_today: spentToday,
+          balance: stats.balance,
+          missions_completed_today: submissions.length,
+          logged_at: new Date().toISOString()
+        });
+      });
+    });
+  }
+
+  // ดูประวัติจาก DailyLog sheet (backup)
+  function getDailyLogHistory_(familyId, limit) {
+    limit = limit || 30;
+    var logs = getAllRows_('DailyLog').filter(function(l) { return String(l.family_id) === String(familyId); });
+    logs.sort(function(a, b) { return b.date > a.date ? 1 : -1; });
+    return logs.slice(0, limit);
+  }
+
+  // ==========================================
+  // LUCKY STAR WHEEL (กงล้อดาวนำโชค)
+  // ==========================================
+  // กติกา: วันไหนมีภารกิจ "อนุมัติแล้ว" อย่างน้อย 1 อัน (นับตามวันที่ส่ง เวลาไทย) = 1 วัน
+  // ครบ 5 วันติดกัน = สิทธิ์หมุน 1 ครั้ง แล้วเริ่มนับใหม่ · ขาดวัน = เริ่ม 0
+  // วันที่ยังรออนุมัติไม่นับ แต่ก็ไม่ทำให้ขาด · เริ่มนับตั้งแต่วันที่ผู้ปกครองกดเปิด (นับทั้งวัน)
+  // สิทธิ์ที่ได้เก็บสะสมได้ ไม่หมดอายุ ใช้ได้เฉพาะตอนกิจกรรมเปิดอยู่
+  var WHEEL_DEFAULT_PRIZES = [1, 2, 3, 2, 5, 1, 3, 10];
+  var WHEEL_ROUND_DAYS = 5;
+  var SPINS_HEADERS = ['spin_id','child_id','family_id','round_key','earned_at','used_at','prize_stars','prize_index','request_id'];
+  var WHEEL_FAMILY_COLS = ['wheel_enabled','wheel_started_at','wheel_prizes'];
+
+  // วันที่ตามเวลาไทย 'yyyy-MM-dd' (ไม่พึ่ง timezone ของ Sheet)
+  function thaiDateKey_(d) {
+    if (d === '' || d === null || d === undefined) return '';
+    var t = (d instanceof Date) ? d : new Date(d);
+    if (isNaN(t.getTime())) return '';
+    return new Date(t.getTime() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+  }
+  function addDaysKey_(key, n) {
+    var d = new Date(key + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+  function isTrue_(v) { return v === true || String(v).toUpperCase() === 'TRUE'; }
+  function isoNoMs_(d) { return (d || new Date()).toISOString().replace(/\.\d{3}Z$/, 'Z'); }
+
+  // สร้างชีต Spins + คอลัมน์ใน Families ให้อัตโนมัติ ถ้ายังไม่มี
+  function ensureWheelSchema_() {}   // D1 มีตาราง Spins และคอลัมน์กงล้อครบแล้ว
+
+  function getSpinRows_() {
+    return getAllRows_('Spins');
+  }
+
+  function wheelSettings_(family) {
+    var prizes = WHEEL_DEFAULT_PRIZES.slice();
+    if (family && family.wheel_prizes) {
+      try {
+        var p = JSON.parse(String(family.wheel_prizes));
+        if (Array.isArray(p) && p.length === 8 && p.every(function(x) { return Number(x) >= 1; })) {
+          prizes = p.map(function(x) { return Math.round(Number(x)); });
+        }
+      } catch (e) {}
+    }
+    var raw = family ? family.wheel_started_at : '';
+    var started = raw ? new Date(raw) : null;
+    var validStart = started && !isNaN(started.getTime());
+    return {
+      enabled: !!(family && isTrue_(family.wheel_enabled) && validStart),
+      prizes: prizes,
+      startedAt: validStart ? isoNoMs_(started) : '',
+      startKey: validStart ? thaiDateKey_(started) : ''
+    };
+  }
+
+  // คำนวณความคืบหน้าของเด็ก 1 คน (ไม่เขียนอะไรลงชีต)
+  // excludeSubId: ใช้จำลองว่า "ถ้าปฏิเสธภารกิจนี้" จะเป็นยังไง
+  function computeWheelProgress_(childId, family, excludeSubId, todayKey) {
+    var ws = wheelSettings_(family);
+    todayKey = todayKey || thaiDateKey_(new Date());
+    var res = { run: 0, pendingCount: 0, todayStatus: 'none', broke: false, newRounds: [], lastEnd: '' };
+    if (!ws.enabled) return res;
+
+    // รอบที่ได้สิทธิ์ไปแล้วในการเปิดกิจกรรมครั้งนี้ → นับต่อจากวันถัดไป (กันได้สิทธิ์ซ้ำ)
+    var lastEnd = '';
+    getSpinRows_().forEach(function(s) {
+      if (String(s.child_id) !== String(childId)) return;
+      var p = String(s.round_key || '').split('|');
+      if (p[0] === ws.startedAt && p[1] > lastEnd) lastEnd = p[1];
+    });
+    res.lastEnd = lastEnd;
+    var from = lastEnd ? addDaysKey_(lastEnd, 1) : ws.startKey;
+
+    var approved = {}, pending = {};
+    getAllRows_('Submissions').forEach(function(s) {
+      if (String(s.child_id) !== String(childId)) return;
+      if (excludeSubId && String(s.submission_id) === String(excludeSubId)) return;
+      var k = thaiDateKey_(s.submitted_at);
+      if (!k || k < from) return;
+      if (s.status === 'approved') approved[k] = true;
+      else if (s.status === 'pending') pending[k] = true;
+    });
+
+    var run = 0, pend = 0, broke = false;
+    for (var d = from; d <= todayKey; d = addDaysKey_(d, 1)) {
+      if (approved[d]) {
+        run++; broke = false;
+        if (run === WHEEL_ROUND_DAYS) { res.newRounds.push(d); run = 0; pend = 0; }
+      } else if (pending[d]) {
+        pend++; broke = false;
+      } else if (d < todayKey) {
+        if (run > 0 || pend > 0) broke = true;
+        run = 0; pend = 0;
+      }
+    }
+    res.run = run;
+    res.pendingCount = pend;
+    res.broke = broke;
+    res.todayStatus = approved[todayKey] ? 'approved' : (pending[todayKey] ? 'pending' : 'none');
+    return res;
+  }
+
+  // คำนวณ + บันทึกสิทธิ์หมุนที่เพิ่งได้ (เรียกตอนโหลดหน้า) แล้วคืนสถานะสำหรับหน้าจอ
+  function syncChildWheel_(child, family) {
+    var ws = wheelSettings_(family);
+    if (!ws.enabled) return { enabled: false };
+    var lock = NO_LOCK;
+    var locked = false;
+    try { locked = lock.tryLock(8000); } catch (e) {}
+    try {
+      var prog = computeWheelProgress_(child.member_id, family);
+      if (prog.newRounds.length && locked) {
+        var existing = {};
+        getSpinRows_().forEach(function(s) { existing[String(s.round_key)] = true; });
+        prog.newRounds.forEach(function(endKey) {
+          var key = ws.startedAt + '|' + endKey;
+          if (existing[key]) return;
+          appendRow_('Spins', {
+            spin_id: genId_(), child_id: child.member_id, family_id: child.family_id,
+            round_key: key, earned_at: isoNoMs_(), used_at: '', prize_stars: '', prize_index: '', request_id: ''
+          });
+        });
+      }
+      var mine = getSpinRows_().filter(function(s) { return String(s.child_id) === String(child.member_id); });
+      var used = mine.filter(function(s) { return s.used_at; })
+        .sort(function(a, b) { return new Date(b.used_at) - new Date(a.used_at); });
+      return {
+        enabled: true, prizes: ws.prizes, startedAt: ws.startedAt,
+        run: prog.run, pendingCount: prog.pendingCount, todayStatus: prog.todayStatus, broke: prog.broke,
+        spins: mine.filter(function(s) { return !s.used_at; }).length,
+        history: used.slice(0, 10).map(function(s) { return { stars: Number(s.prize_stars || 0), used_at: s.used_at }; })
+      };
+    } finally {
+      if (locked) lock.releaseLock();
+    }
+  }
+
+  function getWheelStars_(childId) {
+    return getSpinRows_()
+      .filter(function(s) { return String(s.child_id) === String(childId) && s.used_at; })
+      .reduce(function(sum, s) { return sum + Number(s.prize_stars || 0); }, 0);
+  }
+
+  // เด็กกดหมุน: สุ่มที่เซิร์ฟเวอร์ · requestId กันกดซ้ำ/ส่งซ้ำตอนเน็ตหลุด
+  function spinWheel(childId, requestId) {
+    var lock = NO_LOCK;
+    lock.waitLock(15000);
+    try {
+      clearCache_('Spins');
+      var child = getMember_(childId);
+      if (!child || child.role !== 'child') throw new Error('ไม่พบสมาชิก');
+      var ws = wheelSettings_(getFamilyInfo_(child.family_id));
+      if (!ws.enabled) throw new Error('กิจกรรมกงล้อปิดอยู่');
+      var mine = getSpinRows_().filter(function(s) { return String(s.child_id) === String(childId); });
+
+      if (requestId) {
+        var done = mine.find(function(s) { return s.used_at && String(s.request_id) === String(requestId); });
+        if (done) {
+          return { index: Number(done.prize_index), stars: Number(done.prize_stars), prizes: ws.prizes,
+            spinsLeft: mine.filter(function(s) { return !s.used_at; }).length, balance: getStarBalance_(childId) };
+        }
+      }
+      var avail = mine.filter(function(s) { return !s.used_at; })
+        .sort(function(a, b) { return new Date(a.earned_at) - new Date(b.earned_at); });
+      if (!avail.length) throw new Error('ยังไม่มีสิทธิ์หมุน');
+
+      var idx = Math.floor(Math.random() * ws.prizes.length);
+      var stars = ws.prizes[idx];
+      updateRow_('Spins', 'spin_id', avail[0].spin_id, {
+        used_at: isoNoMs_(), prize_stars: stars, prize_index: idx, request_id: requestId || ''
+      });
+      return { index: idx, stars: stars, prizes: ws.prizes, spinsLeft: avail.length - 1, balance: getStarBalance_(childId) };
+    } finally {
+      lock.releaseLock();
+    }
+  }
+
+  function requireParent_(memberId, familyId) {
+    var m = getMember_(memberId);
+    if (!m || m.role !== 'parent') throw new Error('เฉพาะผู้ปกครองเท่านั้น');
+    if (familyId !== undefined && familyId !== null && String(m.family_id) !== String(familyId)) throw new Error('ไม่มีสิทธิ์ในครอบครัวนี้');
+    return m;
+  }
+
+  function requireChild_(memberId) {
+    var m = getMember_(memberId);
+    if (!m || m.role !== 'child') throw new Error('ไม่พบสมาชิก');
+    return m;
+  }
+
+  // ผู้ปกครองที่ผูก LINE นี้ไว้กับครอบครัวนี้ (บัญชี LINE เดียวอาจอยู่หลายครอบครัว)
+  function findParentByLineInFamily_(lineUserId, familyId) {
+    if (!lineUserId) return null;
+    return getAllRows_('Members').find(function(m) {
+      return m.line_user_id === lineUserId && m.role === 'parent' && String(m.family_id) === String(familyId);
+    }) || null;
+  }
+
+  // ส่งกลับเฉพาะข้อมูลที่หน้าเว็บใช้ (ไม่ส่ง line_user_id / web_token ของคนอื่นออกไป)
+  function publicMember_(m) {
+    return m ? { member_id: m.member_id, family_id: m.family_id, name: m.name, role: m.role, avatar: m.avatar } : null;
+  }
+
+  function cleanPrizes_(prizes) {
+    if (!Array.isArray(prizes) || prizes.length !== 8) throw new Error('ต้องมี 8 ช่อง');
+    return prizes.map(function(x) {
+      var n = Math.round(Number(x));
+      if (!(n >= 1 && n <= 99)) throw new Error('ดาวแต่ละช่องต้องอยู่ระหว่าง 1–99');
+      return n;
+    });
+  }
+
+  // ผู้ปกครองเปิด/ปิดกิจกรรม · เปิดใหม่ทุกครั้ง = เริ่มนับใหม่ (สิทธิ์ที่เก็บไว้ไม่หาย)
+  function setWheelEnabled(memberId, enabled, prizes) {
+    var parent = requireParent_(memberId);
+    var lock = NO_LOCK;
+    lock.waitLock(15000);
+    try {
+      ensureWheelSchema_();
+      clearCache_();
+      var current = wheelSettings_(getFamilyInfo_(parent.family_id));
+      var unchanged = (!!enabled === current.enabled);
+      var updates = {};
+      if (enabled && current.enabled) {
+        // เปิดอยู่แล้ว (เช่นผู้ปกครองอีกคนเปิดไว้ แต่หน้าจอนี้ยังค้างค่าเก่า) → ห้ามเริ่มนับใหม่ บันทึกแค่ดาว
+        if (prizes) updates.wheel_prizes = JSON.stringify(cleanPrizes_(prizes));
+      } else if (enabled) {
+        updates.wheel_enabled = true;
+        updates.wheel_started_at = isoNoMs_();
+        updates.wheel_prizes = JSON.stringify(prizes ? cleanPrizes_(prizes) : current.prizes);
+      } else if (current.enabled) {
+        updates.wheel_enabled = false;
+      }
+      if (Object.keys(updates).length) updateRow_('Families', 'family_id', parent.family_id, updates);
+      clearCache_();
+      var info = getWheelParentInfo_(parent.family_id);
+      info.unchanged = unchanged;   // true = สถานะเป็นแบบนั้นอยู่แล้ว
+      return info;
+    } finally {
+      lock.releaseLock();
+    }
+  }
+
+  // ให้หน้าตั้งค่าดึงสถานะล่าสุด (กันหน้าจอค้างค่าเก่าเมื่อมีผู้ปกครองหลายคน)
+  function getWheelStatus(memberId) {
+    return getWheelParentInfo_(requireParent_(memberId).family_id);
+  }
+
+  function setWheelPrizes(memberId, prizes) {
+    var parent = requireParent_(memberId);
+    ensureWheelSchema_();
+    updateRow_('Families', 'family_id', parent.family_id, { wheel_prizes: JSON.stringify(cleanPrizes_(prizes)) });
+    clearCache_();
+    return getWheelParentInfo_(parent.family_id);
+  }
+
+  function getWheelParentInfo_(familyId) {
+    var family = getFamilyInfo_(familyId);
+    var ws = wheelSettings_(family);
+    var kids = getFamilyMembers_(familyId).filter(function(m) { return m.role === 'child'; });
+    return {
+      enabled: ws.enabled, prizes: ws.prizes, startedAt: ws.startedAt,
+      children: kids.map(function(c) {
+        var w = ws.enabled ? syncChildWheel_(c, family) : null;
+        var mine = getSpinRows_().filter(function(s) { return String(s.child_id) === String(c.member_id); });
+        var last = mine.filter(function(s) { return s.used_at; })
+          .sort(function(a, b) { return new Date(b.used_at) - new Date(a.used_at); })[0];
+        return {
+          member_id: c.member_id, name: c.name, avatar: c.avatar,
+          run: w ? w.run : 0, pendingCount: w ? w.pendingCount : 0,
+          spins: mine.filter(function(s) { return !s.used_at; }).length,
+          lastPrize: last ? { stars: Number(last.prize_stars || 0), used_at: last.used_at } : null
+        };
+      })
+    };
+  }
+
+  // ก่อนปฏิเสธ: เช็กว่าจะทำให้วันสะสมของเด็กหายไหม
+  // (เตือนเฉพาะกรณีที่หายจริง เช่น เป็นภารกิจเดียวของวันนั้น)
+  function checkRejectImpact(submissionId, memberId) {
+    var s0 = getAllRows_('Submissions').find(function(s) { return String(s.submission_id) === String(submissionId); });
+    if (!s0) return { warn: false };
+    requireParent_(memberId, s0.family_id);
+    return checkRejectImpact_(submissionId);
+  }
+
+  function checkRejectImpact_(submissionId) {
+    var sub = getAllRows_('Submissions').find(function(s) { return String(s.submission_id) === String(submissionId); });
+    if (!sub || sub.status !== 'pending') return { warn: false };
+    var family = getFamilyInfo_(sub.family_id);
+    if (!wheelSettings_(family).enabled) return { warn: false };
+    var now = computeWheelProgress_(sub.child_id, family);
+    var after = computeWheelProgress_(sub.child_id, family, submissionId);
+    // ภารกิจของ "วันนี้" ไม่นับเป็นการสูญเสีย เพราะเด็กยังส่งใหม่ได้ภายในวัน
+    var before = now.run + now.pendingCount - (now.todayStatus === 'pending' ? 1 : 0);
+    var left = after.run + after.pendingCount - (after.todayStatus === 'pending' ? 1 : 0);
+    if (left >= before) return { warn: false };
+    var child = getMember_(sub.child_id);
+    return { warn: true, childName: child ? child.name : 'น้อง', before: before, after: left, run: now.run, pending: now.pendingCount };
+  }
+
+
+  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus };
+  return { api: api, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot };
+}
