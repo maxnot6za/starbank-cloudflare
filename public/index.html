@@ -2826,6 +2826,7 @@ function revokeDevice(id) {
 // แจ้งเตือนในแอป (Web Push) + แอปบนหน้าจอโฮม
 // ===================================================================
 function isStandalone() {
+  if (/Line\//.test(navigator.userAgent)) return false;   // เบราว์เซอร์ในแอป LINE บางรุ่นรายงานว่าเป็น standalone
   return !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
 }
 function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1); }

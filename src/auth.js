@@ -150,15 +150,23 @@ async function lineStart(request, env) {
     state, scope: 'profile openid', nonce,
   });
   if (env.LINE_LOGIN_BOT_PROMPT) q.set('bot_prompt', env.LINE_LOGIN_BOT_PROMPT);   // ชวนแอดเพื่อน LINE OA
+  // จด state ไว้ในฐานข้อมูล (ไม่พึ่งคุกกี้อย่างเดียว) — บน iPhone, LINE มักยืนยันในแอป LINE แล้วเด้งกลับมา
+  // หน้าต่างอื่นที่ไม่มีคุกกี้ของเรา · state ใช้ได้ครั้งเดียว อายุ 15 นาที
+  await env.DB.prepare("INSERT INTO AuthTokens (token_hash, kind, line_name, created_at, expires_at) VALUES (?, 'oauth', ?, ?, ?)")
+    .bind(await sha256(state), JSON.stringify({ nonce, invite, handoff: handoff.length >= 32 ? handoff : '' }), nowIso(), addMs(15 * 60000)).run();
   return redirect('https://access.line.me/oauth2/v2.1/authorize?' + q, [cookie(request, OAUTH_COOKIE, [state, nonce, invite].join('.'), 600), ...extra]);
 }
 
 async function lineCallback(request, env) {
   const url = new URL(request.url);
   const fail = msg => redirect('/?login_error=' + encodeURIComponent(msg), [clearCookie(request, OAUTH_COOKIE)]);
-  const [state, nonce, invite] = getCookie(request, OAUTH_COOKIE).split('.');
   if (url.searchParams.get('error')) return fail('ยกเลิกการเข้าสู่ระบบด้วย LINE');
-  if (!state || state !== url.searchParams.get('state')) return fail('หมดเวลา กรุณากดเข้าสู่ระบบอีกครั้ง');
+  const state = url.searchParams.get('state') || '';
+  const st = await readToken(env, 'oauth', state);
+  if (!st || !(await useToken(env, st))) return fail('หมดเวลา กรุณากดเข้าสู่ระบบอีกครั้ง');
+  let saved = {};
+  try { saved = JSON.parse(st.line_name || '{}'); } catch (e) {}
+  const nonce = saved.nonce || '', invite = saved.invite || '', handoffRaw = saved.handoff || '';
 
   let profile;
   try {
@@ -181,6 +189,8 @@ async function lineCallback(request, env) {
   }
   const lineId = profile.sub, lineName = String(profile.name || 'ผู้ปกครอง').slice(0, 40);
   const done = [clearCookie(request, OAUTH_COOKIE)];
+  // เด้งกลับมาหน้าต่างใหม่ → ฝากคำขอของแอปบนหน้าจอโฮมไว้ที่หน้าต่างนี้ด้วย (ให้กดยืนยันรหัสได้)
+  if (handoffRaw) done.push(cookie(request, HANDOFF_COOKIE, handoffRaw, 600));
 
   // มาจากลิงก์เชิญ
   if (invite) {
