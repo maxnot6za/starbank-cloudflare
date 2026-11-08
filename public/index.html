@@ -1541,6 +1541,7 @@ function showSettings() {
 
 function doLogout() {
   authApi('logout').catch(function () {});
+  pauseMusic();
   localStorage.removeItem('starbank_member');
   currentMember = null;
   dashboardData = null;
@@ -1852,18 +1853,26 @@ function setWheelAngle(deg) {
   }
 }
 
+// เสียง "ติ๊ก" ตอนกงล้อหมุน (ปิดตามปุ่มกระดิ่งเดียวกับเพลง)
+var tickCtx = null;
 function wheelTick() {
   try {
-    if (musicMuted() || !musicCtx || musicCtx.state !== 'running') return;
-    var o = musicCtx.createOscillator(), g = musicCtx.createGain(), t = musicCtx.currentTime;
+    if (musicMuted() || !tickCtx || tickCtx.state !== 'running') return;
+    var o = tickCtx.createOscillator(), g = tickCtx.createGain(), t = tickCtx.currentTime;
     o.type = 'triangle'; o.frequency.value = 1800;
     g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
-    o.connect(g); g.connect(musicCtx.destination); o.start(t); o.stop(t + 0.05);
+    o.connect(g); g.connect(tickCtx.destination); o.start(t); o.stop(t + 0.05);
   } catch (e) {}
 }
 
 function doSpin() {
   if (wheelState.spinning) return;
+  try {   // สร้างตอนนิ้วแตะปุ่มหมุน เบราว์เซอร์จึงยอมให้มีเสียง
+    if (!musicMuted()) {
+      if (!tickCtx) { var AC = window.AudioContext || window.webkitAudioContext; if (AC) tickCtx = new AC(); }
+      if (tickCtx) tickCtx.resume();
+    }
+  } catch (e) {}
   var w = dashboardData.wheel;
   if (!w || w.spins < 1) return;
   wheelState.spinning = true;
@@ -2220,99 +2229,102 @@ function confetti(x, y) {
   }
 })();
 
-// === CHRISTMAS MUSIC BOX (Jingle Bells, Web Audio — no file needed) ===
-var musicCtx = null, musicMaster = null, musicLoopEnd = 0, musicTimer = null, musicStarted = false;
+// === เพลงพื้นหลัง (MP3 · tunetank Christmas) ===
+// เบราว์เซอร์ห้ามเล่นเสียงจนกว่าผู้ใช้จะแตะจอ → เล่นทันทีหลังกด PIN ถูก, กรณีอื่นเล่นตอนแตะจอครั้งแรกหลังเข้าระบบ
+// เปิด/ปิดด้วยปุ่มกระดิ่ง · จำค่าแยกเครื่อง · ออกจากแอป/ล็อกจอ = หยุด กลับมา = เล่นต่อ
 var MUSIC_KEY = 'starbank_music_muted';
+var bgAudio = null, musicWanted = false, musicUnlocked = false, musicArmed = false;
 function musicMuted() { try { return localStorage.getItem(MUSIC_KEY) === '1'; } catch(e) { return false; } }
 function setMusicMuted(v) { try { localStorage.setItem(MUSIC_KEY, v ? '1' : '0'); } catch(e) {} }
 
-var JB_BEAT = 0.36; // seconds per beat
-var JB_N = { C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, C6:1046.5 };
-var JB_MELODY = [
-  ['E5',1],['E5',1],['E5',2], ['E5',1],['E5',1],['E5',2], ['E5',1],['G5',1],['C5',1.5],['D5',0.5], ['E5',4],
-  ['F5',1],['F5',1],['F5',1.5],['F5',0.5], ['F5',1],['E5',1],['E5',1],['E5',0.5],['E5',0.5], ['E5',1],['D5',1],['D5',1],['E5',1], ['D5',2],['G5',2],
-  ['E5',1],['E5',1],['E5',2], ['E5',1],['E5',1],['E5',2], ['E5',1],['G5',1],['C5',1.5],['D5',0.5], ['E5',4],
-  ['F5',1],['F5',1],['F5',1.5],['F5',0.5], ['F5',1],['E5',1],['E5',1],['E5',0.5],['E5',0.5], ['G5',1],['G5',1],['F5',1],['D5',1], ['C5',4]
-];
-// one bass note per bar (16 bars)
-var JB_BASS = [130.81,130.81,130.81,130.81, 174.61,130.81,146.83,196.00, 130.81,130.81,130.81,130.81, 174.61,130.81,196.00,130.81];
-
-function musicNote(freq, t, dur, vol) {
-  // music-box tone: sine + soft high partial, quick attack, bell-like decay
-  [[1, 1], [4, 0.12]].forEach(function(p) {
-    var o = musicCtx.createOscillator(), g = musicCtx.createGain();
-    o.type = 'sine'; o.frequency.value = freq * p[0];
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol * p[1], t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(dur, 0.25) + 0.9);
-    o.connect(g); g.connect(musicMaster);
-    o.start(t); o.stop(t + Math.max(dur, 0.25) + 1);
-  });
+function musicAudio() {
+  if (!bgAudio) {
+    bgAudio = new Audio('/music/xmas.mp3');
+    bgAudio.loop = true;
+    bgAudio.preload = 'none';      // ยังไม่โหลดจนกว่าจะเล่นจริง
+    bgAudio.volume = 0.6;          // ไฟล์ถูกลดเสียงไว้แล้ว (iPhone ปรับ volume ผ่านโค้ดไม่ได้)
+    bgAudio.addEventListener('playing', updateMusicBtn);
+    bgAudio.addEventListener('pause', updateMusicBtn);
+    bgAudio.addEventListener('error', function () { musicWanted = false; updateMusicBtn(); });
+  }
+  return bgAudio;
 }
 
-function scheduleJingle(start) {
-  var t = start;
-  JB_MELODY.forEach(function(n) { musicNote(JB_N[n[0]], t, n[1] * JB_BEAT, 0.5); t += n[1] * JB_BEAT; });
-  JB_BASS.forEach(function(f, i) { musicNote(f, start + i * 4 * JB_BEAT, 2 * JB_BEAT, 0.28); });
-  musicLoopEnd = t + 3; // short pause before repeating
+// เรียกระหว่างนิ้วแตะจอ (เช่นกด PIN) เพื่อ "ปลดล็อก" เสียงไว้ก่อน แล้วค่อยเล่นจริงหลังเข้าระบบสำเร็จ
+function musicUnlock() {
+  if (musicUnlocked || musicMuted()) return;
+  try {
+    var a = musicAudio();
+    a.muted = true;
+    var p = a.play();
+    if (p && p.then) p.then(function () {
+      musicUnlocked = true;
+      if (!musicWanted) a.pause();
+      a.muted = false;
+    }, function () { a.muted = false; });
+  } catch (e) {}
 }
 
 function startMusic() {
+  if (musicMuted()) { updateMusicBtn(); return Promise.resolve(false); }
+  musicWanted = true;
   try {
-    if (!musicCtx) {
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      musicCtx = new AC();
-      musicMaster = musicCtx.createGain();
-      musicMaster.gain.value = 0.12; // keep it soft
-      musicMaster.connect(musicCtx.destination);
-    }
-    musicCtx.resume();
-    if (!musicStarted) {
-      musicStarted = true;
-      scheduleJingle(musicCtx.currentTime + 0.1);
-      musicTimer = setInterval(function() {
-        if (musicCtx.state === 'running' && musicCtx.currentTime > musicLoopEnd - 1.5) scheduleJingle(musicLoopEnd);
-      }, 500);
-    }
-  } catch(e) {}
+    var a = musicAudio();
+    a.muted = false;
+    var p = a.play();
+    if (p && p.then) return p.then(function () { musicUnlocked = true; updateMusicBtn(); return true; },
+                                    function () { musicWanted = false; updateMusicBtn(); return false; });
+  } catch (e) {}
   updateMusicBtn();
+  return Promise.resolve(false);
 }
 
 function pauseMusic() {
-  if (musicCtx && musicCtx.state === 'running') musicCtx.suspend();
+  musicWanted = false;
+  if (bgAudio) bgAudio.pause();
   updateMusicBtn();
 }
 
 function toggleMusic() {
-  var playing = musicCtx && musicCtx.state === 'running' && !musicMuted();
+  var playing = bgAudio && !bgAudio.paused && !bgAudio.muted;
   if (playing) { setMusicMuted(true); pauseMusic(); }
   else { setMusicMuted(false); startMusic(); }
 }
 
 function updateMusicBtn() {
-  var muted = musicMuted();
+  var on = !musicMuted();
   document.querySelectorAll('.music-btn').forEach(function(b) {
-    b.innerHTML = muted ? LINE_ICONS.bellOff : LINE_ICONS.bell;
-    b.classList.toggle('muted', muted);
+    b.innerHTML = on ? LINE_ICONS.bell : LINE_ICONS.bellOff;
+    b.classList.toggle('muted', !on);
   });
 }
 
-// Browsers block sound until the first tap — start music on the first tap anywhere
-(function() {
+// หลังเข้าระบบ: ลองเล่นเลย ถ้าเบราว์เซอร์ไม่ยอม (ยังไม่เคยแตะจอ) → รอแตะจอครั้งแรก
+function musicAfterLogin() {
+  if (musicMuted()) return;
+  startMusic().then(function (ok) { if (!ok) armFirstTap(); });
+}
+function armFirstTap() {
+  if (musicArmed) return;
+  musicArmed = true;
   function firstTap(e) {
+    if (e.target && e.target.closest && e.target.closest('.music-btn')) return;   // ปุ่มกระดิ่งจัดการเอง
+    if (typeof currentMember === 'undefined' || !currentMember) return;          // ยังไม่เข้าระบบ → ยังไม่เล่น
     document.removeEventListener('touchend', firstTap, true);
     document.removeEventListener('click', firstTap, true);
-    if (e.target && e.target.closest && e.target.closest('.music-btn')) return; // the button handles itself
-    if (!musicMuted()) startMusic();
+    musicArmed = false;
+    if (!musicMuted() && !(bgAudio && !bgAudio.paused)) startMusic();
   }
   document.addEventListener('touchend', firstTap, true);
   document.addEventListener('click', firstTap, true);
-  // pause when the app goes to background, resume when it comes back
+}
+
+(function() {
+  var wasPlaying = false;
   document.addEventListener('visibilitychange', function() {
-    if (!musicCtx) return;
-    if (document.hidden) musicCtx.suspend();
-    else if (!musicMuted() && musicStarted) musicCtx.resume();
+    if (!bgAudio) return;
+    if (document.hidden) { wasPlaying = !bgAudio.paused; bgAudio.pause(); musicWanted = wasPlaying; }
+    else if (wasPlaying && !musicMuted() && currentMember) startMusic();
   });
   updateMusicBtn();
 })();
@@ -2434,6 +2446,7 @@ function enterAs(m) {
   try { localStorage.setItem('starbank_member', JSON.stringify(currentMember)); } catch (e) {}
   document.getElementById('auto-login-status').style.display = 'none';
   if (m.role === 'child') loadChildDashboard(); else loadParentDashboard();
+  musicAfterLogin();
 }
 
 function enterFromServer(greet) {
@@ -2448,6 +2461,7 @@ function cleanUrl() { try { history.replaceState(null, '', location.pathname); }
 
 function showLogin(msg) {
   currentMember = null; dashboardData = null;
+  if (typeof pauseMusic === 'function') pauseMusic();
   try { localStorage.removeItem('starbank_member'); } catch (e) {}
   document.getElementById('nav-child').style.display = 'none';
   document.getElementById('nav-parent').style.display = 'none';
@@ -2578,6 +2592,7 @@ function pinKey(k) {
   dots.forEach(function (d, i) { d.classList.toggle('on', i < kidCtx.pin.length); });
   if (kidCtx.pin.length === 4) {
     kidCtx.busy = true;
+    musicUnlock();   // นิ้วกำลังแตะจอ → ปลดล็อกเสียงไว้ เล่นได้ทันทีที่เข้าระบบสำเร็จ
     authApi('kidLogin', [kidCtx.code, kidCtx.child.member_id, kidCtx.pin]).then(function () {
       kidCtx = null; return enterFromServer(true);
     }).catch(function (e) {
