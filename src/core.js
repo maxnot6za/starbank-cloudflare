@@ -200,7 +200,7 @@ export function createCore(S) {
       },
       {
         type: 'text',
-        text: `📱 เปิด Web App สำหรับจัดการภารกิจ/รางวัล:\n${webAppUrl}?auto=${webToken}`,
+        text: `📱 เปิดแอปเพื่อจัดการภารกิจ/รางวัล (กด "เข้าสู่ระบบด้วย LINE"):\n${webAppUrl}`,
         quickReply: {
           items: [
             { type: 'action', action: { type: 'message', label: '📊 ดูสถานะ', text: 'สถานะ' }},
@@ -219,10 +219,9 @@ export function createCore(S) {
       return;
     }
     const webAppUrl = S.webAppUrl;
-    const autoUrl = webAppUrl + '?auto=' + member.member_id;
     lineReply_(replyToken, [{
       type: 'text',
-      text: '📱 กดลิงก์เพื่อเปิดเว็บ (เข้าได้เลยไม่ต้องกรอกรหัส):\n' + autoUrl
+      text: '📱 เปิดแอปแล้วกด "เข้าสู่ระบบด้วย LINE":\n' + webAppUrl
     }]);
   }
 
@@ -1379,5 +1378,6 @@ export function createCore(S) {
 
 
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus };
-  return { api: api, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot };
+  return { api: api, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
+    createFamily_: createFamily_, joinFamily: joinFamily };
 }

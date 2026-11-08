@@ -6,16 +6,19 @@ import { Store, ConflictError } from './store.js';
 import { createCore, PUBLIC_API } from './core.js';
 export { FamilyHub } from './hub.js';
 
-// อาร์กิวเมนต์ตัวไหนเป็น memberId/token → ใช้หาครอบครัวที่ต้องโหลด
+import { handleAuth, getSession } from './auth.js';
+
+// คำสั่งที่ต้องเข้าสู่ระบบ: อาร์กิวเมนต์ตัวไหนคือ "ตัวผู้ใช้"
+// → เซิร์ฟเวอร์ใส่รหัสสมาชิกจากกุญแจเครื่อง (session) ทับเสมอ ไม่เชื่อค่าที่หน้าเว็บส่งมา
 const MEMBER_ARG = {
-  getMemberByWebToken: 0, getChildDashboard: 0, getParentDashboard: 0, webReconnect: 0,
+  getChildDashboard: 0, getParentDashboard: 0,
   submitMission: 1, redeemReward: 1, spinWheel: 0,
   reviewSubmission: 2, acknowledgeRedemptions: 1, checkRejectImpact: 1,
   webSaveMission: 1, webSaveReward: 1, webDeleteMission: 1, webDeleteReward: 1,
   toggleSubmissionNotify: 0, getDailySummary: 2,
   setWheelEnabled: 0, setWheelPrizes: 0, getWheelStatus: 0,
 };
-const CODE_ARG = { webLookupFamily: 0, webJoinFamily: 0 };
+// คำสั่งเข้าระบบแบบเก่า (ลิงก์ ?auto=, รหัสครอบครัว) ถูกแทนด้วย /auth/* แล้ว
 
 export default {
   async fetch(request, env, ctx) {
@@ -28,52 +31,45 @@ export default {
       if (request.method !== 'POST') return new Response('OK');
       return handleLine(request, env, ctx);
     }
+    if (url.pathname.startsWith('/auth/')) {
+      return handleAuth(request, env, fid => notifyFamilies(env, ctx, new Set([String(fid)]), ''));
+    }
     if (url.pathname === '/ws') return handleLive(url, request, env);
     if (url.pathname === '/health') return json({ ok: true, app: 'starbank' });
     return env.ASSETS.fetch(request);
   },
 };
 
-function json(obj, status = 200) {
+function json(obj, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(obj), {
-    status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...extraHeaders },
   });
 }
 
-async function familyScopeFor(fn, args, db) {
-  if (fn in MEMBER_ARG) {
-    const id = args[MEMBER_ARG[fn]];
-    if (id === undefined || id === null || id === '') return { familyIds: [] };
-    const r = await db.prepare('SELECT family_id FROM Members WHERE member_id = ?1 OR web_token = ?1 LIMIT 1').bind(String(id)).first();
-    return { familyIds: r ? [r.family_id] : [] };
-  }
-  if (fn in CODE_ARG) {
-    const code = String(args[CODE_ARG[fn]] || '').toUpperCase();
-    const r = await db.prepare('SELECT family_id FROM Families WHERE join_code = ? LIMIT 1').bind(code).first();
-    return { familyIds: r ? [r.family_id] : [] };
-  }
-  return { familyIds: [] };   // webRegister: สร้างครอบครัวใหม่ ไม่ต้องโหลดอะไร
-}
-
 async function handleApi(fn, request, env, ctx) {
-  if (!PUBLIC_API.includes(fn)) return json({ ok: false, error: 'ไม่พบคำสั่งนี้' }, 404);
+  if (!PUBLIC_API.includes(fn) || !(fn in MEMBER_ARG)) return json({ ok: false, error: 'ไม่พบคำสั่งนี้' }, 404);
   let args;
   try { args = (await request.json()).args || []; } catch (e) { return json({ ok: false, error: 'ข้อมูลไม่ถูกต้อง' }, 400); }
   if (!Array.isArray(args)) return json({ ok: false, error: 'ข้อมูลไม่ถูกต้อง' }, 400);
   const webAppUrl = new URL(request.url).origin + '/';
+  const session = await getSession(request, env);
+  if (!session) return json({ ok: false, auth: true, error: 'กรุณาเข้าสู่ระบบใหม่' });
+  args[MEMBER_ARG[fn]] = session.member.member_id;
+  const scope = { familyIds: [session.member.family_id] };
+  const extra = session.renewCookie ? { 'set-cookie': session.renewCookie } : {};
 
   // ถ้ามีเครื่องอื่นแก้ข้อมูลชนกัน (ไม่มีอะไรถูกบันทึก) → ลองใหม่อัตโนมัติ เหมือน LockService รอคิว
   for (let attempt = 0; ; attempt++) {
     const store = new Store(env.DB);
     const S = { store, outbox: [], webAppUrl };
     try {
-      await store.load(await familyScopeFor(fn, args, env.DB));
+      await store.load(scope);
       const core = createCore(S);
       const value = core.api[fn](...args);
       await store.flush();
       notifyFamilies(env, ctx, store.touched, request.headers.get('x-client-id'));
       await sendLine(env, S.outbox, new URL(request.url).origin);
-      return json({ ok: true, value: value === undefined ? null : value });
+      return json({ ok: true, value: value === undefined ? null : value }, 200, extra);
     } catch (e) {
       if (e instanceof ConflictError && attempt < 2) continue;
       console.log('api error', fn, e && e.stack || e);
@@ -85,10 +81,9 @@ async function handleApi(fn, request, env, ctx) {
 // ---------- อัปเดตหน้าจอทันที (ทุกเครื่องในครอบครัวเดียวกัน) ----------
 async function handleLive(url, request, env) {
   if (request.headers.get('upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 });
-  const id = url.searchParams.get('member') || '';
-  const m = id ? await env.DB.prepare('SELECT family_id FROM Members WHERE member_id = ?1 OR web_token = ?1 LIMIT 1').bind(id).first() : null;
-  if (!m) return new Response('unknown member', { status: 403 });
-  const hub = env.FAMILY_HUB.get(env.FAMILY_HUB.idFromName(String(m.family_id)));
+  const session = await getSession(request, env);
+  if (!session) return new Response('login required', { status: 403 });
+  const hub = env.FAMILY_HUB.get(env.FAMILY_HUB.idFromName(String(session.member.family_id)));
   return hub.fetch(new Request('https://hub/connect', request));
 }
 

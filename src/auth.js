@@ -1,0 +1,419 @@
+// ระบบเข้าสู่ระบบ
+//   ผู้ปกครอง: LINE Login (OAuth) · เด็ก: รหัสครอบครัว + เลือกรูป + PIN 4 หลัก หรือสแกน QR จากผู้ปกครอง
+//   ทุกคนได้ "กุญแจเครื่อง" เป็นคุกกี้ HttpOnly (JavaScript อ่านไม่ได้) อายุ 180 วัน ใช้ต่อเนื่องก็ต่ออายุเอง
+//   ฐานข้อมูลเก็บเฉพาะค่าแฮชของกุญแจ/รหัสใช้ครั้งเดียว ไม่เก็บค่าจริง
+import { Store } from './store.js';
+import { createCore } from './core.js';
+
+const SESSION_COOKIE = 'sb_s';
+const OAUTH_COOKIE = 'sb_oauth';
+const TICKET_COOKIE = 'sb_ticket';
+const SESSION_DAYS = 180;
+const PIN_MAX_FAILS = 5;
+const PIN_LOCK_MIN = 10;
+
+// ---------- เครื่องมือ ----------
+const enc = new TextEncoder();
+function b64url(bytes) {
+  let s = ''; bytes.forEach(b => s += String.fromCharCode(b));
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+export function randomToken(n = 32) { return b64url(crypto.getRandomValues(new Uint8Array(n))); }
+export async function sha256(s) {
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(s)));
+  return [...h].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function nowIso() { return new Date().toISOString(); }
+function addMs(ms) { return new Date(Date.now() + ms).toISOString(); }
+
+export function getCookie(request, name) {
+  const raw = request.headers.get('cookie') || '';
+  for (const part of raw.split(';')) {
+    const i = part.indexOf('=');
+    if (i > 0 && part.slice(0, i).trim() === name) return decodeURIComponent(part.slice(i + 1).trim());
+  }
+  return '';
+}
+function cookie(request, name, value, maxAgeSec) {
+  const secure = new URL(request.url).protocol === 'https:' ? '; Secure' : '';
+  return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSec}${secure}`;
+}
+function clearCookie(request, name) { return cookie(request, name, '', 0); }
+
+function json(obj, headers = {}) {
+  const h = new Headers({ 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+  for (const [k, v] of Object.entries(headers)) [].concat(v).forEach(x => h.append(k, x));
+  return new Response(JSON.stringify(obj), { headers: h });
+}
+function redirect(location, cookies = []) {
+  const h = new Headers({ location, 'cache-control': 'no-store' });
+  cookies.forEach(c => h.append('set-cookie', c));
+  return new Response(null, { status: 302, headers: h });
+}
+
+function deviceLabel(request) {
+  const ua = request.headers.get('user-agent') || '';
+  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android'
+    : /Macintosh/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'อุปกรณ์อื่น';
+  const br = /Line\//.test(ua) ? 'LINE' : /CriOS|Chrome/.test(ua) ? 'Chrome' : /FxiOS|Firefox/.test(ua) ? 'Firefox'
+    : /Safari/.test(ua) ? 'Safari' : '';
+  return br ? os + ' · ' + br : os;
+}
+
+async function hashPin(memberId, pin, salt) {
+  salt = salt || randomToken(12);
+  const key = await crypto.subtle.importKey('raw', enc.encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt + ':' + memberId), iterations: 10000 }, key, 256));
+  return salt + ':' + b64url(bits);
+}
+
+function publicMember(m, family) {
+  return m ? { memberId: m.member_id, familyId: m.family_id, name: m.name, role: m.role, avatar: m.avatar,
+    familyName: family ? family.family_name : '' } : null;
+}
+
+// ---------- กุญแจเครื่อง (session) ----------
+export async function getSession(request, env) {
+  const token = getCookie(request, SESSION_COOKIE);
+  if (!token) return null;
+  const hash = await sha256(token);
+  const row = await env.DB.prepare(
+    `SELECT s.session_hash, s.last_seen_at, s.expires_at, m.member_id, m.family_id, m.name, m.role, m.avatar
+       FROM Sessions s JOIN Members m ON m.member_id = s.member_id WHERE s.session_hash = ?`).bind(hash).first();
+  if (!row) return null;
+  if (row.expires_at && row.expires_at < nowIso()) {
+    await env.DB.prepare('DELETE FROM Sessions WHERE session_hash = ?').bind(hash).run();
+    return null;
+  }
+  const session = { hash, token, member: row, renewCookie: null };
+  // ใช้งานต่อเนื่อง → ต่ออายุ (เขียนวันละครั้งพอ ประหยัดโควตา)
+  if (!row.last_seen_at || Date.now() - new Date(row.last_seen_at).getTime() > 86400000) {
+    await env.DB.prepare('UPDATE Sessions SET last_seen_at = ?, expires_at = ? WHERE session_hash = ?')
+      .bind(nowIso(), addMs(SESSION_DAYS * 86400000), hash).run();
+    session.renewCookie = cookie(request, SESSION_COOKIE, token, SESSION_DAYS * 86400);
+  }
+  return session;
+}
+
+async function createSession(env, request, member) {
+  const token = randomToken();
+  await env.DB.prepare('INSERT INTO Sessions (session_hash, member_id, family_id, created_at, last_seen_at, expires_at, device) VALUES (?,?,?,?,?,?,?)')
+    .bind(await sha256(token), member.member_id, member.family_id, nowIso(), nowIso(), addMs(SESSION_DAYS * 86400000), deviceLabel(request)).run();
+  return cookie(request, SESSION_COOKIE, token, SESSION_DAYS * 86400);
+}
+
+// ---------- รหัสใช้ครั้งเดียว ----------
+async function makeToken(env, kind, fields, ttlMs) {
+  const token = randomToken(kind === 'qr' ? 18 : 24);
+  await env.DB.prepare('INSERT INTO AuthTokens (token_hash, kind, family_id, member_id, line_user_id, line_name, created_by, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?)')
+    .bind(await sha256(token), kind, fields.family_id || null, fields.member_id || null, fields.line_user_id || null,
+      fields.line_name || null, fields.created_by || null, nowIso(), addMs(ttlMs)).run();
+  return token;
+}
+async function readToken(env, kind, token) {
+  if (!token) return null;
+  const row = await env.DB.prepare('SELECT * FROM AuthTokens WHERE token_hash = ? AND kind = ?').bind(await sha256(token), kind).first();
+  if (!row || row.used_at || row.expires_at < nowIso()) return null;
+  return row;
+}
+// ใช้แล้วทิ้ง (ถ้ามีคนใช้ไปก่อนเสี้ยววินาที = ไม่ผ่าน)
+async function useToken(env, row) {
+  const r = await env.DB.prepare('UPDATE AuthTokens SET used_at = ? WHERE token_hash = ? AND used_at IS NULL').bind(nowIso(), row.token_hash).run();
+  return r.meta && r.meta.changes === 1;
+}
+
+// ---------- LINE Login ----------
+function lineConfigured(env) { return !!(env.LINE_LOGIN_CHANNEL_ID && env.LINE_LOGIN_CHANNEL_SECRET); }
+function callbackUrl(request) { return new URL(request.url).origin + '/auth/line/callback'; }
+
+async function lineStart(request, env) {
+  const url = new URL(request.url);
+  if (!lineConfigured(env)) return redirect('/?login_error=' + encodeURIComponent('ยังไม่ได้ตั้งค่า LINE Login'));
+  const state = randomToken(16), nonce = randomToken(16);
+  const invite = (url.searchParams.get('invite') || '').replace(/[^A-Za-z0-9_-]/g, '');
+  const q = new URLSearchParams({
+    response_type: 'code', client_id: env.LINE_LOGIN_CHANNEL_ID, redirect_uri: callbackUrl(request),
+    state, scope: 'profile openid', nonce,
+  });
+  if (env.LINE_LOGIN_BOT_PROMPT) q.set('bot_prompt', env.LINE_LOGIN_BOT_PROMPT);   // ชวนแอดเพื่อน LINE OA
+  return redirect('https://access.line.me/oauth2/v2.1/authorize?' + q, [cookie(request, OAUTH_COOKIE, [state, nonce, invite].join('.'), 600)]);
+}
+
+async function lineCallback(request, env) {
+  const url = new URL(request.url);
+  const fail = msg => redirect('/?login_error=' + encodeURIComponent(msg), [clearCookie(request, OAUTH_COOKIE)]);
+  const [state, nonce, invite] = getCookie(request, OAUTH_COOKIE).split('.');
+  if (url.searchParams.get('error')) return fail('ยกเลิกการเข้าสู่ระบบด้วย LINE');
+  if (!state || state !== url.searchParams.get('state')) return fail('หมดเวลา กรุณากดเข้าสู่ระบบอีกครั้ง');
+
+  let profile;
+  try {
+    const tr = await fetch('https://api.line.me/oauth2/v2.1/token', {
+      method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'authorization_code', code: url.searchParams.get('code') || '',
+        redirect_uri: callbackUrl(request), client_id: env.LINE_LOGIN_CHANNEL_ID, client_secret: env.LINE_LOGIN_CHANNEL_SECRET }),
+    });
+    const tok = await tr.json();
+    if (!tr.ok || !tok.id_token) throw new Error('token');
+    const vr = await fetch('https://api.line.me/oauth2/v2.1/verify', {
+      method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ id_token: tok.id_token, client_id: env.LINE_LOGIN_CHANNEL_ID, nonce }),
+    });
+    profile = await vr.json();
+    if (!vr.ok || !profile.sub) throw new Error('verify');
+  } catch (e) {
+    console.log('line login error', e);
+    return fail('เชื่อมต่อ LINE ไม่สำเร็จ ลองใหม่อีกครั้ง');
+  }
+  const lineId = profile.sub, lineName = String(profile.name || 'ผู้ปกครอง').slice(0, 40);
+  const done = [clearCookie(request, OAUTH_COOKIE)];
+
+  // มาจากลิงก์เชิญ
+  if (invite) {
+    const inv = await readToken(env, 'invite', invite);
+    if (!inv) return fail('ลิงก์เชิญหมดอายุหรือถูกใช้ไปแล้ว ขอลิงก์ใหม่จากผู้ปกครองในครอบครัว');
+    const already = await env.DB.prepare("SELECT * FROM Members WHERE line_user_id = ? AND family_id = ? AND role = 'parent'").bind(lineId, inv.family_id).first();
+    let member = already;
+    if (!member && inv.member_id) {
+      // ผูก LINE กับสมาชิกเดิมที่ยังไม่มี LINE (กันสมาชิกซ้ำ)
+      const target = await env.DB.prepare("SELECT * FROM Members WHERE member_id = ? AND family_id = ? AND role = 'parent'").bind(inv.member_id, inv.family_id).first();
+      if (!target) return fail('ไม่พบสมาชิกที่ลิงก์นี้ชี้ไป');
+      if (target.line_user_id && target.line_user_id !== lineId) return fail('สมาชิกนี้ผูกกับ LINE บัญชีอื่นแล้ว');
+      if (!(await useToken(env, inv))) return fail('ลิงก์เชิญถูกใช้ไปแล้ว');
+      await env.DB.prepare('UPDATE Members SET line_user_id = ? WHERE member_id = ?').bind(lineId, target.member_id).run();
+      member = target;
+    } else if (!member) {
+      if (!(await useToken(env, inv))) return fail('ลิงก์เชิญถูกใช้ไปแล้ว');
+      member = await addParentViaCore(env, request, inv.family_id, lineName, '👨‍👩‍👧', lineId);
+    } else {
+      await useToken(env, inv);
+    }
+    done.push(await createSession(env, request, member));
+    return redirect('/', done);
+  }
+
+  const { results } = await env.DB.prepare("SELECT * FROM Members WHERE line_user_id = ? AND role = 'parent'").bind(lineId).all();
+  if (results.length === 1) {
+    done.push(await createSession(env, request, results[0]));
+    return redirect('/', done);
+  }
+  // ยังไม่มีบัญชี หรือมีหลายครอบครัว → ให้หน้าเว็บถามต่อ
+  const ticket = await makeToken(env, 'ticket', { line_user_id: lineId, line_name: lineName }, 15 * 60000);
+  done.push(cookie(request, TICKET_COOKIE, ticket, 900));
+  return redirect(results.length ? '/#pick-family' : '/#new-parent', done);
+}
+
+// เพิ่มผู้ปกครองผ่านตรรกะเดิม (joinFamily) แล้วผูก LINE
+async function addParentViaCore(env, request, familyId, name, avatar, lineId) {
+  const store = new Store(env.DB);
+  await store.load({ familyIds: [familyId] });
+  const core = createCore({ store, outbox: [], webAppUrl: new URL(request.url).origin + '/' });
+  const r = core.joinFamily(familyId, name, 'parent', avatar);
+  store.update('Members', 'member_id', r.memberId, { line_user_id: lineId });
+  await store.flush();
+  return { member_id: r.memberId, family_id: familyId };
+}
+
+// ---------- คำสั่งจากหน้าเว็บ: POST /auth/api/<fn> ----------
+async function requireParentSession(request, env) {
+  const s = await getSession(request, env);
+  if (!s || s.member.role !== 'parent') throw new Error('เฉพาะผู้ปกครองเท่านั้น');
+  return s;
+}
+async function familyChild(env, familyId, childId) {
+  const c = await env.DB.prepare("SELECT * FROM Members WHERE member_id = ? AND family_id = ? AND role = 'child'").bind(String(childId), familyId).first();
+  if (!c) throw new Error('ไม่พบเด็กคนนี้');
+  return c;
+}
+function cleanPin(pin) {
+  pin = String(pin || '');
+  if (!/^\d{4}$/.test(pin)) throw new Error('PIN ต้องเป็นตัวเลข 4 หลัก');
+  return pin;
+}
+
+const ACTIONS = {
+  // ใครกำลังใช้เครื่องนี้
+  async me(request, env) {
+    const s = await getSession(request, env);
+    if (!s) return { value: null };
+    const fam = await env.DB.prepare('SELECT family_name FROM Families WHERE family_id = ?').bind(s.member.family_id).first();
+    return { value: publicMember(s.member, fam), cookies: s.renewCookie ? [s.renewCookie] : [] };
+  },
+
+  async logout(request, env) {
+    const s = await getSession(request, env);
+    if (s) await env.DB.prepare('DELETE FROM Sessions WHERE session_hash = ?').bind(s.hash).run();
+    return { value: true, cookies: [clearCookie(request, SESSION_COOKIE)] };
+  },
+
+  // หลัง LINE Login: ข้อมูลที่ต้องถามต่อ (สร้างครอบครัว / เลือกครอบครัว)
+  async ticketInfo(request, env) {
+    const t = await readToken(env, 'ticket', getCookie(request, TICKET_COOKIE));
+    if (!t) return { value: null };
+    const { results } = await env.DB.prepare(
+      "SELECT m.member_id, m.name, m.avatar, f.family_name FROM Members m JOIN Families f ON f.family_id = m.family_id WHERE m.line_user_id = ? AND m.role = 'parent'")
+      .bind(t.line_user_id).all();
+    return { value: { lineName: t.line_name, options: results } };
+  },
+
+  async pickFamily(request, env, [memberId]) {
+    const t = await readToken(env, 'ticket', getCookie(request, TICKET_COOKIE));
+    if (!t) throw new Error('หมดเวลา กรุณาเข้าสู่ระบบด้วย LINE อีกครั้ง');
+    const m = await env.DB.prepare("SELECT * FROM Members WHERE member_id = ? AND line_user_id = ? AND role = 'parent'").bind(String(memberId), t.line_user_id).first();
+    if (!m) throw new Error('ไม่พบครอบครัวนี้');
+    await useToken(env, t);
+    return { value: true, cookies: [await createSession(env, request, m), clearCookie(request, TICKET_COOKIE)] };
+  },
+
+  async registerFamily(request, env, [familyName, parentName, avatar]) {
+    const t = await readToken(env, 'ticket', getCookie(request, TICKET_COOKIE));
+    if (!t) throw new Error('หมดเวลา กรุณาเข้าสู่ระบบด้วย LINE อีกครั้ง');
+    familyName = String(familyName || '').trim().slice(0, 60);
+    parentName = String(parentName || '').trim().slice(0, 40);
+    if (familyName.length < 2) throw new Error('กรุณาใส่ชื่อครอบครัว');
+    if (!parentName) throw new Error('กรุณาใส่ชื่อของคุณ');
+    if (!(await useToken(env, t))) throw new Error('หมดเวลา กรุณาเข้าสู่ระบบด้วย LINE อีกครั้ง');
+    const store = new Store(env.DB);
+    await store.load({ familyIds: [] });
+    const core = createCore({ store, outbox: [], webAppUrl: new URL(request.url).origin + '/' });
+    const fam = core.createFamily_(familyName);
+    const r = core.joinFamily(fam.familyId, parentName, 'parent', avatar || '👨‍👩‍👧');
+    store.update('Members', 'member_id', r.memberId, { line_user_id: t.line_user_id });
+    await store.flush();
+    return { value: true, cookies: [await createSession(env, request, { member_id: r.memberId, family_id: fam.familyId }), clearCookie(request, TICKET_COOKIE)] };
+  },
+
+  // ---- เด็ก ----
+  async kidFamily(request, env, [code]) {
+    code = String(code || '').toUpperCase().replace(/\s/g, '');
+    const f = await env.DB.prepare('SELECT family_id, family_name FROM Families WHERE join_code = ?').bind(code).first();
+    if (!f) throw new Error('ไม่พบครอบครัวนี้ ลองตรวจรหัสอีกครั้ง');
+    const { results } = await env.DB.prepare("SELECT member_id, name, avatar, pin_hash FROM Members WHERE family_id = ? AND role = 'child' ORDER BY rowid").bind(f.family_id).all();
+    return { value: { familyName: f.family_name, children: results.map(c => ({ member_id: c.member_id, name: c.name, avatar: c.avatar, hasPin: !!c.pin_hash })) } };
+  },
+
+  async kidLogin(request, env, [code, childId, pin]) {
+    code = String(code || '').toUpperCase().replace(/\s/g, '');
+    const c = await env.DB.prepare(
+      "SELECT m.* FROM Members m JOIN Families f ON f.family_id = m.family_id WHERE f.join_code = ? AND m.member_id = ? AND m.role = 'child'")
+      .bind(code, String(childId)).first();
+    if (!c) throw new Error('ไม่พบสมาชิก');
+    if (!c.pin_hash) throw new Error('ยังไม่มี PIN ให้ผู้ปกครองตั้ง PIN หรือเปิด QR ให้สแกน');
+    if (c.pin_locked_until && c.pin_locked_until > nowIso()) {
+      const min = Math.ceil((new Date(c.pin_locked_until) - Date.now()) / 60000);
+      throw new Error(`ใส่ PIN ผิดหลายครั้ง รออีก ${min} นาที หรือให้ผู้ปกครองเปิด QR ให้สแกน`);
+    }
+    const salt = String(c.pin_hash).split(':')[0];
+    if ((await hashPin(c.member_id, String(pin || ''), salt)) !== c.pin_hash) {
+      const fails = Number(c.pin_fails || 0) + 1;
+      const lock = fails >= PIN_MAX_FAILS;
+      await env.DB.prepare('UPDATE Members SET pin_fails = ?, pin_locked_until = ? WHERE member_id = ?')
+        .bind(lock ? 0 : fails, lock ? addMs(PIN_LOCK_MIN * 60000) : null, c.member_id).run();
+      throw new Error(lock ? `ใส่ PIN ผิด ${PIN_MAX_FAILS} ครั้ง ล็อก ${PIN_LOCK_MIN} นาที` : `PIN ไม่ถูกต้อง (เหลือ ${PIN_MAX_FAILS - fails} ครั้ง)`);
+    }
+    await env.DB.prepare('UPDATE Members SET pin_fails = 0, pin_locked_until = NULL WHERE member_id = ?').bind(c.member_id).run();
+    return { value: true, cookies: [await createSession(env, request, c)] };
+  },
+
+  async qrLogin(request, env, [token]) {
+    const t = await readToken(env, 'qr', token);
+    if (!t || !(await useToken(env, t))) throw new Error('QR หมดอายุหรือถูกใช้แล้ว ให้ผู้ปกครองเปิด QR ใหม่');
+    const c = await env.DB.prepare('SELECT * FROM Members WHERE member_id = ? AND family_id = ?').bind(t.member_id, t.family_id).first();
+    if (!c) throw new Error('ไม่พบสมาชิก');
+    return { value: true, cookies: [await createSession(env, request, c)] };
+  },
+
+  // ---- ผู้ปกครองจัดการการเข้าระบบของครอบครัว ----
+  async familyAccess(request, env) {
+    const s = await requireParentSession(request, env);
+    const fid = s.member.family_id;
+    const [mem, ses] = await env.DB.batch([
+      env.DB.prepare('SELECT member_id, name, avatar, role, line_user_id, pin_hash FROM Members WHERE family_id = ? ORDER BY rowid').bind(fid),
+      env.DB.prepare('SELECT s.session_hash, s.member_id, s.device, s.last_seen_at, m.name, m.avatar FROM Sessions s JOIN Members m ON m.member_id = s.member_id WHERE s.family_id = ? ORDER BY s.last_seen_at DESC').bind(fid),
+    ]);
+    const members = mem.results;
+    return { value: {
+      children: members.filter(m => m.role === 'child').map(m => ({ member_id: m.member_id, name: m.name, avatar: m.avatar, hasPin: !!m.pin_hash })),
+      parents: members.filter(m => m.role === 'parent').map(m => ({ member_id: m.member_id, name: m.name, avatar: m.avatar, hasLine: !!m.line_user_id, isMe: m.member_id === s.member.member_id })),
+      devices: ses.results.map(d => ({ id: d.session_hash.slice(0, 16), name: d.name, avatar: d.avatar, device: d.device, lastSeen: d.last_seen_at, current: d.session_hash === s.hash })),
+    } };
+  },
+
+  async setChildPin(request, env, [childId, pin]) {
+    const s = await requireParentSession(request, env);
+    const c = await familyChild(env, s.member.family_id, childId);
+    const h = await hashPin(c.member_id, cleanPin(pin));
+    await env.DB.prepare('UPDATE Members SET pin_hash = ?, pin_fails = 0, pin_locked_until = NULL WHERE member_id = ?').bind(h, c.member_id).run();
+    return { value: true };
+  },
+
+  async addChild(request, env, [name, avatar, pin]) {
+    const s = await requireParentSession(request, env);
+    name = String(name || '').trim().slice(0, 40);
+    if (!name) throw new Error('กรุณาใส่ชื่อ');
+    pin = cleanPin(pin);
+    const store = new Store(env.DB);
+    await store.load({ familyIds: [s.member.family_id] });
+    const core = createCore({ store, outbox: [], webAppUrl: new URL(request.url).origin + '/' });
+    const r = core.joinFamily(s.member.family_id, name, 'child', avatar || '🧒');
+    await store.flush();
+    await env.DB.prepare('UPDATE Members SET pin_hash = ? WHERE member_id = ?').bind(await hashPin(r.memberId, pin), r.memberId).run();
+    return { value: { member_id: r.memberId }, touched: s.member.family_id };
+  },
+
+  async childQr(request, env, [childId]) {
+    const s = await requireParentSession(request, env);
+    const c = await familyChild(env, s.member.family_id, childId);
+    const token = await makeToken(env, 'qr', { family_id: c.family_id, member_id: c.member_id, created_by: s.member.member_id }, 10 * 60000);
+    return { value: { url: new URL(request.url).origin + '/?qr=' + token, minutes: 10 } };
+  },
+
+  async createInvite(request, env, [claimMemberId]) {
+    const s = await requireParentSession(request, env);
+    let target = null;
+    if (claimMemberId) {
+      target = await env.DB.prepare("SELECT * FROM Members WHERE member_id = ? AND family_id = ? AND role = 'parent'").bind(String(claimMemberId), s.member.family_id).first();
+      if (!target) throw new Error('ไม่พบสมาชิก');
+      if (target.line_user_id) throw new Error('สมาชิกนี้ผูก LINE แล้ว');
+    }
+    const token = await makeToken(env, 'invite', { family_id: s.member.family_id, member_id: target ? target.member_id : null, created_by: s.member.member_id }, 7 * 86400000);
+    return { value: { url: new URL(request.url).origin + '/?invite=' + token, days: 7 } };
+  },
+
+  async inviteInfo(request, env, [token]) {
+    const t = await readToken(env, 'invite', token);
+    if (!t) return { value: null };
+    const f = await env.DB.prepare('SELECT family_name FROM Families WHERE family_id = ?').bind(t.family_id).first();
+    const m = t.member_id ? await env.DB.prepare('SELECT name FROM Members WHERE member_id = ?').bind(t.member_id).first() : null;
+    return { value: { familyName: f ? f.family_name : '', claimName: m ? m.name : '' } };
+  },
+
+  async revokeDevice(request, env, [id]) {
+    const s = await requireParentSession(request, env);
+    id = String(id || '').replace(/[^0-9a-f]/g, '');
+    if (id.length !== 16) throw new Error('ไม่พบอุปกรณ์');
+    const r = await env.DB.prepare("DELETE FROM Sessions WHERE family_id = ? AND substr(session_hash, 1, 16) = ?").bind(s.member.family_id, id).run();
+    return { value: (r.meta && r.meta.changes) || 0, touched: s.member.family_id };
+  },
+};
+
+export async function handleAuth(request, env, notify) {
+  const url = new URL(request.url);
+  if (url.pathname === '/auth/line/start') return lineStart(request, env);
+  if (url.pathname === '/auth/line/callback') return lineCallback(request, env);
+  if (url.pathname.startsWith('/auth/api/') && request.method === 'POST') {
+    const fn = url.pathname.slice('/auth/api/'.length);
+    if (!Object.prototype.hasOwnProperty.call(ACTIONS, fn)) return json({ ok: false, error: 'ไม่พบคำสั่งนี้' });
+    let args = [];
+    try { args = (await request.json()).args || []; } catch (e) {}
+    try {
+      const r = await ACTIONS[fn](request, env, Array.isArray(args) ? args : []);
+      if (r.touched && notify) notify(r.touched);
+      return json({ ok: true, value: r.value === undefined ? null : r.value }, { 'set-cookie': r.cookies || [] });
+    } catch (e) {
+      return json({ ok: false, error: e && e.message ? e.message : String(e) });
+    }
+  }
+  return new Response('not found', { status: 404 });
+}
