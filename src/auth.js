@@ -233,7 +233,7 @@ async function addParentViaCore(env, request, familyId, name, avatar, lineId) {
   await store.load({ familyIds: [familyId] });
   const core = createCore({ store, outbox: [], webAppUrl: new URL(request.url).origin + '/' });
   const r = core.joinFamily(familyId, name, 'parent', avatar);
-  store.update('Members', 'member_id', r.memberId, { line_user_id: lineId });
+  if (lineId) store.update('Members', 'member_id', r.memberId, { line_user_id: lineId });
   await store.flush();
   return { member_id: r.memberId, family_id: familyId };
 }
@@ -254,6 +254,67 @@ function cleanPin(pin) {
   if (!/^\d{4}$/.test(pin)) throw new Error('PIN ต้องเป็นตัวเลข 4 หลัก');
   return pin;
 }
+
+// ---------- ชื่อผู้ใช้ + รหัสผ่าน ----------
+// แพ็กเกจฟรีจำกัดเวลาประมวลผล 10 ms → ใช้ PBKDF2 10,000 รอบ + ล็อกเมื่อผิดบ่อย + จำกัดครั้งต่อเครื่อง
+// (เก็บจำนวนรอบไว้ในค่าแฮช → อัปเกรดแพ็กเกจแล้วเพิ่มรอบได้ทันที ผู้ใช้ไม่ต้องทำอะไร)
+const PW_ITER = 10000;
+const PW_MAX_FAILS = 5, PW_LOCK_MIN = 15;
+const USERNAME_RE = /^[a-z0-9]{4,20}$/;
+const RC_ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+function cleanUsername(u) {
+  u = String(u || '').trim().toLowerCase();
+  if (!USERNAME_RE.test(u)) throw new Error('ชื่อผู้ใช้ต้องเป็นภาษาอังกฤษหรือตัวเลข 4–20 ตัว (ไม่มีเว้นวรรค)');
+  return u;
+}
+function cleanPassword(p) {
+  p = String(p || '');
+  if (p.length < 8) throw new Error('รหัสผ่านต้องยาวอย่างน้อย 8 ตัว');
+  if (p.length > 128) throw new Error('รหัสผ่านยาวเกินไป');
+  return p;
+}
+async function hashPassword(pw, salt, iter) {
+  salt = salt || randomToken(16); iter = iter || PW_ITER;
+  const key = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode(salt), iterations: iter }, key, 256));
+  return `pbkdf2$${iter}$${salt}$${b64url(bits)}`;
+}
+function sameStr(a, b) {
+  a = String(a); b = String(b);
+  let d = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return d === 0;
+}
+async function verifyPassword(pw, stored) {
+  const p = String(stored || '').split('$');
+  if (p.length !== 4 || p[0] !== 'pbkdf2') return false;
+  return sameStr(await hashPassword(pw, p[2], Number(p[1])), stored);
+}
+function newRecoveryCode() {
+  const b = crypto.getRandomValues(new Uint8Array(12));
+  const c = Array.from(b, x => RC_ALPHA[x % RC_ALPHA.length]).join('');
+  return c.slice(0, 4) + '-' + c.slice(4, 8) + '-' + c.slice(8);
+}
+async function recoveryHash(code) { return sha256('rc:' + String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '')); }
+async function setRecovery(env, memberId) {
+  const code = newRecoveryCode();
+  await env.DB.prepare('UPDATE Members SET recovery_hash = ?, recovery_created_at = ? WHERE member_id = ?').bind(await recoveryHash(code), nowIso(), memberId).run();
+  return code;
+}
+// จำกัดการเดา: นับเฉพาะครั้งที่ผิด ต่อ IP
+function ipKey(request) { return 'ip:' + (request.headers.get('cf-connecting-ip') || 'local'); }
+async function rlBlocked(env, key, max) {
+  const r = await env.DB.prepare('SELECT count, reset_at FROM RateLimits WHERE key = ?').bind(key).first();
+  return !!(r && r.reset_at > nowIso() && r.count >= max);
+}
+async function rlFail(env, key, windowMin) {
+  await env.DB.prepare(`INSERT INTO RateLimits (key, count, reset_at) VALUES (?1, 1, ?2)
+      ON CONFLICT(key) DO UPDATE SET count = CASE WHEN reset_at > ?3 THEN count + 1 ELSE 1 END,
+                                     reset_at = CASE WHEN reset_at > ?3 THEN reset_at ELSE ?2 END`)
+    .bind(key, addMs(windowMin * 60000), nowIso()).run();
+}
+const TOO_MANY = 'ลองผิดหลายครั้งเกินไป กรุณารอ 15 นาทีแล้วลองใหม่';
 
 const ACTIONS = {
   // ใครกำลังใช้เครื่องนี้
@@ -353,7 +414,7 @@ const ACTIONS = {
     const fid = s.member.family_id;
     const [mem, ses] = await env.DB.batch([
       // ใช้งานล่าสุด = เวลาล่าสุดของ: เข้าระบบ, อนุมัติ/ปฏิเสธ, เพิ่มภารกิจ/รางวัล, รับทราบการแลก
-      env.DB.prepare(`SELECT m.member_id, m.name, m.avatar, m.role, m.line_user_id, m.pin_hash, m.created_at,
+      env.DB.prepare(`SELECT m.member_id, m.name, m.avatar, m.role, m.line_user_id, m.pin_hash, m.created_at, m.username, m.pw_changed_at, m.recovery_hash, m.recovery_created_at,
           (SELECT MAX(last_seen_at) FROM Sessions WHERE member_id = m.member_id) AS seen,
           (SELECT MAX(reviewed_at) FROM Submissions WHERE family_id = m.family_id AND reviewed_by = m.member_id) AS reviewed,
           (SELECT COUNT(*) FROM Submissions WHERE family_id = m.family_id AND reviewed_by = m.member_id) AS n_review,
@@ -371,10 +432,15 @@ const ACTIONS = {
       children: members.filter(m => m.role === 'child').map(m => ({ member_id: m.member_id, name: m.name, avatar: m.avatar, hasPin: !!m.pin_hash })),
       parents: members.filter(m => m.role === 'parent').map(m => ({
         member_id: m.member_id, name: m.name, avatar: m.avatar, hasLine: !!m.line_user_id, isMe: m.member_id === s.member.member_id,
+        username: m.username || '',
         createdAt: m.created_at || '',
         lastActive: [m.seen, m.reviewed, m.mission, m.reward, m.ack, m.created_at].filter(Boolean).sort().pop() || '',
         reviews: m.n_review, missions: m.n_mission, rewards: m.n_reward, devices: m.n_device,
       })),
+      me: (function () {
+        const x = members.find(m => m.member_id === s.member.member_id) || {};
+        return { hasLine: !!x.line_user_id, username: x.username || '', pwChangedAt: x.pw_changed_at || '', hasRecovery: !!x.recovery_hash, recoveryCreatedAt: x.recovery_created_at || '' };
+      })(),
       devices: ses.results.map(d => ({ id: d.session_hash.slice(0, 16), name: d.name, avatar: d.avatar, device: d.device, lastSeen: d.last_seen_at, current: d.session_hash === s.hash })),
     } };
   },
@@ -469,7 +535,7 @@ const ACTIONS = {
       list.push({ id: (await sha256(d.endpoint)).slice(0, 16), device: d.device, since: d.created_at, lastSent: d.last_sent_at, lastDelivered: d.last_delivered_at,
         thisDevice: !!endpoint && d.endpoint === String(endpoint), missed });
     }
-    return { value: { publicKey, channel: m.notify_channel || 'line', hasLine: !!m.line_user_id, thisDevice: !!here, devices: subs.length, list } };
+    return { value: { publicKey, channel: m.notify_channel || (m.line_user_id ? 'line' : 'app'), hasLine: !!m.line_user_id, thisDevice: !!here, devices: subs.length, list } };
   },
 
   async pushSubscribe(request, env, [sub]) {
@@ -480,7 +546,8 @@ const ACTIONS = {
         ON CONFLICT(endpoint) DO UPDATE SET member_id = excluded.member_id, family_id = excluded.family_id, p256dh = excluded.p256dh, auth = excluded.auth, device = excluded.device`)
       .bind(ep, s.member.member_id, s.member.family_id, String(keys.p256dh), String(keys.auth), deviceLabel(request), nowIso()).run();
     // เปิดครั้งแรก: ถ้ายังใช้ค่าเดิม (LINE) → รับทั้งสองทางไปก่อน แล้วค่อยเลือกเองได้
-    await env.DB.prepare("UPDATE Members SET notify_channel = 'both' WHERE member_id = ? AND (notify_channel IS NULL OR notify_channel = 'line')").bind(s.member.member_id).run();
+    // ไม่ได้ผูก LINE → แอปอย่างเดียว
+    await env.DB.prepare("UPDATE Members SET notify_channel = CASE WHEN line_user_id IS NULL OR line_user_id = '' THEN 'app' ELSE 'both' END WHERE member_id = ? AND (notify_channel IS NULL OR notify_channel = 'line')").bind(s.member.member_id).run();
     return { value: true };
   },
 
@@ -489,7 +556,7 @@ const ACTIONS = {
     const { results } = await env.DB.prepare('SELECT endpoint FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).all();
     for (const r of results) if ((await sha256(r.endpoint)).slice(0, 16) === String(id)) await env.DB.prepare('DELETE FROM PushSubs WHERE endpoint = ?').bind(r.endpoint).run();
     const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).first();
-    if (!n.n) await env.DB.prepare("UPDATE Members SET notify_channel = 'line' WHERE member_id = ? AND notify_channel IN ('app','both')").bind(s.member.member_id).run();
+    if (!n.n) await env.DB.prepare("UPDATE Members SET notify_channel = 'line' WHERE member_id = ? AND notify_channel IN ('app','both') AND line_user_id IS NOT NULL AND line_user_id <> ''").bind(s.member.member_id).run();
     return { value: true };
   },
 
@@ -497,7 +564,7 @@ const ACTIONS = {
     const s = await requireParentSession(request, env);
     await env.DB.prepare('DELETE FROM PushSubs WHERE endpoint = ? AND member_id = ?').bind(String(endpoint || ''), s.member.member_id).run();
     const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).first();
-    if (!n.n) await env.DB.prepare("UPDATE Members SET notify_channel = 'line' WHERE member_id = ? AND notify_channel IN ('app','both')").bind(s.member.member_id).run();
+    if (!n.n) await env.DB.prepare("UPDATE Members SET notify_channel = 'line' WHERE member_id = ? AND notify_channel IN ('app','both') AND line_user_id IS NOT NULL AND line_user_id <> ''").bind(s.member.member_id).run();
     return { value: true };
   },
 
@@ -552,6 +619,170 @@ const ACTIONS = {
     const m = await env.DB.prepare('SELECT * FROM Members WHERE member_id = ?').bind(t.member_id).first();
     if (!m) throw new Error('ไม่พบสมาชิก');
     return { value: true, cookies: [await createSession(env, request, m)] };
+  },
+
+  // ---- ชื่อผู้ใช้ + รหัสผ่าน ----
+  async usernameCheck(request, env, [u]) {
+    let name;
+    try { name = cleanUsername(u); } catch (e) { return { value: { ok: false, reason: e.message } }; }
+    const r = await env.DB.prepare('SELECT 1 AS x FROM Members WHERE username = ?').bind(name).first();
+    return { value: r ? { ok: false, reason: 'ชื่อผู้ใช้นี้มีคนใช้แล้ว' } : { ok: true } };
+  },
+
+  // สมัคร: mode 'new' = สร้างครอบครัวใหม่ · 'invite' = เข้าร่วมด้วยลิงก์เชิญ
+  async registerPassword(request, env, [d]) {
+    d = d || {};
+    if (await rlBlocked(env, ipKey(request) + ':reg', 20)) throw new Error(TOO_MANY);
+    const username = cleanUsername(d.username), password = cleanPassword(d.password);
+    const name = String(d.name || '').trim().slice(0, 40);
+    if (!name) throw new Error('กรุณาใส่ชื่อเล่น');
+    if (await env.DB.prepare('SELECT 1 AS x FROM Members WHERE username = ?').bind(username).first()) throw new Error('ชื่อผู้ใช้นี้มีคนใช้แล้ว');
+    const pwHash = await hashPassword(password);
+    let memberId, familyId, createdFamily = false;
+    if (d.mode === 'invite') {
+      const inv = await readToken(env, 'invite', String(d.invite || ''));
+      if (!inv) throw new Error('ลิงก์เชิญหมดอายุหรือถูกใช้ไปแล้ว ขอลิงก์ใหม่จากผู้ปกครองในครอบครัว');
+      if (inv.member_id) {
+        const t = await env.DB.prepare("SELECT * FROM Members WHERE member_id = ? AND family_id = ? AND role = 'parent'").bind(inv.member_id, inv.family_id).first();
+        if (!t) throw new Error('ไม่พบสมาชิกที่ลิงก์นี้ชี้ไป');
+        if (t.username) throw new Error('สมาชิกนี้มีชื่อผู้ใช้แล้ว');
+        if (!(await useToken(env, inv))) throw new Error('ลิงก์เชิญถูกใช้ไปแล้ว');
+        memberId = t.member_id; familyId = t.family_id;
+      } else {
+        if (!(await useToken(env, inv))) throw new Error('ลิงก์เชิญถูกใช้ไปแล้ว');
+        const r = await addParentViaCore(env, request, inv.family_id, name, d.avatar || '👨‍👩‍👧', null);
+        memberId = r.member_id; familyId = inv.family_id;
+      }
+    } else {
+      const familyName = String(d.familyName || '').trim().slice(0, 60);
+      if (familyName.length < 2) throw new Error('กรุณาใส่ชื่อครอบครัว');
+      const store = new Store(env.DB);
+      await store.load({ familyIds: [] });
+      const core = createCore({ store, outbox: [], webAppUrl: new URL(request.url).origin + '/' });
+      const fam = core.createFamily_(familyName);
+      const r = core.joinFamily(fam.familyId, name, 'parent', d.avatar || '👨‍👩‍👧');
+      await store.flush();
+      memberId = r.memberId; familyId = fam.familyId; createdFamily = true;
+    }
+    try {
+      await env.DB.prepare(`UPDATE Members SET username = ?, pw_hash = ?, pw_changed_at = ?, pw_fails = 0,
+          notify_channel = CASE WHEN line_user_id IS NULL OR line_user_id = '' THEN 'app' ELSE notify_channel END WHERE member_id = ?`)
+        .bind(username, pwHash, nowIso(), memberId).run();
+    } catch (e) {
+      if (createdFamily) await env.DB.batch([
+        env.DB.prepare('DELETE FROM Missions WHERE family_id = ?').bind(familyId),
+        env.DB.prepare('DELETE FROM Members WHERE family_id = ?').bind(familyId),
+        env.DB.prepare('DELETE FROM Families WHERE family_id = ?').bind(familyId),
+      ]);
+      throw new Error(/UNIQUE/i.test(String(e.message)) ? 'ชื่อผู้ใช้นี้มีคนใช้แล้ว' : e.message);
+    }
+    await rlFail(env, ipKey(request) + ':reg', 60);
+    const code = await setRecovery(env, memberId);
+    return { value: { recoveryCode: code }, touched: familyId,
+      cookies: [await createSession(env, request, { member_id: memberId, family_id: familyId })] };
+  },
+
+  async loginPassword(request, env, [u, p]) {
+    const key = ipKey(request) + ':login';
+    if (await rlBlocked(env, key, 30)) throw new Error(TOO_MANY);
+    const generic = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+    const username = String(u || '').trim().toLowerCase();
+    const m = USERNAME_RE.test(username) ? await env.DB.prepare('SELECT * FROM Members WHERE username = ?').bind(username).first() : null;
+    if (!m || !m.pw_hash) { await hashPassword(String(p || 'x')); await rlFail(env, key, 15); throw new Error(generic); }
+    if (m.pw_locked_until && m.pw_locked_until > nowIso()) {
+      throw new Error(`ใส่รหัสผิดหลายครั้ง บัญชีถูกล็อก ${Math.ceil((new Date(m.pw_locked_until) - Date.now()) / 60000)} นาที · ลืมรหัส? ใช้รหัสกู้คืนหรือให้คนในบ้านส่งลิงก์ตั้งรหัสใหม่`);
+    }
+    if (!(await verifyPassword(String(p || ''), m.pw_hash))) {
+      const fails = Number(m.pw_fails || 0) + 1, lock = fails >= PW_MAX_FAILS;
+      await env.DB.prepare('UPDATE Members SET pw_fails = ?, pw_locked_until = ? WHERE member_id = ?')
+        .bind(lock ? 0 : fails, lock ? addMs(PW_LOCK_MIN * 60000) : null, m.member_id).run();
+      await rlFail(env, key, 15);
+      throw new Error(lock ? `ใส่รหัสผิด ${PW_MAX_FAILS} ครั้ง บัญชีถูกล็อก ${PW_LOCK_MIN} นาที` : generic);
+    }
+    await env.DB.prepare('UPDATE Members SET pw_fails = 0, pw_locked_until = NULL WHERE member_id = ?').bind(m.member_id).run();
+    return { value: true, cookies: [await createSession(env, request, m)] };
+  },
+
+  // รหัสกู้คืน: ใช้ได้ครั้งเดียว → เข้าระบบ แล้วหน้าเว็บพาไปตั้งรหัสผ่านใหม่ + ออกรหัสกู้คืนใหม่
+  async recoveryLogin(request, env, [code]) {
+    const key = ipKey(request) + ':recovery';
+    if (await rlBlocked(env, key, 10)) throw new Error(TOO_MANY);
+    const h = await recoveryHash(code);
+    const m = String(code || '').replace(/[^A-Za-z0-9]/g, '').length === 12
+      ? await env.DB.prepare('SELECT * FROM Members WHERE recovery_hash = ?').bind(h).first() : null;
+    if (!m) { await rlFail(env, key, 15); throw new Error('รหัสกู้คืนไม่ถูกต้อง หรือถูกใช้ไปแล้ว'); }
+    const r = await env.DB.prepare('UPDATE Members SET recovery_hash = NULL, pw_fails = 0, pw_locked_until = NULL WHERE member_id = ? AND recovery_hash = ?').bind(m.member_id, h).run();
+    if (!(r.meta && r.meta.changes === 1)) throw new Error('รหัสกู้คืนถูกใช้ไปแล้ว');
+    // มีชื่อผู้ใช้ → ออกรหัสตั้งรหัสผ่านใหม่อายุสั้นให้หน้าเว็บใช้ต่อทันที (ไม่ต้องรู้รหัสเดิม)
+    const resetToken = m.username ? await makeToken(env, 'pwreset', { family_id: m.family_id, member_id: m.member_id, created_by: 'recovery' }, 15 * 60000) : '';
+    return { value: { name: m.name, username: m.username || '', hasLine: !!m.line_user_id, resetToken }, cookies: [await createSession(env, request, m)] };
+  },
+
+  async resetInfo(request, env, [token]) {
+    const t = await readToken(env, 'pwreset', String(token || ''));
+    if (!t) return { value: null };
+    const m = await env.DB.prepare('SELECT name, avatar, username FROM Members WHERE member_id = ?').bind(t.member_id).first();
+    return { value: m ? { name: m.name, avatar: m.avatar, username: m.username } : null };
+  },
+
+  async resetPassword(request, env, [token, pw]) {
+    const t = await readToken(env, 'pwreset', String(token || ''));
+    if (!t) throw new Error('ลิงก์หมดอายุหรือถูกใช้ไปแล้ว ขอลิงก์ใหม่จากคนในบ้าน');
+    const password = cleanPassword(pw);
+    if (!(await useToken(env, t))) throw new Error('ลิงก์ถูกใช้ไปแล้ว');
+    const m = await env.DB.prepare('SELECT * FROM Members WHERE member_id = ?').bind(t.member_id).first();
+    if (!m) throw new Error('ไม่พบสมาชิก');
+    await env.DB.batch([
+      env.DB.prepare('UPDATE Members SET pw_hash = ?, pw_changed_at = ?, pw_fails = 0, pw_locked_until = NULL WHERE member_id = ?').bind(await hashPassword(password), nowIso(), m.member_id),
+      env.DB.prepare('DELETE FROM Sessions WHERE member_id = ?').bind(m.member_id),   // เครื่องที่ค้างอยู่ออกจากระบบทั้งหมด
+    ]);
+    return { value: true, cookies: [await createSession(env, request, m)] };
+  },
+
+  // ผู้ปกครองส่งลิงก์ตั้งรหัสใหม่ให้ผู้ปกครองอีกคน (ที่มีชื่อผู้ใช้)
+  async createResetLink(request, env, [memberId]) {
+    const s = await requireParentSession(request, env);
+    const t = await env.DB.prepare("SELECT * FROM Members WHERE member_id = ? AND family_id = ? AND role = 'parent'").bind(String(memberId || ''), s.member.family_id).first();
+    if (!t) throw new Error('ไม่พบสมาชิก');
+    if (!t.username) throw new Error('สมาชิกนี้ยังไม่มีชื่อผู้ใช้');
+    if (t.member_id === s.member.member_id) throw new Error('เปลี่ยนรหัสของตัวเองได้ที่ "เปลี่ยนรหัส"');
+    const token = await makeToken(env, 'pwreset', { family_id: t.family_id, member_id: t.member_id, created_by: s.member.member_id }, 24 * 3600000);
+    return { value: { url: new URL(request.url).origin + '/?reset=' + token, hours: 24 } };
+  },
+
+  // ตั้งชื่อผู้ใช้ให้บัญชีปัจจุบัน (เช่นคนที่เข้าด้วย LINE อยากมีทางสำรอง)
+  async setCredentials(request, env, [u, pw]) {
+    const s = await getSession(request, env);
+    if (!s) throw new Error('กรุณาเข้าสู่ระบบใหม่');
+    const me = await env.DB.prepare('SELECT username FROM Members WHERE member_id = ?').bind(s.member.member_id).first();
+    if (me && me.username) throw new Error('บัญชีนี้มีชื่อผู้ใช้แล้ว');
+    const username = cleanUsername(u), password = cleanPassword(pw);
+    try {
+      await env.DB.prepare('UPDATE Members SET username = ?, pw_hash = ?, pw_changed_at = ?, pw_fails = 0 WHERE member_id = ?')
+        .bind(username, await hashPassword(password), nowIso(), s.member.member_id).run();
+    } catch (e) { throw new Error(/UNIQUE/i.test(String(e.message)) ? 'ชื่อผู้ใช้นี้มีคนใช้แล้ว' : e.message); }
+    return { value: true };
+  },
+
+  async changePassword(request, env, [oldPw, newPw]) {
+    const s = await getSession(request, env);
+    if (!s) throw new Error('กรุณาเข้าสู่ระบบใหม่');
+    const m = await env.DB.prepare('SELECT * FROM Members WHERE member_id = ?').bind(s.member.member_id).first();
+    if (!m.pw_hash) throw new Error('บัญชีนี้ยังไม่มีรหัสผ่าน');
+    if (await rlBlocked(env, ipKey(request) + ':login', 30)) throw new Error(TOO_MANY);
+    if (!(await verifyPassword(String(oldPw || ''), m.pw_hash))) { await rlFail(env, ipKey(request) + ':login', 15); throw new Error('รหัสผ่านเดิมไม่ถูกต้อง'); }
+    const password = cleanPassword(newPw);
+    await env.DB.batch([
+      env.DB.prepare('UPDATE Members SET pw_hash = ?, pw_changed_at = ? WHERE member_id = ?').bind(await hashPassword(password), nowIso(), m.member_id),
+      env.DB.prepare('DELETE FROM Sessions WHERE member_id = ? AND session_hash <> ?').bind(m.member_id, s.hash),   // เครื่องอื่นออกจากระบบ
+    ]);
+    return { value: true };
+  },
+
+  async newRecoveryCode(request, env) {
+    const s = await getSession(request, env);
+    if (!s || s.member.role !== 'parent') throw new Error('เฉพาะผู้ปกครองเท่านั้น');
+    return { value: { code: await setRecovery(env, s.member.member_id) } };
   },
 
   async revokeDevice(request, env, [id]) {

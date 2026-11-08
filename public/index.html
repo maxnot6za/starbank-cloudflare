@@ -134,6 +134,24 @@
     .acc-row .nm div:first-child { font-weight:700; font-size:0.92rem; }
     .acc-row .nm div:last-child { font-size:0.78rem; color:var(--text-muted); }
     .chip-btn { font-size:0.78rem; padding:6px 10px; border:1px solid var(--border); background:#fff; color:var(--text); border-radius:12px; cursor:pointer; white-space:nowrap; }
+    .btn-dark { background:#1F3B35; color:#fff; border-radius:16px; }
+    .login-note { font-size:0.76rem; color:var(--text-muted); text-align:center; margin:8px 0 2px; line-height:1.5; }
+    .or-line { display:flex; align-items:center; gap:10px; color:var(--text-muted); font-size:0.8rem; margin:12px 0; }
+    .or-line span { flex:1; height:1px; background:var(--border); }
+    .login-links { display:flex; justify-content:space-between; margin-top:12px; font-size:0.88rem; }
+    .login-links a { color:var(--primary); font-weight:700; text-decoration:none; }
+    .login-links a.muted { color:var(--text-muted); font-weight:500; }
+    .pw-wrap { position:relative; }
+    .pw-wrap input { padding-right:64px; }
+    .pw-eye { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; color:var(--primary); font-weight:700; font-size:0.85rem; padding:6px 8px; }
+    .field-hint { font-size:0.78rem; margin-top:4px; min-height:1em; }
+    .field-hint.ok { color:var(--success); } .field-hint.bad { color:var(--danger); }
+    .pw-meter { height:6px; border-radius:3px; background:#E5E7EB; margin-top:6px; overflow:hidden; }
+    .pw-meter i { display:block; height:100%; width:0; background:var(--danger); transition:width .2s, background .2s; }
+    .rc-code { font:700 1.6rem Mali,sans-serif; letter-spacing:3px; text-align:center; background:#fff; border:2px dashed var(--gold); border-radius:14px; padding:14px; color:var(--text); user-select:all; }
+    .seg { display:flex; gap:6px; margin:4px 0 14px; }
+    .seg button { flex:1; padding:9px; border-radius:12px; border:2px solid var(--border); background:#fff; font-weight:700; font-size:0.85rem; color:var(--text); }
+    .seg button.on { background:var(--primary); border-color:var(--primary); color:#fff; }
     .install-card { margin-top:20px; background:linear-gradient(135deg,#FFF4D6,#FFFFFF); border:2px solid var(--gold); }
     .install-card h3 { margin-bottom:6px; }
     .guide-tabs { display:flex; gap:8px; margin:6px 0 14px; }
@@ -466,11 +484,18 @@
   <!-- ผู้ปกครอง: LINE Login -->
   <div class="card" style="margin-top:20px">
     <h3>👨‍👩‍👧 ผู้ปกครอง</h3>
-    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px">เข้าสู่ระบบด้วยบัญชี LINE ไม่ต้องจำรหัสผ่าน<br>ยังไม่มีครอบครัว? กดปุ่มนี้แล้วสร้างใหม่ได้เลย</p>
-    <a class="btn btn-line" href="/auth/line/start" data-no-fe onclick="return lineLoginClick(event)">
+    <a class="btn btn-line" style="margin-top:6px" href="/auth/line/start" data-no-fe onclick="return lineLoginClick(event)">
       <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M12 3C6.48 3 2 6.58 2 11c0 3.96 3.54 7.28 8.32 7.9.32.07.77.21.88.49.1.25.07.65.03.9l-.14.85c-.04.25-.2.98.86.53 1.06-.44 5.7-3.36 7.78-5.75C21.17 14.38 22 12.8 22 11c0-4.42-4.48-8-10-8z"/></svg>
       เข้าสู่ระบบด้วย LINE
     </a>
+    <p class="login-note">🔒 แอปเห็นแค่ชื่อและรูปของคุณ · ไม่เห็นแชต ไม่เห็นเพื่อน · ไม่โพสต์แทน</p>
+    <div class="or-line"><span></span>หรือ<span></span></div>
+    <form id="pw-login" onsubmit="return pwLogin(event)" autocomplete="on">
+      <div class="form-group"><input type="text" id="login-user" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="ชื่อผู้ใช้"></div>
+      <div class="form-group pw-wrap"><input type="password" id="login-pass" name="password" autocomplete="current-password" placeholder="รหัสผ่าน"><button type="button" class="pw-eye" onclick="togglePw(this)">แสดง</button></div>
+      <button type="submit" class="btn btn-dark" id="login-btn">เข้าสู่ระบบ</button>
+    </form>
+    <div class="login-links"><a href="#" onclick="showRegister('new');return false">สร้างบัญชีใหม่</a><a href="#" onclick="showForgot();return false" class="muted">ลืมรหัสผ่าน?</a></div>
   </div>
 
   <!-- เด็ก: รหัสครอบครัว + รูป + PIN -->
@@ -2524,6 +2549,14 @@ function bootAuth() {
     authApi('qrLogin', [t]).then(function () { return enterFromServer(true); }).catch(function (e) { showLogin(e.message); });
     return;
   }
+  if (q.get('reset')) {
+    var rt = q.get('reset'); cleanUrl();
+    authApi('resetInfo', [rt]).then(function (info) {
+      if (!info) return showLogin('ลิงก์ตั้งรหัสใหม่หมดอายุหรือถูกใช้ไปแล้ว ขอลิงก์ใหม่จากคนในบ้าน');
+      showResetPassword(rt, info);
+    }).catch(function (e) { showLogin(e.message); });
+    return;
+  }
   if (q.get('invite')) {
     var inv = q.get('invite'); cleanUrl();
     authApi('inviteInfo', [inv]).then(function (info) {
@@ -2555,7 +2588,9 @@ function showInvite(token, info) {
     '<p style="text-align:center;margin-bottom:6px">ครอบครัว <b>' + esc(info.familyName) + '</b></p>' +
     (info.claimName ? '<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">ผูกบัญชี LINE ของคุณกับชื่อ <b>' + esc(info.claimName) + '</b></p>'
                     : '<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">เข้าร่วมเป็นผู้ปกครอง</p>') +
-    LINE_BTN.replace('HREF', '/auth/line/start?invite=' + encodeURIComponent(token)));
+    LINE_BTN.replace('HREF', '/auth/line/start?invite=' + encodeURIComponent(token)) +
+    '<div class="or-line"><span></span>หรือ<span></span></div>' +
+    '<button class="btn btn-dark" onclick="showRegister(\'invite\', ' + JSON.stringify(token).replace(/"/g, '&quot;') + ', ' + JSON.stringify(info).replace(/"/g, '&quot;') + ')">👤 สร้างชื่อผู้ใช้ + รหัสผ่าน</button>');
 }
 
 function showPickFamily(info) {
@@ -2677,9 +2712,10 @@ function renderAccess(a) {
     if (p.missions) acts.push('ภารกิจ ' + p.missions);
     if (p.rewards) acts.push('รางวัล ' + p.rewards);
     return '<div class="acc-row" style="flex-wrap:wrap"><div style="font-size:1.6rem">' + p.avatar + '</div><div class="nm"><div>' + esc(p.name) + (p.isMe ? ' (คุณ)' : '') + '</div>' +
-      '<div>' + (p.hasLine ? 'ผูก LINE แล้ว ✓' : 'ยังไม่ผูก LINE') + ' · ใช้งานล่าสุด ' + lastActiveText(p.lastActive) + '</div>' +
+      '<div>' + [p.hasLine ? '💬 LINE' : '', p.username ? '👤 ' + esc(p.username) : ''].filter(Boolean).join(' · ') + (p.hasLine || p.username ? '' : 'ยังไม่มีวิธีเข้าระบบ') + ' · ใช้งานล่าสุด ' + lastActiveText(p.lastActive) + '</div>' +
       '<div>' + (acts.length ? acts.join(' · ') : 'ยังไม่เคยทำรายการ') + ' · รหัส ' + esc(String(p.member_id).slice(0, 4)) + '…</div></div>' +
-      (p.hasLine ? '' : '<div style="display:flex;gap:6px;width:100%;justify-content:flex-end">' +
+      (p.username && !p.isMe ? '<div style="display:flex;gap:6px;width:100%;justify-content:flex-end"><button class="chip-btn" onclick="sendResetLink(\'' + escJs(p.member_id) + '\',\'' + escJs(p.name) + '\')">🔗 ลิงก์ตั้งรหัสใหม่</button></div>' : '') +
+      (p.hasLine || p.username ? '' : '<div style="display:flex;gap:6px;width:100%;justify-content:flex-end">' +
         '<button class="chip-btn" onclick="showInviteLink(\'' + escJs(p.member_id) + '\',\'' + escJs(p.name) + '\')">🔗 ผูก LINE</button>' +
         '<button class="chip-btn" style="color:var(--danger)" onclick="showMergeParent(\'' + escJs(p.member_id) + '\')">🧹 รวมกับ…</button></div>') + '</div>';
   }).join('');
@@ -2687,7 +2723,7 @@ function renderAccess(a) {
     return '<div class="acc-row"><div style="font-size:1.4rem">' + d.avatar + '</div><div class="nm"><div>' + esc(d.name) + ' · ' + esc(d.device || '') + '</div><div>' + (d.current ? 'เครื่องนี้' : 'ใช้ล่าสุด ' + timeAgo(d.lastSeen)) + '</div></div>' +
       (d.current ? '' : '<button class="chip-btn" style="color:var(--danger)" onclick="revokeDevice(\'' + d.id + '\')">ออกจากระบบ</button>') + '</div>';
   }).join('');
-  el.innerHTML =
+  el.innerHTML = myLoginCard(a) +
     '<div class="card" style="box-shadow:none;background:var(--bg)"><h3>🧒 เด็ก · การเข้าระบบ</h3>' + kids +
     '<button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px" onclick="showAddChild()">➕ เพิ่มเด็ก</button></div>' +
     '<div class="card" style="box-shadow:none;background:var(--bg)"><h3>👨‍👩‍👧 ผู้ปกครอง</h3>' + parents +
@@ -3137,6 +3173,238 @@ function showInstallGuide(os) {
     setTimeout(function () { if (!currentMember) showInstallGuide(); }, 600);
   }
 })();
+</script>
+
+<script>
+// ===================================================================
+// เข้าสู่ระบบด้วยชื่อผู้ใช้ + รหัสผ่าน (ทางเลือกนอกจาก LINE)
+// ===================================================================
+function togglePw(btn) {
+  var i = btn.parentNode.querySelector('input');
+  i.type = i.type === 'password' ? 'text' : 'password';
+  btn.textContent = i.type === 'password' ? 'แสดง' : 'ซ่อน';
+}
+function pwLogin(e) {
+  e.preventDefault();
+  var u = document.getElementById('login-user').value.trim(), p = document.getElementById('login-pass').value;
+  if (!u || !p) { toast('กรอกชื่อผู้ใช้และรหัสผ่าน'); return false; }
+  var btn = document.getElementById('login-btn'); btn.disabled = true;
+  authApi('loginPassword', [u, p]).then(function () { document.getElementById('login-pass').value = ''; return enterFromServer(true); })
+    .catch(function (err) { toast(err.message, 4500); }).then(function () { btn.disabled = false; });
+  return false;
+}
+
+var PW_FIELD = function (id, label, ac) {
+  return '<div class="form-group"><label>' + label + '</label><div class="pw-wrap"><input type="password" id="' + id + '" autocomplete="' + ac + '" oninput="pwStrength(this)"><button type="button" class="pw-eye" onclick="togglePw(this)">แสดง</button></div>' +
+    '<div class="pw-meter"><i id="' + id + '-m"></i></div><div class="field-hint" id="' + id + '-h">อย่างน้อย 8 ตัว · มือถือช่วยคิดและจำรหัสให้ได้</div></div>';
+};
+function pwStrength(inp) {
+  var v = inp.value, sc = 0;
+  if (v.length >= 8) sc++; if (v.length >= 12) sc++;
+  if (/[a-z]/.test(v) && /[A-Z]/.test(v)) sc++; if (/\d/.test(v)) sc++; if (/[^A-Za-z0-9]/.test(v)) sc++;
+  var m = document.getElementById(inp.id + '-m'), h = document.getElementById(inp.id + '-h');
+  if (!m) return;
+  var pct = v.length < 8 ? 15 : Math.min(100, 30 + sc * 15), col = v.length < 8 ? 'var(--danger)' : sc >= 4 ? 'var(--success)' : '#F59E0B';
+  m.style.width = (v ? pct : 0) + '%'; m.style.background = col;
+  h.className = 'field-hint' + (v && v.length < 8 ? ' bad' : '');
+  h.textContent = !v ? 'อย่างน้อย 8 ตัว · มือถือช่วยคิดและจำรหัสให้ได้' : v.length < 8 ? 'ยังสั้นไป (อย่างน้อย 8 ตัว)' : sc >= 4 ? 'แข็งแรงดี 👍' : 'ใช้ได้ · ผสมตัวพิมพ์ใหญ่/ตัวเลขจะดีขึ้น';
+}
+
+var unameTimer = null;
+function unameCheck(inp) {
+  var h = document.getElementById('rg-user-h');
+  inp.value = inp.value.toLowerCase().replace(/\s/g, '');
+  clearTimeout(unameTimer);
+  if (!inp.value) { h.className = 'field-hint'; h.textContent = 'ภาษาอังกฤษหรือตัวเลข 4–20 ตัว'; return; }
+  if (!/^[a-z0-9]{4,20}$/.test(inp.value)) { h.className = 'field-hint bad'; h.textContent = 'ใช้ได้แค่ a–z และ 0–9 · 4–20 ตัว'; return; }
+  h.className = 'field-hint'; h.textContent = 'กำลังตรวจ...';
+  unameTimer = setTimeout(function () {
+    authApi('usernameCheck', [inp.value]).then(function (r) {
+      h.className = 'field-hint ' + (r.ok ? 'ok' : 'bad'); h.textContent = r.ok ? '✓ ใช้ชื่อนี้ได้' : r.reason;
+    }).catch(function () {});
+  }, 400);
+}
+
+// mode: 'new' สร้างครอบครัวใหม่ · 'invite' เข้าร่วมด้วยลิงก์เชิญ
+function showRegister(mode, invite, info) {
+  window.__reg = { mode: mode, invite: invite || '', info: info || null };
+  var claim = info && info.claimName;
+  openModal('<h2>✨ สร้างบัญชีผู้ปกครอง</h2>' +
+    (mode === 'invite'
+      ? '<p style="text-align:center;color:var(--text-muted);font-size:0.88rem;margin-bottom:12px">เข้าร่วมครอบครัว <b>' + esc(info ? info.familyName : '') + '</b>' + (claim ? '<br>ในชื่อ <b>' + esc(claim) + '</b>' : '') + '</p>'
+      : '<div class="seg"><button class="on">🏠 สร้างครอบครัวใหม่</button><button onclick="showHaveInvite()">💌 มีลิงก์เชิญ</button></div>') +
+    '<form onsubmit="return doRegister(event)" autocomplete="on">' +
+    (mode === 'new' ? '<div class="form-group"><label>ชื่อครอบครัว</label><input id="rg-family" placeholder=\'เช่น "บ้านสุขสันต์"\'></div>' : '') +
+    (claim ? '' : '<div class="form-group"><label>ชื่อเล่น (แสดงในแอป)</label><input id="rg-name" placeholder="เช่น แม่ปุ๋ย"></div>' +
+      '<div class="form-group"><label>อวาตาร์</label><div class="avatar-pick" id="rg-avatar"></div></div>') +
+    '<div class="form-group"><label>ชื่อผู้ใช้</label><input id="rg-user" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="เช่น mompui" oninput="unameCheck(this)"><div class="field-hint" id="rg-user-h">ภาษาอังกฤษหรือตัวเลข 4–20 ตัว</div></div>' +
+    PW_FIELD('rg-pass', 'รหัสผ่าน', 'new-password') +
+    '<button type="submit" class="btn btn-dark" id="rg-btn">สร้างบัญชี</button></form>' +
+    (mode === 'new' ? '<p class="login-note" style="margin-top:12px">มีบัญชี LINE? กด "เข้าสู่ระบบด้วย LINE" ในหน้าแรกได้เลย ไม่ต้องสร้างบัญชี</p>' : ''));
+  if (!claim) { selectedAvatar = ''; renderAvatars(AVATARS_PARENT, 'rg-avatar'); }
+}
+function showHaveInvite() {
+  openModal('<h2>💌 มีลิงก์เชิญ</h2><p style="line-height:1.7;text-align:center">ให้ผู้ปกครองในบ้านกด<br>⚙️ ตั้งค่า → <b>"เชิญผู้ปกครองเพิ่ม"</b><br>แล้วส่งลิงก์ให้คุณ · <b>เปิดลิงก์นั้น</b>แล้วเลือก<br>"สร้างชื่อผู้ใช้ + รหัสผ่าน"</p>' +
+    '<div class="form-group" style="margin-top:12px"><label>หรือวางลิงก์ที่ได้รับตรงนี้</label><input id="inv-paste" placeholder="https://.../?invite=..."></div>' +
+    '<button class="btn btn-primary" onclick="openPastedInvite()">ถัดไป</button>' +
+    '<button class="btn btn-outline" style="margin-top:10px" onclick="showRegister(\'new\')">ย้อนกลับ</button>');
+}
+function openPastedInvite() {
+  var v = document.getElementById('inv-paste').value.trim(), m = /[?&]invite=([A-Za-z0-9_-]+)/.exec(v);
+  if (!m) return toast('ลิงก์ไม่ถูกต้อง');
+  authApi('inviteInfo', [m[1]]).then(function (info) {
+    if (!info) return toast('ลิงก์เชิญหมดอายุหรือถูกใช้ไปแล้ว');
+    showRegister('invite', m[1], info);
+  }).catch(function (e) { toast(e.message); });
+}
+function doRegister(e) {
+  e.preventDefault();
+  var r = window.__reg || {}, g = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  var d = { mode: r.mode, invite: r.invite, familyName: g('rg-family'), name: g('rg-name') || (r.info && r.info.claimName) || '', avatar: selectedAvatar,
+            username: g('rg-user'), password: document.getElementById('rg-pass').value };
+  if (r.mode === 'new' && d.familyName.length < 2) { toast('กรุณาใส่ชื่อครอบครัว'); return false; }
+  if (!d.name) { toast('กรุณาใส่ชื่อเล่น'); return false; }
+  if (!/^[a-z0-9]{4,20}$/.test(d.username)) { toast('ชื่อผู้ใช้ต้องเป็นภาษาอังกฤษหรือตัวเลข 4–20 ตัว'); return false; }
+  if (d.password.length < 8) { toast('รหัสผ่านต้องยาวอย่างน้อย 8 ตัว'); return false; }
+  var btn = document.getElementById('rg-btn'); btn.disabled = true;
+  authApi('registerPassword', [d]).then(function (res) {
+    showRecoveryCode(res.recoveryCode, true);
+  }).catch(function (err) { btn.disabled = false; toast(err.message, 4500); });
+  return false;
+}
+
+// รหัสกู้คืน (แสดงครั้งเดียว)
+function showRecoveryCode(code, afterRegister) {
+  openModal('<div style="text-align:center"><div style="font-size:2.4rem">' + (afterRegister ? '🎉' : '🧾') + '</div>' +
+    '<h2 style="margin:4px 0">' + (afterRegister ? 'สร้างบัญชีแล้ว!' : 'รหัสกู้คืนใหม่') + '</h2>' +
+    '<p style="font-size:0.9rem;margin:8px 0 12px;line-height:1.6">เก็บ<b>รหัสกู้คืน</b>นี้ไว้ ใช้เข้าบัญชีเมื่อ<br>ลืมรหัสผ่าน หรือมือถือหาย</p></div>' +
+    '<div class="rc-code" id="rc-code">' + esc(code) + '</div>' +
+    '<button class="btn btn-outline" style="margin-top:12px" onclick="copyText(\'' + code + '\')">📋 คัดลอก</button>' +
+    '<p class="login-note" style="margin-top:8px">แคปหน้าจอเก็บไว้ก็ได้ · ใช้ได้ครั้งเดียว · ' + (afterRegister ? 'สร้างใหม่ได้ในตั้งค่า' : 'รหัสเดิมใช้ไม่ได้แล้ว') + '</p>' +
+    '<button class="btn btn-primary" style="margin-top:12px" onclick="' + (afterRegister ? 'closeModal();enterFromServer(true)' : 'showSettings()') + '">เก็บแล้ว ไปต่อ →</button>');
+}
+function copyText(t) {
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { toast('📋 คัดลอกแล้ว'); }, function () { toast('กดค้างที่รหัสเพื่อคัดลอก'); });
+  else toast('กดค้างที่รหัสเพื่อคัดลอก');
+}
+
+// ลืมรหัสผ่าน
+function showForgot() {
+  openModal('<h2>🔑 ลืมรหัสผ่าน</h2><p style="text-align:center;color:var(--text-muted);font-size:0.88rem;margin-bottom:12px">เลือกวิธีตั้งรหัสใหม่</p>' +
+    '<div class="card" style="box-shadow:none;background:var(--bg);margin-bottom:10px"><b>👨‍👩‍👧 ให้ผู้ปกครองอีกคนในบ้านช่วย</b><p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;line-height:1.6">เขากด ⚙️ ตั้งค่า → ที่ชื่อคุณกด <b>"ลิงก์ตั้งรหัสใหม่"</b> แล้วส่งให้คุณเปิด</p></div>' +
+    '<div class="card" style="box-shadow:none;background:var(--bg);border:2px solid var(--gold);margin-bottom:10px"><b>🧾 ใช้รหัสกู้คืน</b>' +
+    '<input id="rc-in" placeholder="XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" style="margin-top:8px;text-align:center;letter-spacing:3px;font-weight:700">' +
+    '<button class="btn btn-dark" style="margin-top:8px" id="rc-btn" onclick="useRecovery()">ใช้รหัสนี้</button></div>' +
+    '<div class="card" style="box-shadow:none;background:var(--bg)"><b>💬 เข้าด้วย LINE แทน</b><p style="font-size:0.85rem;color:var(--text-muted);margin-top:4px">ถ้าบัญชีนี้เคยผูก LINE ไว้</p></div>' +
+    '<button class="btn btn-outline" style="margin-top:12px" onclick="closeModal()">ปิด</button>');
+}
+function useRecovery() {
+  var c = document.getElementById('rc-in').value.trim();
+  if (c.replace(/[^A-Za-z0-9]/g, '').length !== 12) return toast('รหัสกู้คืนมี 12 ตัว เช่น K7QX-3FPA-M2RD');
+  var btn = document.getElementById('rc-btn'); btn.disabled = true;
+  authApi('recoveryLogin', [c]).then(function (r) {
+    if (r.username) {
+      window.__rcReset = r.resetToken;
+      openModal('<h2>🔐 ตั้งรหัสผ่านใหม่</h2><p style="text-align:center;margin-bottom:12px">บัญชี <b>' + esc(r.name) + '</b> (' + esc(r.username) + ')</p>' +
+        '<form onsubmit="return saveNewPwAfterRecovery(event)">' + '<input type="text" name="username" autocomplete="username" value="' + esc(r.username) + '" hidden>' +
+        PW_FIELD('np-pass', 'รหัสผ่านใหม่', 'new-password') + '<button type="submit" class="btn btn-dark" id="np-btn">บันทึก</button></form>');
+    } else afterRecovery();
+  }).catch(function (e) { btn.disabled = false; toast(e.message, 4500); });
+}
+function saveNewPwAfterRecovery(e) {
+  e.preventDefault();
+  var p = document.getElementById('np-pass').value;
+  if (p.length < 8) { toast('รหัสผ่านต้องยาวอย่างน้อย 8 ตัว'); return false; }
+  document.getElementById('np-btn').disabled = true;
+  // ใช้รหัสตั้งรหัสใหม่อายุสั้นที่ได้ตอนใช้รหัสกู้คืน
+  authApi('resetPassword', [window.__rcReset, p]).then(afterRecovery).catch(function (err) { document.getElementById('np-btn').disabled = false; toast(err.message); });
+  return false;
+}
+function afterRecovery() {
+  authApi('newRecoveryCode').then(function (r) {
+    openModal('<div style="text-align:center"><div style="font-size:2.4rem">✅</div><h2>เข้าบัญชีแล้ว</h2><p style="font-size:0.9rem;margin:8px 0 12px">รหัสกู้คืนเดิมใช้ไปแล้ว · นี่คือ<b>รหัสใหม่</b> เก็บไว้นะ</p></div>' +
+      '<div class="rc-code">' + esc(r.code) + '</div>' +
+      '<button class="btn btn-outline" style="margin-top:12px" onclick="copyText(\'' + r.code + '\')">📋 คัดลอก</button>' +
+      '<button class="btn btn-primary" style="margin-top:10px" onclick="closeModal();enterFromServer(true)">เก็บแล้ว ไปต่อ →</button>');
+  }).catch(function () { closeModal(); enterFromServer(true); });
+}
+
+// ตั้งรหัสใหม่จากลิงก์ที่คนในบ้านส่งมา
+function showResetPassword(token, info) {
+  window.__resetToken = token;
+  openModal('<div style="text-align:center"><div style="font-size:2.2rem">🔐</div><h2>ตั้งรหัสผ่านใหม่</h2><p style="margin:6px 0 14px">บัญชี <b>' + info.avatar + ' ' + esc(info.name) + '</b> (' + esc(info.username) + ')</p></div>' +
+    '<form onsubmit="return doResetPassword(event)"><input type="text" name="username" autocomplete="username" value="' + esc(info.username) + '" hidden>' +
+    PW_FIELD('rs-pass', 'รหัสผ่านใหม่', 'new-password') + '<button type="submit" class="btn btn-dark" id="rs-btn">บันทึกและเข้าสู่ระบบ</button></form>' +
+    '<p class="login-note" style="margin-top:10px">ลิงก์ใช้ได้ครั้งเดียว · เครื่องอื่นที่ค้างอยู่จะถูกออกจากระบบ</p>');
+}
+function doResetPassword(e) {
+  e.preventDefault();
+  var p = document.getElementById('rs-pass').value;
+  if (p.length < 8) { toast('รหัสผ่านต้องยาวอย่างน้อย 8 ตัว'); return false; }
+  document.getElementById('rs-btn').disabled = true;
+  authApi('resetPassword', [window.__resetToken, p]).then(function () { toast('✅ ตั้งรหัสใหม่แล้ว'); return enterFromServer(true); })
+    .catch(function (err) { document.getElementById('rs-btn').disabled = false; toast(err.message, 4500); });
+  return false;
+}
+
+// ---------- ตั้งค่า: วิธีเข้าสู่ระบบของฉัน ----------
+function myLoginCard(a) {
+  var me = a.me || {};
+  var rows = '<div class="acc-row"><div style="font-size:1.4rem">💬</div><div class="nm"><div>LINE</div><div>' + (me.hasLine ? 'ผูกแล้ว ✓' : 'ยังไม่ผูก') + '</div></div></div>';
+  rows += me.username
+    ? '<div class="acc-row"><div style="font-size:1.4rem">👤</div><div class="nm"><div>ชื่อผู้ใช้: ' + esc(me.username) + '</div><div>' + (me.pwChangedAt ? 'เปลี่ยนรหัสล่าสุด ' + lastActiveText(me.pwChangedAt) : '') + '</div></div><button class="chip-btn" onclick="showChangePw()">เปลี่ยนรหัส</button></div>'
+    : '<div class="acc-row"><div style="font-size:1.4rem">👤</div><div class="nm"><div>ชื่อผู้ใช้ + รหัสผ่าน</div><div>ยังไม่ได้ตั้ง (ใช้เป็นทางสำรองได้)</div></div><button class="chip-btn" onclick="showSetCredentials()">ตั้ง</button></div>';
+  rows += '<div class="acc-row"><div style="font-size:1.4rem">🧾</div><div class="nm"><div>รหัสกู้คืน</div><div>' + (me.hasRecovery ? 'มีแล้ว · สร้างเมื่อ ' + lastActiveText(me.recoveryCreatedAt) : 'ยังไม่มี') + '</div></div><button class="chip-btn" onclick="regenRecovery(' + (me.hasRecovery ? 'true' : 'false') + ')">' + (me.hasRecovery ? 'สร้างใหม่' : 'สร้าง') + '</button></div>';
+  return '<div class="card" style="box-shadow:none;background:var(--bg)"><h3>🔐 วิธีเข้าสู่ระบบของฉัน</h3>' + rows + '</div>';
+}
+function regenRecovery(had) {
+  if (had && !window.__rcConfirm) {
+    window.__rcConfirm = true; setTimeout(function () { window.__rcConfirm = false; }, 4000);
+    return toast('กดอีกครั้งเพื่อยืนยัน · รหัสเดิมจะใช้ไม่ได้');
+  }
+  window.__rcConfirm = false;
+  authApi('newRecoveryCode').then(function (r) { showRecoveryCode(r.code, false); }).catch(function (e) { toast(e.message); });
+}
+function showChangePw() {
+  openModal('<h2>🔐 เปลี่ยนรหัสผ่าน</h2><form onsubmit="return doChangePw(event)">' +
+    '<div class="form-group"><label>รหัสผ่านเดิม</label><div class="pw-wrap"><input type="password" id="cp-old" autocomplete="current-password"><button type="button" class="pw-eye" onclick="togglePw(this)">แสดง</button></div></div>' +
+    PW_FIELD('cp-new', 'รหัสผ่านใหม่', 'new-password') +
+    '<button type="submit" class="btn btn-dark" id="cp-btn">บันทึก</button></form>' +
+    '<p class="login-note" style="margin-top:8px">เครื่องอื่นที่ใช้บัญชีนี้จะถูกออกจากระบบ</p>' +
+    '<button class="btn btn-outline" style="margin-top:10px" onclick="showSettings()">ย้อนกลับ</button>');
+}
+function doChangePw(e) {
+  e.preventDefault();
+  var o = document.getElementById('cp-old').value, n = document.getElementById('cp-new').value;
+  if (n.length < 8) { toast('รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัว'); return false; }
+  document.getElementById('cp-btn').disabled = true;
+  authApi('changePassword', [o, n]).then(function () { toast('✅ เปลี่ยนรหัสแล้ว'); showSettings(); })
+    .catch(function (err) { document.getElementById('cp-btn').disabled = false; toast(err.message); });
+  return false;
+}
+function showSetCredentials() {
+  openModal('<h2>👤 ตั้งชื่อผู้ใช้ + รหัสผ่าน</h2><p class="login-note" style="margin-bottom:12px">ใช้เข้าแอปได้โดยไม่ต้องใช้ LINE</p><form onsubmit="return doSetCredentials(event)">' +
+    '<div class="form-group"><label>ชื่อผู้ใช้</label><input id="rg-user" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" oninput="unameCheck(this)"><div class="field-hint" id="rg-user-h">ภาษาอังกฤษหรือตัวเลข 4–20 ตัว</div></div>' +
+    PW_FIELD('sc-pass', 'รหัสผ่าน', 'new-password') + '<button type="submit" class="btn btn-dark" id="sc-btn">บันทึก</button></form>' +
+    '<button class="btn btn-outline" style="margin-top:10px" onclick="showSettings()">ย้อนกลับ</button>');
+}
+function doSetCredentials(e) {
+  e.preventDefault();
+  var u = document.getElementById('rg-user').value.trim(), p = document.getElementById('sc-pass').value;
+  if (!/^[a-z0-9]{4,20}$/.test(u)) { toast('ชื่อผู้ใช้ต้องเป็นภาษาอังกฤษหรือตัวเลข 4–20 ตัว'); return false; }
+  if (p.length < 8) { toast('รหัสผ่านต้องยาวอย่างน้อย 8 ตัว'); return false; }
+  document.getElementById('sc-btn').disabled = true;
+  authApi('setCredentials', [u, p]).then(function () { toast('✅ ตั้งชื่อผู้ใช้แล้ว'); showSettings(); })
+    .catch(function (err) { document.getElementById('sc-btn').disabled = false; toast(err.message); });
+  return false;
+}
+function sendResetLink(id, name) {
+  authApi('createResetLink', [id]).then(function (r) {
+    openModal('<h2>🔗 ลิงก์ตั้งรหัสใหม่ของ ' + esc(name) + '</h2><p style="text-align:center;color:var(--text-muted);font-size:0.85rem">ส่งลิงก์นี้ให้ ' + esc(name) + ' เปิด · ใช้ได้ครั้งเดียว ภายใน ' + r.hours + ' ชั่วโมง</p>' +
+      '<div class="qr-box">' + qrSvg(r.url) + '</div>' + linkBox(r.url) +
+      '<button class="btn btn-outline" style="margin-top:14px" onclick="showSettings()">ย้อนกลับ</button>');
+  }).catch(function (e) { toast(e.message); });
+}
 </script>
 </body>
 </html>

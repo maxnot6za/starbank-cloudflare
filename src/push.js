@@ -140,8 +140,10 @@ async function pendingCount(env, familyId) {
 export async function notifyApp(env, origin, events) {
   for (const ev of events || []) {
     const { results: parents } = await env.DB.prepare(
-      "SELECT member_id, notify_channel, notify_submission FROM Members WHERE family_id = ? AND role = 'parent'").bind(ev.familyId).all();
-    const want = parents.filter(p => (p.notify_channel === 'app' || p.notify_channel === 'both') &&
+      "SELECT member_id, line_user_id, notify_channel, notify_submission FROM Members WHERE family_id = ? AND role = 'parent'").bind(ev.familyId).all();
+    // ค่าเริ่มต้น: ผูก LINE = LINE (แบบเดิม) · ไม่ผูก LINE = แอป
+    const chOf = p => p.notify_channel || (p.line_user_id ? 'line' : 'app');
+    const want = parents.filter(p => (chOf(p) === 'app' || chOf(p) === 'both') &&
       !(ev.type === 'submit' && p.notify_submission === 0)).map(p => p.member_id);
     if (!want.length) continue;
     const { results: subs } = await env.DB.prepare(
