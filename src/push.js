@@ -87,13 +87,52 @@ export async function sendPush(env, sub, payload, origin) {
 
 async function deliver(env, subs, payload, origin) {
   await Promise.all(subs.map(async s => {
+    // แต่ละเครื่องได้รหัสข้อความของตัวเอง → เครื่องส่งใบตอบรับกลับมาเมื่อแจ้งเตือนเด้งขึ้นจอ
+    const nid = crypto.randomUUID().replace(/-/g, '');
+    const now = new Date().toISOString();
+    let st = 0;
+    try { st = await sendPush(env, s, Object.assign({}, payload, { nid }), origin); }
+    catch (e) { console.log('push error', e); }
     try {
-      const st = await sendPush(env, s, payload, origin);
-      if (st === 404 || st === 410) await env.DB.prepare('DELETE FROM PushSubs WHERE endpoint = ?').bind(s.endpoint).run();
-      else if (st >= 200 && st < 300) await env.DB.prepare('UPDATE PushSubs SET last_ok_at = ? WHERE endpoint = ?').bind(new Date().toISOString(), s.endpoint).run();
-      else console.log('push status', st);
-    } catch (e) { console.log('push error', e); }
+      if (st === 404 || st === 410) {
+        await env.DB.prepare('DELETE FROM PushSubs WHERE endpoint = ?').bind(s.endpoint).run();
+        return;
+      }
+      await env.DB.batch([
+        env.DB.prepare('INSERT INTO PushLog (nid, endpoint, member_id, kind, sent_at, status) VALUES (?,?,?,?,?,?)')
+          .bind(nid, s.endpoint, s.member_id, payload.kind || '', now, st),
+        st >= 200 && st < 300
+          ? env.DB.prepare('UPDATE PushSubs SET last_ok_at = ?, last_sent_at = ? WHERE endpoint = ?').bind(now, now, s.endpoint)
+          : env.DB.prepare('UPDATE PushSubs SET last_sent_at = ? WHERE endpoint = ?').bind(now, s.endpoint),
+      ]);
+      if (Math.random() < 0.05) await env.DB.prepare('DELETE FROM PushLog WHERE sent_at < ?').bind(new Date(Date.now() - 30 * 86400000).toISOString()).run();
+      if (!(st >= 200 && st < 300)) console.log('push status', st);
+    } catch (e) { console.log('push log error', e); }
   }));
+}
+
+// ใบตอบรับจากเครื่อง (service worker): 'shown' = เด้งขึ้นจอแล้ว · 'click' = ผู้ปกครองแตะแจ้งเตือน
+export async function pushAck(env, nid, ev) {
+  nid = String(nid || '').replace(/[^0-9a-f]/g, '');
+  if (nid.length !== 32) return false;
+  const now = new Date().toISOString();
+  const row = await env.DB.prepare('SELECT endpoint FROM PushLog WHERE nid = ?').bind(nid).first();
+  if (!row) return false;
+  if (ev === 'click') {
+    await env.DB.prepare('UPDATE PushLog SET clicked_at = COALESCE(clicked_at, ?), delivered_at = COALESCE(delivered_at, ?) WHERE nid = ?').bind(now, now, nid).run();
+  } else {
+    await env.DB.prepare('UPDATE PushLog SET delivered_at = COALESCE(delivered_at, ?) WHERE nid = ?').bind(now, nid).run();
+  }
+  await env.DB.prepare('UPDATE PushSubs SET last_delivered_at = ? WHERE endpoint = ?').bind(now, row.endpoint).run();
+  return true;
+}
+
+// จำนวนเรื่องที่รอผู้ปกครองจัดการ → ตัวเลขบนไอคอนแอป
+async function pendingCount(env, familyId) {
+  const r = await env.DB.prepare(
+    "SELECT (SELECT COUNT(*) FROM Submissions WHERE family_id = ?1 AND status = 'pending') + (SELECT COUNT(*) FROM Redemptions WHERE family_id = ?1 AND (acknowledged_at IS NULL OR acknowledged_at = '')) AS n")
+    .bind(familyId).first();
+  return r ? r.n : 0;
 }
 
 // ---------- ส่งตามเหตุการณ์จากตรรกะหลัก ----------
@@ -109,11 +148,12 @@ export async function notifyApp(env, origin, events) {
       `SELECT * FROM PushSubs WHERE member_id IN (${want.map(() => '?').join(',')})`).bind(...want).all();
     if (!subs.length) continue;
     let payload;
+    const badge = await pendingCount(env, ev.familyId);
     if (ev.type === 'submit') {
       payload = { title: `${ev.childAvatar || '🧒'} ${ev.childName} ส่งภารกิจ`, body: `${ev.missionTitle} · ${ev.starsDisplay}`,
-        tag: 'sub-' + ev.submissionId, url: '/#approvals', subId: ev.submissionId, kind: 'submit' };
+        tag: 'sub-' + ev.submissionId, url: '/#approvals', subId: ev.submissionId, kind: 'submit', badge };
     } else if (ev.type === 'redeem') {
-      payload = { title: `🎁 ${ev.childName} แลกรางวัล`, body: `${ev.rewardTitle} (${ev.stars} ดาว)`, tag: 'redeem-' + Date.now(), url: '/', kind: 'redeem' };
+      payload = { title: `🎁 ${ev.childName} แลกรางวัล`, body: `${ev.rewardTitle} (${ev.stars} ดาว)`, tag: 'redeem-' + Date.now(), url: '/', kind: 'redeem', badge };
     } else continue;
     await deliver(env, subs, payload, origin);
   }

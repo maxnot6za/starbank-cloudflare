@@ -7,7 +7,7 @@ import { createCore, PUBLIC_API } from './core.js';
 export { FamilyHub } from './hub.js';
 
 import { handleAuth, getSession } from './auth.js';
-import { notifyApp, filterLineOutbox } from './push.js';
+import { notifyApp, filterLineOutbox, pushAck } from './push.js';
 
 // คำสั่งที่ต้องเข้าสู่ระบบ: อาร์กิวเมนต์ตัวไหนคือ "ตัวผู้ใช้"
 // → เซิร์ฟเวอร์ใส่รหัสสมาชิกจากกุญแจเครื่อง (session) ทับเสมอ ไม่เชื่อค่าที่หน้าเว็บส่งมา
@@ -34,6 +34,10 @@ export default {
     }
     if (url.pathname.startsWith('/auth/')) {
       return handleAuth(request, env, fid => notifyFamilies(env, ctx, new Set([String(fid)]), ''));
+    }
+    if (url.pathname === '/push/ack' && request.method === 'POST') {
+      let b = {}; try { b = await request.json(); } catch (e) {}
+      return json({ ok: await pushAck(env, b.nid, b.ev) });
     }
     if (url.pathname === '/ws') return handleLive(url, request, env);
     if (url.pathname === '/health') return json({ ok: true, app: 'starbank' });

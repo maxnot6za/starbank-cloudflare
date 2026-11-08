@@ -451,8 +451,15 @@ const ACTIONS = {
     const m = await env.DB.prepare('SELECT notify_channel, line_user_id FROM Members WHERE member_id = ?').bind(s.member.member_id).first();
     const { publicKey } = await vapidKeys(env);
     const here = endpoint ? await env.DB.prepare('SELECT 1 AS x FROM PushSubs WHERE endpoint = ? AND member_id = ?').bind(String(endpoint), s.member.member_id).first() : null;
-    const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).first();
-    return { value: { publicKey, channel: m.notify_channel || 'line', hasLine: !!m.line_user_id, thisDevice: !!here, devices: n.n } };
+    const { results: subs } = await env.DB.prepare('SELECT endpoint, device, created_at, last_sent_at, last_delivered_at FROM PushSubs WHERE member_id = ? ORDER BY created_at').bind(s.member.member_id).all();
+    const list = [];
+    for (const d of subs) {
+      // ส่งไปแล้วแต่ไม่มีใบตอบรับเกิน 5 นาที = แจ้งเตือนล่าสุดยังไม่ถึงเครื่อง
+      const missed = !!(d.last_sent_at && (!d.last_delivered_at || d.last_delivered_at < d.last_sent_at) && Date.now() - new Date(d.last_sent_at) > 5 * 60000);
+      list.push({ id: (await sha256(d.endpoint)).slice(0, 16), device: d.device, since: d.created_at, lastSent: d.last_sent_at, lastDelivered: d.last_delivered_at,
+        thisDevice: !!endpoint && d.endpoint === String(endpoint), missed });
+    }
+    return { value: { publicKey, channel: m.notify_channel || 'line', hasLine: !!m.line_user_id, thisDevice: !!here, devices: subs.length, list } };
   },
 
   async pushSubscribe(request, env, [sub]) {
@@ -464,6 +471,15 @@ const ACTIONS = {
       .bind(ep, s.member.member_id, s.member.family_id, String(keys.p256dh), String(keys.auth), deviceLabel(request), nowIso()).run();
     // เปิดครั้งแรก: ถ้ายังใช้ค่าเดิม (LINE) → รับทั้งสองทางไปก่อน แล้วค่อยเลือกเองได้
     await env.DB.prepare("UPDATE Members SET notify_channel = 'both' WHERE member_id = ? AND (notify_channel IS NULL OR notify_channel = 'line')").bind(s.member.member_id).run();
+    return { value: true };
+  },
+
+  async pushRemoveDevice(request, env, [id]) {
+    const s = await requireParentSession(request, env);
+    const { results } = await env.DB.prepare('SELECT endpoint FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).all();
+    for (const r of results) if ((await sha256(r.endpoint)).slice(0, 16) === String(id)) await env.DB.prepare('DELETE FROM PushSubs WHERE endpoint = ?').bind(r.endpoint).run();
+    const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).first();
+    if (!n.n) await env.DB.prepare("UPDATE Members SET notify_channel = 'line' WHERE member_id = ? AND notify_channel IN ('app','both')").bind(s.member.member_id).run();
     return { value: true };
   },
 

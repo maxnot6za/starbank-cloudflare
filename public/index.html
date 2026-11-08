@@ -887,6 +887,7 @@ function loadChildDashboard() {
       renderChildHome(data);
       renderChildRewards(data);
       renderChildHistory(data);
+      updateAppBadge(null);
     })
     .withFailureHandler(e => toast('โหลดข้อมูลไม่สำเร็จ'))
     .getChildDashboard(currentMember.memberId);
@@ -1067,6 +1068,7 @@ function loadParentDashboard() {
       renderReviewHistory(data);
       renderParentRewards(data);
       renderParentRedemptionHistory(data);
+      updateAppBadge(data);
     })
     .withFailureHandler(e => toast('โหลดข้อมูลไม่สำเร็จ'))
     .getParentDashboard(currentMember.memberId);
@@ -1561,6 +1563,7 @@ function showSettings() {
 function doLogout() {
   authApi('logout').catch(function () {});
   pauseMusic();
+  try { if (navigator.clearAppBadge) navigator.clearAppBadge().catch(function () {}); } catch (e) {}
   localStorage.removeItem('starbank_member');
   currentMember = null;
   dashboardData = null;
@@ -2426,7 +2429,7 @@ var Live = (function () {
         if (still() && !busy()) {
           dashboardData = d;
           renderParentHome(d); renderRedemptionAlerts(d); renderParentMissions(d); renderParentPending(d);
-          renderReviewHistory(d); renderParentRewards(d); renderParentRedemptionHistory(d);
+          renderReviewHistory(d); renderParentRewards(d); renderParentRedemptionHistory(d); updateAppBadge(d);
           var sum = document.getElementById('screen-parent-summary');
           if (sum && sum.classList.contains('active')) loadDailySummary();
         } else if (still()) pending = true;
@@ -2887,6 +2890,14 @@ function renderPush(info, sub) {
       '<div style="display:flex;gap:6px;margin-top:6px">' + opt('app', '📲 แอป', false) + opt('both', 'ทั้งสอง', !info.hasLine) + opt('line', '💬 LINE', !info.hasLine) + '</div>' +
       '<p style="font-size:0.78rem;color:var(--text-muted);margin-top:6px">' +
       (info.channel === 'app' ? 'ไม่ส่ง LINE ให้คุณ (ประหยัดโควต้า) · ' : '') + 'เปิดไว้ ' + info.devices + ' เครื่อง</p>';
+    html += '<div style="margin-top:10px">' + (info.list || []).map(function (d) {
+      var st = d.missed ? '<span style="color:#C2410C;font-weight:700">⚠️ แจ้งเตือนล่าสุดยังไม่ถึงเครื่อง (' + lastActiveText(d.lastSent) + ')</span>'
+        : d.lastDelivered ? 'ถึงเครื่องล่าสุด ' + lastActiveText(d.lastDelivered)
+        : d.lastSent ? 'รอใบตอบรับ…' : 'ยังไม่มีแจ้งเตือน';
+      return '<div class="acc-row"><div style="font-size:1.3rem">' + (d.missed ? '⚠️' : '📱') + '</div><div class="nm"><div>' + esc(d.device || 'อุปกรณ์') + (d.thisDevice ? ' (เครื่องนี้)' : '') + '</div><div>' + st + '</div></div>' +
+        (d.thisDevice ? '' : '<button class="chip-btn" style="color:var(--danger)" onclick="removePushDevice(\'' + d.id + '\')">เอาออก</button>') + '</div>';
+    }).join('') + '</div>' +
+      ((info.list || []).some(function (d) { return d.missed; }) ? '<p style="font-size:0.78rem;color:#C2410C;margin-top:6px">เครื่องที่มี ⚠️ อาจปิดเครื่อง/ไม่มีเน็ต/เปิดโหมดโฟกัส หรือลบแอปไปแล้ว ลองเปิดแอปบนเครื่องนั้นแล้วกด "ทดสอบ"</p>' : '');
   }
   el.innerHTML = '<div class="card" style="box-shadow:none;background:var(--bg)"><h3>📲 แจ้งเตือนบนมือถือเครื่องนี้</h3>' + html + '</div><div class="divider"></div>';
 }
@@ -2916,6 +2927,20 @@ function disablePush() {
     var ep = sub ? sub.endpoint : '';
     return (sub ? sub.unsubscribe() : Promise.resolve()).then(function () { return authApi('pushUnsubscribe', [ep]); });
   }).then(function () { toast('ปิดแจ้งเตือนในเครื่องนี้แล้ว'); loadPush(); }).catch(function (e) { toast(e.message); });
+}
+
+function removePushDevice(id) {
+  authApi('pushRemoveDevice', [id]).then(function () { toast('เอาเครื่องออกแล้ว'); loadPush(); }).catch(function (e) { toast(e.message); });
+}
+
+// ตัวเลขบนไอคอนแอป (หน้าจอโฮม) = รออนุมัติ + การแลกที่ยังไม่รับทราบ
+function updateAppBadge(d) {
+  try {
+    if (!('setAppBadge' in navigator)) return;
+    var n = 0;
+    if (d && currentMember && currentMember.role === 'parent') n = (d.pending || []).length + (d.recentRedemptions || []).length;
+    (n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(function () {});
+  } catch (e) {}
 }
 
 function testPush() {
