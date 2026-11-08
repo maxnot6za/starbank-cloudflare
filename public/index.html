@@ -689,7 +689,7 @@ let dashboardData = null;
       if (typeof name !== 'string' || name === 'then') return undefined;
       return function () {
         var args = Array.prototype.slice.call(arguments);
-        fetch('/api/' + name, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ args: args }) })
+        fetch('/api/' + name, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-id': window.__clientId }, body: JSON.stringify({ args: args }) })
           .then(function (r) { return r.json(); })
           .then(function (j) {
             if (j && j.ok) { if (ok) ok(j.value); }
@@ -698,6 +698,7 @@ let dashboardData = null;
       };
     } });
   }
+  window.__clientId = Math.random().toString(36).slice(2) + Date.now().toString(36);
   window.google = { script: { run: runner(null, null) } };
 })();
 const AUTO_TOKEN = new URLSearchParams(location.search).get('auto') || '';
@@ -2347,6 +2348,105 @@ function updateMusicBtn() {
     else if (!musicMuted() && musicStarted) musicCtx.resume();
   });
   updateMusicBtn();
+})();
+</script>
+
+<script>
+// ===================================================================
+// อัปเดตหน้าจอทันที: เมื่อเครื่องอื่นในครอบครัวเปลี่ยนข้อมูล (อนุมัติ/ส่งภารกิจ/แลกรางวัล ฯลฯ)
+// เซิร์ฟเวอร์ส่งสัญญาณมา → ดึงข้อมูลใหม่แบบเงียบ ๆ (ไม่เปลี่ยนแท็บ ไม่ขึ้น "กำลังโหลด")
+// + ทุกครั้งที่กลับมาเปิดแอป ดึงข้อมูลใหม่ (มือถือมักตัดการเชื่อมต่อตอนแอปอยู่เบื้องหลัง)
+// ===================================================================
+var Live = (function () {
+  var ws = null, wsMember = null, retry = 0, pingTimer = null, retryTimer = null;
+  var pending = false, inflight = false, lastHidden = 0;
+
+  function me() { return (typeof currentMember !== 'undefined' && currentMember) ? currentMember : null; }
+
+  function close() {
+    clearInterval(pingTimer); clearTimeout(retryTimer);
+    if (ws) { ws.onclose = null; try { ws.close(); } catch (e) {} }
+    ws = null; wsMember = null;
+  }
+
+  function ensure() {
+    var m = me();
+    if (!m || !m.memberId) { if (ws) close(); return; }
+    if (ws && wsMember === m.memberId && ws.readyState <= 1) return;
+    close();
+    wsMember = m.memberId;
+    try {
+      ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws?member=' + encodeURIComponent(m.memberId));
+    } catch (e) { ws = null; return; }
+    ws.onopen = function () {
+      retry = 0;
+      clearInterval(pingTimer);
+      pingTimer = setInterval(function () { try { ws.send('ping'); } catch (e) {} }, 30000);
+    };
+    ws.onmessage = function (e) {
+      if (e.data === 'pong') return;
+      var msg; try { msg = JSON.parse(e.data); } catch (x) { return; }
+      if (msg.type === 'changed' && msg.from !== window.__clientId) request();
+    };
+    ws.onclose = function () {
+      clearInterval(pingTimer);
+      ws = null;
+      if (document.visibilityState === 'visible' && me()) {
+        retryTimer = setTimeout(ensure, Math.min(30000, 1000 * Math.pow(2, retry++)));
+      }
+    };
+  }
+
+  // อย่าวาดหน้าจอทับตอนเปิดหน้าต่าง/กำลังหมุนกงล้อ — รอปิดก่อนแล้วค่อยอัปเดต
+  function busy() {
+    var ov = document.getElementById('modal-overlay');
+    if (ov && ov.classList.contains('show')) return true;
+    var wheel = document.getElementById('screen-child-wheel');
+    if (wheel && wheel.classList.contains('active')) return true;
+    if (typeof wheelState !== 'undefined' && wheelState.spinning) return true;
+    return false;
+  }
+
+  function request() { pending = true; tryRefresh(); }
+
+  function tryRefresh() {
+    var m = me();
+    if (!pending || inflight || !m || busy()) return;
+    pending = false; inflight = true;
+    var done = function () { inflight = false; if (pending) setTimeout(tryRefresh, 300); };
+    var memberId = m.memberId, role = m.role;
+    var still = function () { var c = me(); return c && c.memberId === memberId; };
+    if (role === 'child') {
+      google.script.run.withSuccessHandler(function (d) {
+        if (still() && !busy()) {
+          dashboardData = d; renderChildHome(d); renderChildRewards(d); renderChildHistory(d);
+        } else if (still()) pending = true;
+        done();
+      }).withFailureHandler(done).getChildDashboard(memberId);
+    } else {
+      google.script.run.withSuccessHandler(function (d) {
+        if (still() && !busy()) {
+          dashboardData = d;
+          renderParentHome(d); renderRedemptionAlerts(d); renderParentMissions(d); renderParentPending(d);
+          renderReviewHistory(d); renderParentRewards(d); renderParentRedemptionHistory(d);
+          var sum = document.getElementById('screen-parent-summary');
+          if (sum && sum.classList.contains('active')) loadDailySummary();
+        } else if (still()) pending = true;
+        done();
+      }).withFailureHandler(done).getParentDashboard(memberId);
+    }
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') { lastHidden = Date.now(); return; }
+    ensure();
+    if (lastHidden && Date.now() - lastHidden > 3000) request();   // กลับมาจากแอปอื่น → ดึงข้อมูลล่าสุด
+  });
+  window.addEventListener('online', function () { ensure(); request(); });
+  // ใช้ตรวจ: login/logout แล้ว และอัปเดตที่รอไว้ตอนปิดหน้าต่าง
+  setInterval(function () { ensure(); tryRefresh(); }, 1000);
+
+  return { ensure: ensure, request: request };
 })();
 </script>
 </body>

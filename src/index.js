@@ -4,6 +4,7 @@
 //   อื่น ๆ                  หน้าเว็บจากโฟลเดอร์ public/
 import { Store, ConflictError } from './store.js';
 import { createCore, PUBLIC_API } from './core.js';
+export { FamilyHub } from './hub.js';
 
 // อาร์กิวเมนต์ตัวไหนเป็น memberId/token → ใช้หาครอบครัวที่ต้องโหลด
 const MEMBER_ARG = {
@@ -21,12 +22,13 @@ export default {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/api/')) {
       if (request.method !== 'POST') return json({ ok: false, error: 'method' }, 405);
-      return handleApi(url.pathname.slice(5), request, env);
+      return handleApi(url.pathname.slice(5), request, env, ctx);
     }
     if (url.pathname === '/line') {
       if (request.method !== 'POST') return new Response('OK');
       return handleLine(request, env, ctx);
     }
+    if (url.pathname === '/ws') return handleLive(url, request, env);
     if (url.pathname === '/health') return json({ ok: true, app: 'starbank' });
     return env.ASSETS.fetch(request);
   },
@@ -53,7 +55,7 @@ async function familyScopeFor(fn, args, db) {
   return { familyIds: [] };   // webRegister: สร้างครอบครัวใหม่ ไม่ต้องโหลดอะไร
 }
 
-async function handleApi(fn, request, env) {
+async function handleApi(fn, request, env, ctx) {
   if (!PUBLIC_API.includes(fn)) return json({ ok: false, error: 'ไม่พบคำสั่งนี้' }, 404);
   let args;
   try { args = (await request.json()).args || []; } catch (e) { return json({ ok: false, error: 'ข้อมูลไม่ถูกต้อง' }, 400); }
@@ -69,6 +71,7 @@ async function handleApi(fn, request, env) {
       const core = createCore(S);
       const value = core.api[fn](...args);
       await store.flush();
+      notifyFamilies(env, ctx, store.touched, request.headers.get('x-client-id'));
       await sendLine(env, S.outbox, new URL(request.url).origin);
       return json({ ok: true, value: value === undefined ? null : value });
     } catch (e) {
@@ -76,6 +79,27 @@ async function handleApi(fn, request, env) {
       console.log('api error', fn, e && e.stack || e);
       return json({ ok: false, error: e && e.message ? e.message : String(e) });
     }
+  }
+}
+
+// ---------- อัปเดตหน้าจอทันที (ทุกเครื่องในครอบครัวเดียวกัน) ----------
+async function handleLive(url, request, env) {
+  if (request.headers.get('upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 });
+  const id = url.searchParams.get('member') || '';
+  const m = id ? await env.DB.prepare('SELECT family_id FROM Members WHERE member_id = ?1 OR web_token = ?1 LIMIT 1').bind(id).first() : null;
+  if (!m) return new Response('unknown member', { status: 403 });
+  const hub = env.FAMILY_HUB.get(env.FAMILY_HUB.idFromName(String(m.family_id)));
+  return hub.fetch(new Request('https://hub/connect', request));
+}
+
+// บอกทุกเครื่องในครอบครัวว่า "มีข้อมูลใหม่" (ไม่ส่งข้อมูลจริงออกไป หน้าจอจะดึงเองตามสิทธิ์ของตัวเอง)
+function notifyFamilies(env, ctx, families, from) {
+  if (!env.FAMILY_HUB || !families || !families.size) return;
+  for (const fid of families) {
+    const hub = env.FAMILY_HUB.get(env.FAMILY_HUB.idFromName(fid));
+    const p = hub.fetch('https://hub/notify', { method: 'POST', body: JSON.stringify({ from: from || '' }) })
+      .catch(e => console.log('notify error', e));
+    if (ctx && ctx.waitUntil) ctx.waitUntil(p);
   }
 }
 
@@ -91,7 +115,7 @@ async function verifyLineSignature(secret, body, signature) {
   return diff === 0;
 }
 
-async function handleLine(request, env) {
+async function handleLine(request, env, ctx) {
   const body = await request.text();
   const ok = await verifyLineSignature(env.LINE_CHANNEL_SECRET, body, request.headers.get('x-line-signature'));
   if (!ok) return new Response('bad signature', { status: 401 });
@@ -106,6 +130,7 @@ async function handleLine(request, env) {
         await store.load({ all: true });
         createCore(S).handleLineEvent_(event);
         await store.flush();
+        notifyFamilies(env, ctx, store.touched, 'line');
         await sendLine(env, S.outbox, new URL(request.url).origin);
         break;
       } catch (e) {

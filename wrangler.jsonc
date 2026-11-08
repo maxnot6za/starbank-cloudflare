@@ -7,8 +7,12 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*", "/line", "/health"]
+    "run_worker_first": ["/api/*", "/line", "/health", "/ws"]
   },
+  "durable_objects": {
+    "bindings": [{ "name": "FAMILY_HUB", "class_name": "FamilyHub" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["FamilyHub"] }],
   "d1_databases": [
     { "binding": "DB", "database_name": "starbank-db", "database_id": "e413d4ec-6867-48c2-89c8-21ec30926996", "migrations_dir": "migrations" }
   ]

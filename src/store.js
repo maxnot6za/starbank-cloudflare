@@ -47,6 +47,7 @@ export class Store {
     this.rows = {};          // table -> array of row objects (ตัวที่โค้ดใช้)
     this.raw = new Map();    // row object -> ค่าล่าสุดใน D1 (ใช้ทำเงื่อนไขกันแก้ทับ)
     this.ops = [];
+    this.touched = new Set();   // ครอบครัวที่ข้อมูลเปลี่ยน (ไว้ส่งสัญญาณให้หน้าจออัปเดต)
   }
 
   // scope: { all: true } | { familyIds: [...] }  — LineState โหลดเมื่อ withLineState
@@ -93,6 +94,7 @@ export class Store {
     this.all(name).push(obj);
     this.raw.set(obj, raw);
     this.ops.push({ kind: 'insert', name, raw: { ...raw } });
+    if (raw.family_id) this.touched.add(String(raw.family_id));
   }
 
   update(name, idField, idValue, updates) {
@@ -108,7 +110,10 @@ export class Store {
       raw[k] = set[k];
       row[k] = v;
     }
-    if (Object.keys(set).length) this.ops.push({ kind: 'update', name, pkVal: raw[t.pk], set, before });
+    if (Object.keys(set).length) {
+      this.ops.push({ kind: 'update', name, pkVal: raw[t.pk], set, before });
+      if (raw.family_id) this.touched.add(String(raw.family_id));
+    }
     return true;
   }
 
