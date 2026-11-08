@@ -134,6 +134,18 @@
     .acc-row .nm div:first-child { font-weight:700; font-size:0.92rem; }
     .acc-row .nm div:last-child { font-size:0.78rem; color:var(--text-muted); }
     .chip-btn { font-size:0.78rem; padding:6px 10px; border:1px solid var(--border); background:#fff; color:var(--text); border-radius:12px; cursor:pointer; white-space:nowrap; }
+    .install-card { margin-top:20px; background:linear-gradient(135deg,#FFF4D6,#FFFFFF); border:2px solid var(--gold); }
+    .install-card h3 { margin-bottom:6px; }
+    .guide-tabs { display:flex; gap:8px; margin:6px 0 14px; }
+    .guide-tabs button { flex:1; padding:10px; border-radius:14px; border:2px solid var(--border); background:#fff; font:700 0.95rem inherit; color:var(--text); cursor:pointer; }
+    .guide-tabs button.on { background:var(--primary); border-color:var(--primary); color:#fff; }
+    .guide-step { display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px dashed var(--border); }
+    .guide-step:last-child { border-bottom:none; }
+    .guide-step .no { flex:none; width:30px; height:30px; border-radius:50%; background:var(--primary); color:#fff; font:700 1rem Mali,sans-serif; display:flex; align-items:center; justify-content:center; }
+    .guide-step .tx { flex:1; min-width:0; font-size:0.92rem; line-height:1.6; }
+    .guide-step .tx small { display:block; color:var(--text-muted); font-size:0.8rem; }
+    .gico { display:inline-flex; vertical-align:middle; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:#EEF2F7; margin:0 2px; }
+    .gico svg { width:18px; height:18px; }
     .qr-box { display:flex; justify-content:center; padding:12px; background:#fff; border-radius:18px; margin:10px auto; max-width:260px; }
     .qr-box svg { width:100%; height:auto; }
     .btn-danger { background:var(--danger); color:#fff; }
@@ -447,6 +459,9 @@
     <h1>ธนาคารดาว</h1>
     <p class="subtitle">สะสมดาว แลกรางวัล</p>
   </div>
+
+  <!-- ติดตั้งแอปลงมือถือ (ซ่อนเมื่อเปิดจากไอคอนบนหน้าจอโฮมแล้ว) -->
+  <div class="card install-card" id="install-card" hidden></div>
 
   <!-- ผู้ปกครอง: LINE Login -->
   <div class="card" style="margin-top:20px">
@@ -1557,6 +1572,7 @@ function showSettings() {
     <button class="btn btn-outline" style="color:var(--danger);border-color:var(--danger)" onclick="doLogout()">
       🚪 ออกจากระบบ (เครื่องนี้)
     </button>
+    <div style="text-align:center;margin-top:12px"><a href="#" onclick="showInstallGuide();return false" style="font-size:0.85rem;color:var(--primary);font-weight:700">📲 วิธีติดตั้งแอปบนมือถือ (ส่งให้คนในบ้าน)</a></div>
     <div id="version-slot" style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-top:16px">เวอร์ชัน ${esc(appVersionLabel())}</div>
   `);
   checkAppVersion();
@@ -3026,6 +3042,100 @@ function checkAppVersion() {
     }
   }).catch(function () {});
 }
+</script>
+
+<script>
+// ===================================================================
+// เริ่มต้นใช้งาน: ติดตั้งแอปลงหน้าจอโฮม (iPhone / Android) — ยังไม่ต้องเข้าสู่ระบบ
+//   · เปิดจาก LINE → ปุ่มพาออกไปเปิดใน Safari/Chrome (LINE รองรับ ?openExternalBrowser=1)
+//   · Android Chrome → ปุ่ม "ติดตั้งแอป" เปิดหน้าต่างติดตั้งได้ในแตะเดียว
+//   · iPhone → Apple ไม่ให้เว็บติดตั้งเอง จึงแสดงวิธีทีละขั้น
+// ===================================================================
+var deferredInstall = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredInstall = e; renderInstallCard(); });
+window.addEventListener('appinstalled', function () { deferredInstall = null; toast('🎉 ติดตั้งแล้ว! เปิดจากไอคอนดาวบนหน้าจอได้เลย', 4500); renderInstallCard(); });
+
+function isAndroid() { return /Android/i.test(navigator.userAgent); }
+function isMobileDevice() { return isIOS() || isAndroid(); }
+function iosBrowser() { var ua = navigator.userAgent; return /CriOS/.test(ua) ? 'chrome' : /FxiOS/.test(ua) ? 'firefox' : /EdgiOS/.test(ua) ? 'edge' : 'safari'; }
+function openOutsideLine() { location.href = location.origin + '/?openExternalBrowser=1&guide=1'; }
+
+var SVG_SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="#1E6FD9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+var SVG_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+var SVG_DOTS3 = '<svg viewBox="0 0 24 24" fill="#333"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
+var SVG_DOTSH = '<svg viewBox="0 0 24 24" fill="#333"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+
+function renderInstallCard() {
+  var el = document.getElementById('install-card');
+  if (!el) return;
+  if (isStandalone() || !isMobileDevice()) { el.hidden = true; return; }
+  el.hidden = false;
+  var btn;
+  if (inLineApp()) {
+    btn = '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px">ตอนนี้เปิดอยู่ในแอป LINE · ติดตั้งแอปต้องเปิดใน ' + (isIOS() ? 'Safari' : 'Chrome') + ' ก่อน</p>' +
+      '<button class="btn btn-gold" onclick="openOutsideLine()">🧭 เปิดใน ' + (isIOS() ? 'Safari' : 'Chrome') + '</button>';
+  } else if (deferredInstall) {
+    btn = '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px">ได้ไอคอนดาวบนหน้าจอ เปิดเต็มจอ และรับแจ้งเตือนได้</p>' +
+      '<button class="btn btn-gold" onclick="doInstall()">📲 ติดตั้งแอป</button>';
+  } else {
+    btn = '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px">ได้ไอคอนดาวบนหน้าจอ เปิดเต็มจอ และรับแจ้งเตือนได้</p>' +
+      '<button class="btn btn-gold" onclick="showInstallGuide()">📲 วิธีเริ่มต้นใช้งาน</button>';
+  }
+  el.innerHTML = '<h3>⭐ ติดตั้งแอปลงมือถือก่อนนะ</h3>' + btn +
+    '<div style="text-align:center;margin-top:8px"><a href="#" onclick="showInstallGuide();return false" style="font-size:0.82rem;color:var(--text-muted)">ดูวิธีแบบละเอียด</a></div>';
+}
+
+function doInstall() {
+  if (!deferredInstall) return showInstallGuide();
+  deferredInstall.prompt();
+  deferredInstall.userChoice.then(function (c) { if (c && c.outcome === 'accepted') toast('🎉 กำลังติดตั้ง...'); deferredInstall = null; renderInstallCard(); }).catch(function () {});
+}
+
+function guideStep(n, html, sub) { return '<div class="guide-step"><div class="no">' + n + '</div><div class="tx">' + html + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>'; }
+
+function installGuideHtml(os) {
+  var lineNote = inLineApp() ? '<button class="btn btn-gold" style="margin-bottom:10px" onclick="openOutsideLine()">🧭 เปิดใน ' + (os === 'ios' ? 'Safari' : 'Chrome') + ' ก่อน</button>' : '';
+  var after = guideStep('★', '<b>เปิดแอปจากไอคอนดาว</b> แล้วเข้าสู่ระบบในแอป',
+    'ผู้ปกครอง: กด "เข้าสู่ระบบด้วย LINE" แล้วกดยืนยันรหัส 4 ตัว · เด็ก: ใส่รหัสครอบครัว + PIN · ผู้ปกครองเปิดแจ้งเตือนได้ที่ ⚙️ ตั้งค่า');
+  if (os === 'ios') {
+    var br = iosBrowser();
+    var shareWhere = br === 'chrome' ? 'ปุ่ม <span class="gico">' + SVG_SHARE + '</span> <b>แชร์</b> ที่แถบที่อยู่ด้านบน'
+      : 'ปุ่ม <span class="gico">' + SVG_SHARE + '</span> <b>แชร์</b> ที่แถบด้านล่าง';
+    return lineNote +
+      guideStep(1, 'เปิดลิงก์นี้ใน <b>' + (br === 'safari' ? 'Safari' : br === 'chrome' ? 'Chrome' : 'Safari') + '</b>', inLineApp() ? 'ตอนนี้อยู่ในแอป LINE กดปุ่มด้านบนก่อน' : 'ถ้าเปิดจาก LINE ให้กดปุ่ม "เปิดใน Safari" ในหน้าแรก') +
+      guideStep(2, 'กด' + shareWhere, br === 'safari' ? 'ถ้าไม่เห็นปุ่มแชร์ ให้กด <span class="gico">' + SVG_DOTSH + '</span> (⋯) ก่อน แล้วเลือก "แชร์"' : '') +
+      guideStep(3, 'เลื่อนลงแล้วเลือก <span class="gico">' + SVG_PLUS + '</span> <b>"เพิ่มไปยังหน้าจอโฮม"</b>', 'ถ้าไม่เจอ เลื่อนลงล่างสุดแล้วกด "แก้ไขการทำงาน" เพื่อเพิ่มเมนูนี้') +
+      guideStep(4, 'เปิด <b>"เปิดเป็นเว็บแอป"</b> (ถ้ามี) แล้วกด <b>"เพิ่ม"</b> มุมขวาบน', 'ไอคอนดาวหมวกซานต้าจะขึ้นบนหน้าจอโฮม') +
+      after +
+      '<p style="font-size:0.78rem;color:var(--text-muted);margin-top:10px">ต้องเป็น iOS 16.4 ขึ้นไปจึงจะรับแจ้งเตือนได้ (ตั้งค่า → ทั่วไป → เกี่ยวกับ)</p>';
+  }
+  return lineNote +
+    (deferredInstall ? '<button class="btn btn-gold" style="margin-bottom:10px" onclick="closeModal();doInstall()">📲 ติดตั้งแอป (แตะเดียว)</button><p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-bottom:6px">หรือทำเองตามขั้นตอนนี้</p>' : '') +
+    guideStep(1, 'เปิดลิงก์นี้ใน <b>Chrome</b>', inLineApp() ? 'ตอนนี้อยู่ในแอป LINE กดปุ่มด้านบนก่อน' : '') +
+    guideStep(2, 'กดปุ่ม <span class="gico">' + SVG_DOTS3 + '</span> <b>เมนู</b> มุมขวาบน', '') +
+    guideStep(3, 'เลือก <b>"ติดตั้งแอป"</b> หรือ <b>"เพิ่มลงในหน้าจอหลัก"</b>', 'Samsung Internet: เมนู ☰ → "เพิ่มหน้าไปยัง" → "หน้าจอหลัก"') +
+    guideStep(4, 'กด <b>"ติดตั้ง"</b> / <b>"เพิ่ม"</b>', 'ไอคอนดาวหมวกซานต้าจะขึ้นบนหน้าจอหลัก') +
+    after;
+}
+
+function showInstallGuide(os) {
+  os = os || (isAndroid() ? 'android' : 'ios');
+  openModal('<h2>📲 วิธีเริ่มต้นใช้งาน</h2>' +
+    '<div class="guide-tabs"><button class="' + (os === 'ios' ? 'on' : '') + '" onclick="showInstallGuide(\'ios\')">🍎 iPhone / iPad</button>' +
+    '<button class="' + (os === 'android' ? 'on' : '') + '" onclick="showInstallGuide(\'android\')">🤖 Android</button></div>' +
+    installGuideHtml(os) +
+    '<button class="btn btn-outline" style="margin-top:14px" onclick="closeModal()">ปิด</button>');
+}
+
+(function () {
+  renderInstallCard();
+  var q = new URLSearchParams(location.search);
+  // มาจากปุ่ม "เปิดใน Safari/Chrome" หรือลิงก์ที่ใส่ ?guide=1 → เปิดคู่มือให้เลย
+  if (q.get('guide') && !isStandalone() && isMobileDevice()) {
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    setTimeout(function () { if (!currentMember) showInstallGuide(); }, 600);
+  }
+})();
 </script>
 </body>
 </html>
