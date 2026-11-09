@@ -139,6 +139,16 @@ async function pendingCount(env, familyId) {
 // events: [{ type: 'submit'|'redeem', familyId, ... }]
 export async function notifyApp(env, origin, events) {
   for (const ev of events || []) {
+    // ภารกิจด่วน: แจ้งไปที่เครื่องของเด็กคนนั้น
+    if (ev.type === 'urgent_new' || ev.type === 'urgent_remind') {
+      const { results: subs } = await env.DB.prepare('SELECT * FROM PushSubs WHERE member_id = ?').bind(String(ev.childId)).all();
+      if (!subs.length) continue;
+      const payload = ev.type === 'urgent_new'
+        ? { title: `⚡ ${ev.parentName} มีภารกิจด่วน!!`, body: `${ev.icon} ${ev.title} · ⭐ ${ev.stars} ดาว`, tag: 'urgent-' + ev.urgentId, url: '/#urgent', kind: 'urgent' }
+        : { title: `⏰ เหลืออีก ${ev.minutesLeft} นาที!`, body: `ภารกิจด่วนจาก ${ev.parentName}: ${ev.icon} ${ev.title}`, tag: 'urgent-' + ev.urgentId, url: '/#urgent', kind: 'urgent' };
+      await deliver(env, subs, payload, origin);
+      continue;
+    }
     const { results: parents } = await env.DB.prepare(
       "SELECT member_id, line_user_id, notify_channel, notify_submission FROM Members WHERE family_id = ? AND role = 'parent'").bind(ev.familyId).all();
     // ค่าเริ่มต้น: ผูก LINE = LINE (แบบเดิม) · ไม่ผูก LINE = แอป
@@ -156,6 +166,11 @@ export async function notifyApp(env, origin, events) {
         tag: 'sub-' + ev.submissionId, url: '/#approvals', subId: ev.submissionId, kind: 'submit', badge };
     } else if (ev.type === 'redeem') {
       payload = { title: `🎁 ${ev.childName} แลกรางวัล`, body: `${ev.rewardTitle} (${ev.stars} ดาว)`, tag: 'redeem-' + Date.now(), url: '/', kind: 'redeem', badge };
+    } else if (ev.type === 'urgent_declined') {
+      payload = { title: `😴 ${ev.childName}: ไว้คราวหน้านะ ยุ่งอยู่`, body: `ภารกิจด่วน ${ev.icon} ${ev.title}`, tag: 'urgent-' + ev.urgentId, url: '/#urgent', kind: 'urgent', badge };
+    } else if (ev.type === 'urgent_expired') {
+      payload = { title: ev.unseen ? `📭 ${ev.childName} ยังไม่ได้เปิดดูภารกิจด่วน` : `⏰ ${ev.childName} ทำภารกิจด่วนไม่ทันเวลา`,
+        body: `${ev.icon} ${ev.title} · ปิดภารกิจแล้ว`, tag: 'urgent-' + ev.urgentId, url: '/#urgent', kind: 'urgent', badge };
     } else continue;
     await deliver(env, subs, payload, origin);
   }

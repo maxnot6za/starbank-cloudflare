@@ -18,6 +18,7 @@ const MEMBER_ARG = {
   webSaveMission: 1, webSaveReward: 1, webDeleteMission: 1, webDeleteReward: 1,
   toggleSubmissionNotify: 0, getDailySummary: 2,
   setWheelEnabled: 0, setWheelPrizes: 0, getWheelStatus: 0,
+  createUrgent: 0, cancelUrgent: 0, urgentSeen: 0, submitUrgent: 0, declineUrgent: 0,
 };
 // คำสั่งเข้าระบบแบบเก่า (ลิงก์ ?auto=, รหัสครอบครัว) ถูกแทนด้วย /auth/* แล้ว
 
@@ -97,6 +98,7 @@ async function handleApi(fn, request, env, ctx) {
       notifyFamilies(env, ctx, store.touched, request.headers.get('x-client-id'));
       const origin = new URL(request.url).origin;
       if (S.events.length) ctx.waitUntil(notifyApp(env, origin, S.events).catch(e => console.log('app push error', e)));
+      if (S.urgentWake) scheduleUrgent(env, ctx, session.member.family_id, S.urgentWake, origin);
       await sendLine(env, await filterLineOutbox(env, scope.familyIds, S.outbox), origin);
       return json({ ok: true, value: value === undefined ? null : value }, 200, extra);
     } catch (e) {
@@ -125,6 +127,15 @@ function notifyFamilies(env, ctx, families, from) {
       .catch(e => console.log('notify error', e));
     if (ctx && ctx.waitUntil) ctx.waitUntil(p);
   }
+}
+
+// ภารกิจด่วน: ตั้งนาฬิกาปลุกที่ศูนย์กลางของครอบครัว → ปิดภารกิจที่หมดเวลา/เตือนเด็ก ตรงเวลาแม้ไม่มีใครเปิดแอป
+function scheduleUrgent(env, ctx, familyId, at, origin) {
+  if (!env.FAMILY_HUB) return;
+  const hub = env.FAMILY_HUB.get(env.FAMILY_HUB.idFromName(String(familyId)));
+  const p = hub.fetch('https://hub/urgent-wake', { method: 'POST', body: JSON.stringify({ familyId: String(familyId), at, origin }) })
+    .catch(e => console.log('urgent schedule error', e));
+  if (ctx && ctx.waitUntil) ctx.waitUntil(p);
 }
 
 // ---------- LINE ----------

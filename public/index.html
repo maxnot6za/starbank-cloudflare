@@ -455,6 +455,46 @@
 
     /* === STAR COUNT GOLD === */
     .star-hero .star-count { color:#FFFFFF; text-shadow:0 2px 0 rgba(0,0,0,0.08); }
+
+    /* ===== ภารกิจด่วน ===== */
+    .u-card { position:relative; overflow:hidden; background:#fff; border:3px solid #FF5A36; border-radius:20px; padding:14px; margin-bottom:14px; box-shadow:0 6px 18px rgba(255,90,54,.15); }
+    .u-card .u-tag { position:absolute; right:-34px; top:12px; background:#FF5A36; color:#fff; font-size:.72rem; font-weight:700; transform:rotate(35deg); padding:3px 38px; }
+    .u-row { display:flex; align-items:center; gap:10px; }
+    .u-ico { font-size:2rem; flex:none; }
+    .u-title { font-weight:700; font-size:1.02rem; line-height:1.35; }
+    .u-sub { font-size:.8rem; color:var(--text-muted); }
+    .u-timer { font-size:1.6rem; font-weight:700; color:#FF5A36; font-variant-numeric:tabular-nums; }
+    .u-bar { height:10px; border-radius:99px; background:#FFE3D9; margin:8px 0 12px; overflow:hidden; }
+    .u-bar i { display:block; height:100%; background:linear-gradient(90deg,#FFB020,#FF5A36); transition:width 1s linear; }
+    .u-btn { display:block; width:100%; border:none; border-radius:14px; padding:13px; font:inherit; font-size:1.02rem; font-weight:700; color:#fff; cursor:pointer; text-align:center; }
+    .u-btn.red { background:linear-gradient(135deg,#FF5A36,#FF7A45); box-shadow:0 4px 0 #c43c1c; }
+    .u-btn.mint { background:var(--mint); box-shadow:0 4px 0 var(--mint-dark); }
+    .u-btn.ghost { background:#fff; color:var(--text-muted); border:2px solid var(--border); }
+    .u-btn:disabled { opacity:.55; }
+    .u-banner { text-align:center; margin:-8px -4px 0; }
+    .u-ribbon { display:inline-block; background:linear-gradient(135deg,#FF5A36,#FF7A45); color:#fff; font-weight:700; font-size:1.2rem; padding:6px 18px; border-radius:999px; transform:rotate(-2deg); box-shadow:0 4px 0 #c43c1c; }
+    .u-mascot { width:150px; height:auto; display:block; margin:8px auto 0; }
+    .u-mascot.bounce { animation:u-bounce 1.6s ease-in-out infinite; }
+    @keyframes u-bounce { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-8px) } }
+    .u-reward { display:inline-block; background:var(--gold-light); color:var(--gold-dark); font-weight:700; border-radius:999px; padding:4px 14px; margin-top:6px; }
+    .u-cdbox { display:flex; justify-content:center; gap:6px; margin:8px 0 14px; }
+    .u-cdbox div { background:var(--text); color:#fff; border-radius:12px; min-width:62px; padding:6px 4px; }
+    .u-cdbox b { display:block; font-size:1.7rem; line-height:1.1; font-variant-numeric:tabular-nums; }
+    .u-cdbox span { font-size:.7rem; opacity:.85; }
+    .u-pill { font-size:.75rem; font-weight:700; border-radius:999px; padding:4px 10px; white-space:nowrap; }
+    .u-p-wait { background:#EEF1F5; color:#5b6577; } .u-p-run { background:#FFF0EB; color:#FF5A36; } .u-p-sent { background:#E2F5EE; color:var(--mint-dark); }
+    .u-p-no { background:#F3EEF8; color:#7a5ea8; } .u-p-out { background:#FDECEC; color:var(--danger); }
+    .u-kid { display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid #eef3f1; }
+    .u-kid:first-child { border-top:none; }
+    .u-chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .u-chip { border:2px solid var(--border); border-radius:999px; padding:6px 12px; font:inherit; font-size:.9rem; font-weight:600; background:#fff; color:var(--text); cursor:pointer; }
+    .u-chip.on { border-color:#FF5A36; background:#FFF0EB; color:#FF5A36; }
+    .u-dur { display:flex; gap:8px; }
+    .u-dur label { flex:1; text-align:center; border:2px solid var(--border); border-radius:12px; padding:6px 4px; background:#fff; }
+    .u-dur input { width:100%; border:none; text-align:center; font:inherit; font-size:1.4rem; font-weight:700; background:transparent; color:var(--text); padding:0; }
+    .u-dur span { font-size:.75rem; color:var(--text-muted); }
+    .u-in { width:100%; border:2px solid var(--border); border-radius:12px; padding:11px 12px; font:inherit; font-size:1rem; background:#fff; color:var(--text); }
+    .u-flabel { display:block; font-size:.82rem; font-weight:700; color:var(--text-muted); margin:12px 0 6px; }
   </style>
 </head>
 <body>
@@ -566,7 +606,9 @@
     <div class="star-label">⭐ ดาวสะสม</div>
   </div>
 
+  <div id="child-urgent"></div>
   <div id="child-wheel-card"></div>
+  <div id="kid-push-slot"></div>
 
   <div class="stats-grid">
     <div class="stat-card">
@@ -639,6 +681,12 @@
   <div class="section-title">👧 สมาชิกเด็ก</div>
   <div id="parent-children-list"></div>
 
+  <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+    <span>⚡ ภารกิจด่วน</span>
+    <button class="btn btn-sm" style="background:linear-gradient(135deg,#FF5A36,#FF7A45);color:#fff" onclick="showCreateUrgent()">+ สร้าง</button>
+  </div>
+  <div id="parent-urgent"></div>
+
   <div id="redemption-alert-box" style="display:none;background:#FFF8E6;border:2px solid var(--gold);border-radius:var(--radius);padding:16px;margin-bottom:16px;animation:pulse-border 2s ease-in-out infinite">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
       <span style="font-size:1.4rem">🎁</span>
@@ -660,7 +708,10 @@
 <div id="screen-parent-missions" class="screen">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
     <div class="section-title" style="margin:0">📋 จัดการภารกิจ</div>
-    <button class="btn btn-sm btn-primary" onclick="showAddMission()">+ เพิ่ม</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm" style="background:linear-gradient(135deg,#FF5A36,#FF7A45);color:#fff" onclick="showCreateUrgent()">⚡ ด่วน</button>
+      <button class="btn btn-sm btn-primary" onclick="showAddMission()">+ เพิ่ม</button>
+    </div>
   </div>
   <div id="parent-missions-list"></div>
 </div>
@@ -941,6 +992,8 @@ function renderChildHome(d) {
   document.getElementById('child-earned').textContent = d.stats.totalEarned;
   document.getElementById('child-completed').textContent = d.stats.missionsCompleted;
   renderWheelCard(d);
+  renderUrgentKid(d);
+  renderKidPush();
 
   const list = document.getElementById('child-missions-list');
   if (!d.missions.length) {
@@ -1118,6 +1171,7 @@ function renderParentHome(d) {
   document.getElementById('parent-avatar').textContent = d.member.avatar;
   document.getElementById('parent-name').textContent = d.member.name;
   document.getElementById('parent-family-name').textContent = d.family.family_name;
+  renderUrgentParent(d);
 
   // children stars
   const cl = document.getElementById('parent-children-list');
@@ -2397,6 +2451,277 @@ function armFirstTap() {
 
 <script>
 // ===================================================================
+// ⚡ ภารกิจด่วน — ผู้ปกครองสั่ง + ตั้งเวลา · เด็กเห็นป้ายแล้วเริ่มนับถอยหลัง
+// เวลาอ้างอิงนาฬิกาเซิร์ฟเวอร์ (serverNow) → เปลี่ยนเวลาในเครื่องไม่มีผล
+// ===================================================================
+var URG = { offset: 0, shown: {}, seenCalled: {}, ticking: null, deferBanner: false };
+var URG_IMG = { go: '/img/mascot/dao-go.webp', sleep: '/img/mascot/dao-sleep.webp', timeout: '/img/mascot/dao-timeout.webp', yay: '/img/mascot/dao-yay.webp' };
+
+function urgNow() { return Date.now() + URG.offset; }
+function urgSync(serverNow) { if (serverNow) { var t = new Date(serverNow).getTime(); if (!isNaN(t)) URG.offset = t - Date.now(); } }
+function urgDur(sec) {
+  sec = Number(sec) || 0;
+  var d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.round(sec % 3600 / 60);
+  var p = []; if (d) p.push(d + ' วัน'); if (h) p.push(h + ' ชม.'); if (m) p.push(m + ' นาที');
+  return p.join(' ') || '1 นาที';
+}
+function urgClock(ms) {
+  ms = Math.max(0, ms); var s = Math.floor(ms / 1000);
+  var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  var two = function (n) { return (n < 10 ? '0' : '') + n; };
+  if (d) return d + ' วัน ' + two(h) + ':' + two(m) + ':' + two(x);
+  return h ? h + ':' + two(m) + ':' + two(x) : two(m) + ':' + two(x);
+}
+function urgStore(key, val) { try { if (val === undefined) return JSON.parse(localStorage.getItem(key) || '{}'); localStorage.setItem(key, JSON.stringify(val)); } catch (e) { return {}; } }
+function urgMarkDone(id) { var s = urgStore('urg_done'); s[id] = Date.now(); for (var k in s) if (Date.now() - s[k] > 4 * 86400000) delete s[k]; urgStore('urg_done', s); }
+
+// นาฬิกาทุกตัวบนจอ: <span class="u-cd" data-dl="เวลาครบกำหนด ms">
+function urgTick() {
+  var now = urgNow(), ended = false;
+  document.querySelectorAll('[data-dl]').forEach(function (el) {
+    var dl = Number(el.getAttribute('data-dl')), left = dl - now;
+    if (el.classList.contains('u-cdbox')) {
+      var s = Math.max(0, Math.floor(left / 1000));
+      var b = el.querySelectorAll('b');
+      if (b.length === 3) { b[0].textContent = String(Math.floor(s / 3600)).padStart(2, '0'); b[1].textContent = String(Math.floor(s % 3600 / 60)).padStart(2, '0'); b[2].textContent = String(s % 60).padStart(2, '0'); }
+    } else if (el.classList.contains('u-barfill')) {
+      var tot = Number(el.getAttribute('data-total')) || 1;
+      el.style.width = Math.max(0, Math.min(100, left / tot * 100)) + '%';
+    } else el.textContent = left > 0 ? urgClock(left) : 'หมดเวลา';
+    if (left <= 0 && el.getAttribute('data-kid') && !el.__ended) { el.__ended = true; ended = true; }
+  });
+  // ครบเวลาบนจอเด็ก → รอช่วงผ่อนผัน 6 วิ แล้วถามเซิร์ฟเวอร์ (ตัวตัดสินจริง)
+  if (ended) setTimeout(function () { if (typeof Live !== 'undefined') Live.request(); }, 6500);
+}
+function urgStartTick() { if (!URG.ticking) URG.ticking = setInterval(urgTick, 1000); urgTick(); }
+
+// ---------------- เด็ก ----------------
+function renderUrgentKid(d) {
+  var box = document.getElementById('child-urgent'); if (!box) return;
+  var u = d.urgent || { active: [], recent: [] };
+  urgSync(u.serverNow);
+  var a = (u.active || [])[0];
+  if (!a) box.innerHTML = '';
+  else if (a.status === 'pending') {
+    box.innerHTML = '<div class="u-card" onclick="showUrgentBanner()" style="cursor:pointer"><div class="u-tag">ด่วน!!</div>' +
+      '<div class="u-row"><span class="u-ico">' + esc(a.icon) + '</span><div style="flex:1"><div class="u-title">⚡ ภารกิจด่วนจาก ' + esc(a.from_name) + '</div>' +
+      '<div class="u-sub">แตะเพื่อดูภารกิจ · ⭐ ' + a.stars + ' ดาว</div></div></div></div>';
+  } else {
+    var dl = new Date(a.deadline_at).getTime(), tot = a.duration_sec * 1000;
+    box.innerHTML = '<div class="u-card"><div class="u-tag">ด่วน!!</div>' +
+      '<div class="u-row"><span class="u-ico">' + esc(a.icon) + '</span><div style="flex:1;min-width:0"><div class="u-title">' + esc(a.title) + '</div>' +
+      '<div class="u-sub">จาก ' + esc(a.from_name) + ' · ⭐ ' + a.stars + ' ดาว</div></div></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px"><span class="u-sub">เหลือเวลา</span><span class="u-timer" data-kid="1" data-dl="' + dl + '"></span></div>' +
+      '<div class="u-bar"><i class="u-barfill" data-dl="' + dl + '" data-total="' + tot + '"></i></div>' +
+      '<button class="u-btn mint" id="u-submit-btn" onclick="submitUrgentNow(\'' + a.urgent_id + '\')">✅ ทำเสร็จแล้ว ส่งเลย!</button></div>';
+  }
+  urgStartTick();
+  window.__urgActive = a || null;
+  // ป้ายใหญ่: แสดงครั้งเดียวต่อภารกิจ เมื่อหน้าจอเปิดอยู่จริง
+  if (a && a.status === 'pending' && !URG.shown[a.urgent_id]) {
+    if (document.visibilityState === 'visible') showUrgentBanner(); else URG.deferBanner = true;
+  } else urgOutcomes(u.recent || []);
+}
+
+function showUrgentBanner() {
+  var a = window.__urgActive; if (!a) return;
+  URG.shown[a.urgent_id] = true;
+  var tot = a.duration_sec * 1000;
+  var h = Math.floor(a.duration_sec / 3600), m = Math.floor(a.duration_sec % 3600 / 60);
+  var long = a.duration_sec >= 86400;
+  openModal('<div class="u-banner"><div class="u-ribbon">⚡ ภารกิจด่วน!!</div>' +
+    '<img class="u-mascot bounce" src="' + URG_IMG.go + '" alt="น้องดาว">' +
+    '<div class="u-sub" style="margin-top:4px">จาก ' + esc(a.from_name) + '</div>' +
+    '<div style="font-size:1.35rem;font-weight:700;margin:2px 0">' + esc(a.icon) + ' ' + esc(a.title) + '</div>' +
+    '<div class="u-reward">ได้ ⭐ ' + a.stars + ' ดาว</div>' +
+    '<div style="margin-top:10px">ทำภารกิจให้สำเร็จและกดส่งภายใน</div>' +
+    (long ? '<div class="u-timer" id="u-banner-cd" style="margin:8px 0 14px">' + urgDur(a.duration_sec) + '</div>'
+          : '<div class="u-cdbox" id="u-banner-cd"><div><b>' + String(h).padStart(2, '0') + '</b><span>ชั่วโมง</span></div><div><b>' + String(m).padStart(2, '0') + '</b><span>นาที</span></div><div><b>00</b><span>วินาที</span></div></div>') +
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+    '<button class="u-btn red" onclick="closeModal();Live.request()">💪 ไปทำเลย!</button>' +
+    '<button class="u-btn ghost" id="u-decline-btn" onclick="declineUrgentNow(\'' + a.urgent_id + '\')">😴 ไว้คราวหน้านะ ยุ่งอยู่</button></div></div>');
+  // เห็นป้ายแล้ว → บอกเซิร์ฟเวอร์ให้เริ่มนับ (ครั้งเดียว)
+  if (URG.seenCalled[a.urgent_id]) return;
+  URG.seenCalled[a.urgent_id] = true;
+  google.script.run.withSuccessHandler(function (r) {
+    urgSync(r.serverNow);
+    var el = document.getElementById('u-banner-cd');
+    if (el && r.urgent && r.urgent.deadline_at) { el.setAttribute('data-dl', new Date(r.urgent.deadline_at).getTime()); urgTick(); }
+  }).withFailureHandler(function () { URG.seenCalled[a.urgent_id] = false; }).urgentSeen(currentMember.memberId, a.urgent_id);
+}
+
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible' && URG.deferBanner && currentMember && currentMember.role === 'child') {
+    URG.deferBanner = false;
+    var a = window.__urgActive;
+    if (a && a.status === 'pending' && !URG.shown[a.urgent_id]) showUrgentBanner();
+  }
+});
+
+function urgPopup(img, title, msg, btn) {
+  openModal('<div class="u-banner"><img class="u-mascot" src="' + img + '" alt="น้องดาว" style="width:140px">' +
+    '<div style="font-size:1.3rem;font-weight:700;margin-top:6px">' + title + '</div>' +
+    '<div style="margin:6px 0 14px;line-height:1.6">' + msg + '</div>' +
+    '<button class="u-btn mint" onclick="closeModal();Live.request()">' + (btn || 'ตกลง') + '</button></div>');
+}
+
+function submitUrgentNow(id) {
+  var b = document.getElementById('u-submit-btn'); if (b) { b.disabled = true; b.textContent = '⏳ กำลังส่ง...'; }
+  google.script.run.withSuccessHandler(function (r) {
+    urgMarkDone(id);
+    if (r && r.expired) urgPopup(URG_IMG.timeout, 'หมดเวลาแล้ว ⏰', 'ภารกิจด่วนนี้ปิดแล้ว ไม่เป็นไรนะ<br>ครั้งหน้าเอาใหม่ สู้ ๆ! 💪');
+    else urgPopup(URG_IMG.yay, 'ส่งทันเวลา! 🎉', 'เก่งมาก! รอผู้ปกครองอนุมัติ<br>แล้วรับดาวไปเลย ⭐');
+  }).withFailureHandler(function (e) {
+    if (b) { b.disabled = false; b.textContent = '✅ ทำเสร็จแล้ว ส่งเลย!'; }
+    toast('ส่งไม่สำเร็จ: ' + e.message, 4000);
+    if (typeof Live !== 'undefined') Live.request();
+  }).submitUrgent(currentMember.memberId, id);
+}
+
+function declineUrgentNow(id) {
+  var b = document.getElementById('u-decline-btn'); if (b) b.disabled = true;
+  var a = window.__urgActive;
+  google.script.run.withSuccessHandler(function () {
+    urgMarkDone(id);
+    urgPopup(URG_IMG.sleep, 'ไม่เป็นไรนะ 😊', 'บอก ' + esc(a ? a.from_name : 'ผู้ปกครอง') + ' ให้แล้วว่ารอบนี้ยุ่งอยู่<br>ไว้ภารกิจด่วนครั้งหน้านะ!');
+  }).withFailureHandler(function (e) { if (b) b.disabled = false; toast(e.message); }).declineUrgent(currentMember.memberId, id);
+}
+
+// ภารกิจที่จบไปตอนเด็กไม่ได้เปิดแอป → บอกครั้งเดียว
+function urgOutcomes(recent) {
+  if (document.getElementById('modal-overlay').classList.contains('show')) return;
+  var done = urgStore('urg_done');
+  var r = recent.filter(function (x) { return !done[x.urgent_id] && (x.status === 'expired' || x.status === 'cancelled'); })[0];
+  if (!r) return;
+  urgMarkDone(r.urgent_id);
+  if (r.status === 'expired') urgPopup(URG_IMG.timeout, r.seen_at ? 'หมดเวลาแล้ว ⏰' : 'ภารกิจด่วนหมดเวลาแล้ว ⏰',
+    esc(r.icon) + ' ' + esc(r.title) + '<br>ไม่เป็นไรนะ ครั้งหน้าเอาใหม่ สู้ ๆ! 💪');
+  else urgPopup(URG_IMG.sleep, 'ยกเลิกภารกิจด่วนแล้ว', esc(r.from_name) + ' ยกเลิก "' + esc(r.title) + '" แล้ว<br>ไม่ต้องทำแล้วนะ 😊');
+}
+
+// แจ้งเตือนในเครื่องเด็ก (ไว้รับภารกิจด่วน)
+function renderKidPush() {
+  var el = document.getElementById('kid-push-slot'); if (!el) return;
+  if (urgStore('urg_push_hide').hide) { el.innerHTML = ''; return; }
+  var card = function (inner) { el.innerHTML = '<div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:.88rem">' + inner + '</div>'; };
+  var close = '<button onclick="urgStore(\'urg_push_hide\',{hide:1});renderKidPush()" aria-label="ปิด" style="border:none;background:none;font-size:1.1rem;color:var(--text-muted);cursor:pointer">✕</button>';
+  if (!pushSupported()) {
+    if (isIOS() && !isStandalone()) card('<span style="font-size:1.5rem">🔔</span><div style="flex:1">ติดตั้งแอปลงหน้าจอโฮม เพื่อรับแจ้งเตือนภารกิจด่วน <a href="#" onclick="showInstallGuide();return false" style="color:var(--primary);font-weight:700">ดูวิธี</a></div>' + close);
+    else el.innerHTML = '';
+    return;
+  }
+  if (Notification.permission === 'denied') { el.innerHTML = ''; return; }
+  var btn = '<span style="font-size:1.5rem">🔔</span><div style="flex:1">เปิดแจ้งเตือน จะได้รู้ทันทีเมื่อมีภารกิจด่วน</div><button class="btn btn-sm btn-gold" onclick="enableKidPush()">เปิด</button>' + close;
+  if (Notification.permission !== 'granted') { card(btn); return; }
+  if (window.__kidPushOk === currentMember.memberId) { el.innerHTML = ''; return; }
+  currentSub().then(function (sub) {
+    if (!sub) { card(btn); return; }
+    return authApi('kidPushState', [sub.endpoint]).then(function (st) {
+      if (st.thisDevice) { window.__kidPushOk = currentMember.memberId; el.innerHTML = ''; }
+      else if (st.owner) card('<span style="font-size:1.5rem">🔔</span><div style="flex:1">เครื่องนี้รับแจ้งเตือนของ ' + esc(st.owner) + ' อยู่</div><button class="btn btn-sm btn-gold" onclick="enableKidPush()">ให้หนูแทน</button>' + close);
+      else card(btn);
+    });
+  }).catch(function () { el.innerHTML = ''; });
+}
+
+function enableKidPush(force) {
+  Notification.requestPermission().then(function (perm) {
+    if (perm !== 'granted') throw new Error('ยังไม่ได้อนุญาตการแจ้งเตือน');
+    return navigator.serviceWorker.register('/sw.js').then(function () { return navigator.serviceWorker.ready; });
+  }).then(function (reg) {
+    return authApi('kidPushState').then(function (st) {
+      return reg.pushManager.getSubscription().then(function (old) { return old || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(st.publicKey) }); });
+    });
+  }).then(function (sub) { return authApi('kidPushSubscribe', [sub.toJSON(), !!force]); })
+  .then(function (r) {
+    if (r && r.needConfirm) {
+      openModal('<h2>🔔 ใช้เครื่องนี้รับแจ้งเตือนของหนู?</h2><p style="line-height:1.7;margin:10px 0 16px">ตอนนี้เครื่องนี้รับแจ้งเตือนของ <b>' + esc(r.owner) + '</b> อยู่<br>ถ้าเปลี่ยน ' + esc(r.owner) + ' จะไม่ได้แจ้งเตือนที่เครื่องนี้แล้ว</p>' +
+        '<div style="display:flex;flex-direction:column;gap:10px"><button class="u-btn red" onclick="closeModal();enableKidPush(true)">เปลี่ยนเป็นของหนู</button><button class="u-btn ghost" onclick="closeModal()">ไม่เปลี่ยน</button></div>');
+      return;
+    }
+    window.__kidPushOk = currentMember.memberId;
+    toast('🔔 เปิดแจ้งเตือนแล้ว!');
+    renderKidPush();
+  }).catch(function (e) { toast(e.message || 'เปิดแจ้งเตือนไม่สำเร็จ', 4000); });
+}
+
+// ---------------- ผู้ปกครอง ----------------
+function urgKidPill(k) {
+  if (k.status === 'pending') return '<span class="u-pill u-p-wait">ยังไม่เปิดดู</span>';
+  if (k.status === 'running') return '<span class="u-pill u-p-run">กำลังทำ · เหลือ <span data-dl="' + new Date(k.deadline_at).getTime() + '"></span></span>';
+  if (k.status === 'submitted') {
+    if (k.review === 'approved') return '<span class="u-pill u-p-sent">✅ อนุมัติแล้ว</span>';
+    if (k.review === 'rejected') return '<span class="u-pill u-p-out">ไม่อนุมัติ</span>';
+    return '<span class="u-pill u-p-sent" style="cursor:pointer" onclick="parentNav(\'approvals\')">ส่งแล้ว รออนุมัติ ›</span>';
+  }
+  if (k.status === 'declined') return '<span class="u-pill u-p-no">ไว้คราวหน้า</span>';
+  if (k.status === 'expired') return '<span class="u-pill u-p-out">' + (k.seen_at ? 'หมดเวลา' : 'ไม่ได้เปิดดู') + '</span>';
+  return '<span class="u-pill u-p-wait">ยกเลิกแล้ว</span>';
+}
+function renderUrgentParent(d) {
+  var box = document.getElementById('parent-urgent'); if (!box) return;
+  urgSync(d.serverNow);
+  var g = d.urgent || [];
+  if (!g.length) { box.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;margin:-4px 0 16px">สั่งภารกิจเร่งด่วนพร้อมนับเวลาถอยหลัง ลูกได้แจ้งเตือนทันที</div>'; return; }
+  box.innerHTML = g.map(function (x) {
+    return '<div class="card" style="padding:14px' + (x.active ? ';border:2px solid #FF5A36' : '') + '">' +
+      '<div class="u-row"><span class="u-ico" style="font-size:1.7rem">' + esc(x.icon) + '</span><div style="flex:1;min-width:0"><div class="u-title">' + esc(x.title) + '</div>' +
+      '<div class="u-sub">⭐ ' + x.stars + ' ดาว · ' + urgDur(x.duration_sec) + ' · โดย ' + esc(x.from_name) + '</div></div></div>' +
+      '<div style="margin-top:6px">' + x.kids.map(function (k) {
+        return '<div class="u-kid"><span style="font-size:1.4rem">' + esc(k.child_avatar) + '</span><span style="flex:1;font-weight:600">' + esc(k.child_name) + '</span>' + urgKidPill(k) + '</div>';
+      }).join('') + '</div>' +
+      (x.active ? '<button class="u-btn ghost" style="margin-top:8px;padding:9px;font-size:.9rem" onclick="cancelUrgentBatch(this,\'' + x.batch_id + '\')">ยกเลิกภารกิจด่วน</button>' : '') +
+      '</div>';
+  }).join('');
+  urgStartTick();
+}
+
+function cancelUrgentBatch(btn, batchId) {
+  if (!btn.__armed) { btn.__armed = true; btn.textContent = 'แตะอีกครั้งเพื่อยืนยันยกเลิก'; btn.style.color = 'var(--danger)'; setTimeout(function () { btn.__armed = false; btn.textContent = 'ยกเลิกภารกิจด่วน'; btn.style.color = ''; }, 4000); return; }
+  btn.disabled = true;
+  google.script.run.withSuccessHandler(function () { toast('ยกเลิกภารกิจด่วนแล้ว'); Live.request(); })
+    .withFailureHandler(function (e) { btn.disabled = false; toast(e.message); }).cancelUrgent(currentMember.memberId, batchId);
+}
+
+var URG_ICONS = ['⚡', '🧸', '🧹', '🍽️', '🛏️', '🧺', '📚', '🚿', '🪴', '🗑️', '🦷', '👕'];
+function showCreateUrgent() {
+  var kids = (dashboardData && dashboardData.children) || [];
+  if (!kids.length) return toast('เพิ่มสมาชิกเด็กก่อนนะ');
+  window.__urgForm = { icon: '⚡', kids: kids.length === 1 ? [kids[0].member_id] : [] };
+  openModal('<h2>⚡ สร้างภารกิจด่วน</h2>' +
+    '<label class="u-flabel">ภารกิจ</label><input id="u-title" class="u-in" maxlength="60" placeholder="เช่น เก็บของเล่นในห้องนั่งเล่น">' +
+    '<label class="u-flabel">ไอคอน</label><div class="u-chips" id="u-icons">' + URG_ICONS.map(function (i) { return '<button type="button" class="u-chip' + (i === '⚡' ? ' on' : '') + '" onclick="urgPickIcon(this,\'' + i + '\')">' + i + '</button>'; }).join('') + '</div>' +
+    '<label class="u-flabel">ดาวรางวัล</label><div style="display:flex;align-items:center;gap:10px"><button type="button" class="u-chip" onclick="urgStep(-1)">−</button><b id="u-stars" style="font-size:1.4rem;min-width:56px;text-align:center">⭐ 5</b><button type="button" class="u-chip" onclick="urgStep(1)">+</button></div>' +
+    '<label class="u-flabel">เวลาทำ (เริ่มนับเมื่อลูกเห็นป้าย)</label>' +
+    '<div class="u-dur"><label><input id="u-d" type="number" min="0" max="7" value="0" inputmode="numeric"><span>วัน</span></label><label><input id="u-h" type="number" min="0" max="23" value="0" inputmode="numeric"><span>ชั่วโมง</span></label><label><input id="u-m" type="number" min="0" max="59" value="30" inputmode="numeric"><span>นาที</span></label></div>' +
+    '<div class="u-chips" style="margin-top:8px">' + [[0, 0, 10, '10 นาที'], [0, 0, 30, '30 นาที'], [0, 1, 0, '1 ชม.'], [0, 3, 0, '3 ชม.'], [1, 0, 0, '1 วัน']].map(function (q) {
+      return '<button type="button" class="u-chip" style="font-size:.8rem;padding:4px 10px" onclick="urgQuick(' + q[0] + ',' + q[1] + ',' + q[2] + ')">' + q[3] + '</button>'; }).join('') + '</div>' +
+    '<label class="u-flabel">ส่งให้</label><div class="u-chips" id="u-kids">' + kids.map(function (k) {
+      var on = window.__urgForm.kids.indexOf(k.member_id) >= 0;
+      return '<button type="button" class="u-chip' + (on ? ' on' : '') + '" onclick="urgPickKid(this,\'' + k.member_id + '\')">' + esc(k.avatar) + ' ' + esc(k.name) + '</button>'; }).join('') + '</div>' +
+    '<label class="u-flabel">ถ้าลูกยังไม่เปิดดู ปิดรับภายใน</label><select id="u-open" class="u-in"><option value="3">3 ชั่วโมง</option><option value="6">6 ชั่วโมง</option><option value="12">12 ชั่วโมง</option><option value="24" selected>24 ชั่วโมง</option><option value="48">2 วัน</option></select>' +
+    '<button class="u-btn red" id="u-create-btn" style="margin-top:16px" onclick="doCreateUrgent()">⚡ ส่งภารกิจด่วน</button>' +
+    '<p style="text-align:center;font-size:.8rem;color:var(--text-muted);margin-top:8px">ลูกจะได้แจ้งเตือนทันที (ถ้าเปิดแจ้งเตือนในเครื่องไว้)</p>');
+  window.__urgStars = 5;
+}
+function urgPickIcon(b, i) { document.querySelectorAll('#u-icons .u-chip').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on'); window.__urgForm.icon = i; }
+function urgPickKid(b, id) { var a = window.__urgForm.kids, i = a.indexOf(id); if (i >= 0) { a.splice(i, 1); b.classList.remove('on'); } else { a.push(id); b.classList.add('on'); } }
+function urgStep(n) { window.__urgStars = Math.max(1, Math.min(100, (window.__urgStars || 5) + n)); document.getElementById('u-stars').textContent = '⭐ ' + window.__urgStars; }
+function urgQuick(d, h, m) { document.getElementById('u-d').value = d; document.getElementById('u-h').value = h; document.getElementById('u-m').value = m; }
+function doCreateUrgent() {
+  var f = window.__urgForm, btn = document.getElementById('u-create-btn');
+  var data = { title: document.getElementById('u-title').value, icon: f.icon, stars: window.__urgStars,
+    days: document.getElementById('u-d').value, hours: document.getElementById('u-h').value, minutes: document.getElementById('u-m').value,
+    childIds: f.kids, openHours: Number(document.getElementById('u-open').value) };
+  btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
+  google.script.run.withSuccessHandler(function (r) {
+    closeModal(); toast('⚡ ส่งภารกิจด่วนให้ลูก ' + r.count + ' คนแล้ว!'); parentNav('home'); Live.request();
+  }).withFailureHandler(function (e) { btn.disabled = false; btn.textContent = '⚡ ส่งภารกิจด่วน'; toast(e.message, 4000); }).createUrgent(currentMember.memberId, data);
+}
+</script>
+
+<script>
+// ===================================================================
 // อัปเดตหน้าจอทันที: เมื่อเครื่องอื่นในครอบครัวเปลี่ยนข้อมูล (อนุมัติ/ส่งภารกิจ/แลกรางวัล ฯลฯ)
 // เซิร์ฟเวอร์ส่งสัญญาณมา → ดึงข้อมูลใหม่แบบเงียบ ๆ (ไม่เปลี่ยนแท็บ ไม่ขึ้น "กำลังโหลด")
 // + ทุกครั้งที่กลับมาเปิดแอป ดึงข้อมูลใหม่ (มือถือมักตัดการเชื่อมต่อตอนแอปอยู่เบื้องหลัง)
@@ -2512,6 +2837,7 @@ function enterAs(m) {
   document.getElementById('auto-login-status').style.display = 'none';
   if (m.role === 'child') loadChildDashboard(); else loadParentDashboard();
   if (m.role === 'parent' && location.hash === '#approvals') { parentNav('approvals'); cleanUrl(); }
+  if (location.hash === '#urgent') cleanUrl();
   musicAfterLogin();
   if (!isStandalone()) checkHandoff();
 }
@@ -2873,6 +3199,9 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () {}); });
   navigator.serviceWorker.addEventListener('message', function (e) {
     var d = e.data || {};
+    if (d.type === 'open' && currentMember && currentMember.role === 'child') {
+      if (typeof Live !== 'undefined') Live.request();
+    }
     if (d.type === 'open' && currentMember && currentMember.role === 'parent') {
       closeModal();
       if (/approvals/.test(d.url || '')) parentNav('approvals');

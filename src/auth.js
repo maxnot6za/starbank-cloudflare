@@ -551,6 +551,45 @@ const ACTIONS = {
     return { value: true };
   },
 
+  // ---- แจ้งเตือนในเครื่องของเด็ก (ภารกิจด่วน) ----
+  // เครื่องเดียวรับแจ้งเตือนได้ทีละบัญชี: ถ้าเครื่องนี้เป็นของผู้ปกครองอยู่ → ถามก่อนย้ายมาเป็นของเด็ก
+  async kidPushState(request, env, [endpoint]) {
+    const s = await getSession(request, env);
+    if (!s || s.member.role !== 'child') throw new Error('เฉพาะบัญชีเด็ก');
+    const { publicKey } = await vapidKeys(env);
+    let thisDevice = false, owner = null;
+    if (endpoint) {
+      const r = await env.DB.prepare('SELECT p.member_id, m.name FROM PushSubs p LEFT JOIN Members m ON m.member_id = p.member_id WHERE p.endpoint = ?').bind(String(endpoint)).first();
+      if (r) { if (r.member_id === s.member.member_id) thisDevice = true; else owner = r.name || 'ผู้ปกครอง'; }
+    }
+    return { value: { publicKey, thisDevice, owner } };
+  },
+
+  async kidPushSubscribe(request, env, [sub, force]) {
+    const s = await getSession(request, env);
+    if (!s || s.member.role !== 'child') throw new Error('เฉพาะบัญชีเด็ก');
+    const ep = sub && String(sub.endpoint || ''), keys = (sub && sub.keys) || {};
+    if (!/^https:\/\//.test(ep) || !keys.p256dh || !keys.auth) throw new Error('ข้อมูลการแจ้งเตือนไม่ถูกต้อง');
+    const cur = await env.DB.prepare('SELECT p.member_id, m.name FROM PushSubs p LEFT JOIN Members m ON m.member_id = p.member_id WHERE p.endpoint = ?').bind(ep).first();
+    if (cur && cur.member_id !== s.member.member_id && !force) return { value: { needConfirm: true, owner: cur.name || 'ผู้ปกครอง' } };
+    await env.DB.prepare(`INSERT INTO PushSubs (endpoint, member_id, family_id, p256dh, auth, device, created_at) VALUES (?,?,?,?,?,?,?)
+        ON CONFLICT(endpoint) DO UPDATE SET member_id = excluded.member_id, family_id = excluded.family_id, p256dh = excluded.p256dh, auth = excluded.auth, device = excluded.device`)
+      .bind(ep, s.member.member_id, s.member.family_id, String(keys.p256dh), String(keys.auth), deviceLabel(request), nowIso()).run();
+    // ผู้ปกครองที่เสียเครื่องนี้ไป: ถ้าไม่เหลือเครื่องรับแอปแล้ว และผูก LINE → กลับไปรับทาง LINE (ไม่พลาดแจ้งเตือน)
+    if (cur && cur.member_id !== s.member.member_id) {
+      const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM PushSubs WHERE member_id = ?').bind(cur.member_id).first();
+      if (!n.n) await env.DB.prepare("UPDATE Members SET notify_channel = 'line' WHERE member_id = ? AND notify_channel IN ('app','both') AND line_user_id IS NOT NULL AND line_user_id <> ''").bind(cur.member_id).run();
+    }
+    return { value: { ok: true } };
+  },
+
+  async kidPushOff(request, env, [endpoint]) {
+    const s = await getSession(request, env);
+    if (!s || s.member.role !== 'child') throw new Error('เฉพาะบัญชีเด็ก');
+    await env.DB.prepare('DELETE FROM PushSubs WHERE endpoint = ? AND member_id = ?').bind(String(endpoint || ''), s.member.member_id).run();
+    return { value: true };
+  },
+
   async pushRemoveDevice(request, env, [id]) {
     const s = await requireParentSession(request, env);
     const { results } = await env.DB.prepare('SELECT endpoint FROM PushSubs WHERE member_id = ?').bind(s.member.member_id).all();

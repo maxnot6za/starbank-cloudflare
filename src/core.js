@@ -10,7 +10,8 @@ export const PUBLIC_API = [
   'getChildDashboard', 'submitMission', 'redeemReward', 'spinWheel',
   'getParentDashboard', 'acknowledgeRedemptions', 'checkRejectImpact', 'reviewSubmission',
   'webSaveMission', 'webSaveReward', 'webDeleteMission', 'webDeleteReward',
-  'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus'
+  'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
+  'createUrgent', 'cancelUrgent', 'urgentSeen', 'submitUrgent', 'declineUrgent'
 ];
 
 export function createCore(S) {
@@ -574,6 +575,10 @@ export function createCore(S) {
     if (status === 'approved') {
       const mission = getAllRows_('Missions').find(m => String(m.mission_id) === String(sub.mission_id));
       if (mission) starsEarned = Number(mission.base_stars) * Number(mission.multiplier || 1);
+      else {   // ภารกิจด่วน: ดาวตามที่ผู้ปกครองตั้งตอนสร้าง
+        var urg = getAllRows_('Urgent').find(function(u) { return String(u.urgent_id) === String(sub.mission_id); });
+        if (urg) starsEarned = Number(urg.stars) || 0;
+      }
     }
 
     // หาชื่อผู้ปกครองจาก reviewerId (member_id)
@@ -793,7 +798,9 @@ export function createCore(S) {
     const familyId = member.family_id;
     const family = getFamilyInfo_(familyId);
     const wheel = syncChildWheel_(member, family);   // ก่อน stats: อาจเพิ่มสิทธิ์หมุนใหม่
+    urgentSweep(familyId);
     return {
+      urgent: childUrgent_(member),
       member, family: family, wheel: wheel, stats: getChildStats_(memberId),
       missions: getMissions_(familyId), rewards: getRewardsForChild_(familyId),
       recentSubmissions: getChildSubmissions_(memberId).slice(-20).reverse(),
@@ -860,6 +867,8 @@ export function createCore(S) {
     const familyId = member.family_id;
     const members = getFamilyMembers_(familyId);
     const wheel = getWheelParentInfo_(familyId);
+    urgentSweep(familyId);
+    const urgent = parentUrgent_(familyId);
     const children = members.filter(m => m.role === 'child').map(c => ({
       ...c, stats: getChildStats_(c.member_id)
     }));
@@ -869,7 +878,7 @@ export function createCore(S) {
       recentRedemptions: getUnacknowledgedRedemptions_(familyId),
       reviewHistory: getReviewHistory_(familyId),
       redemptionHistory: getRedemptionHistory_(familyId),
-      wheel: wheel
+      wheel: wheel, urgent: urgent, serverNow: new Date(nowMs_()).toISOString()
     };
   }
 
@@ -1391,7 +1400,229 @@ export function createCore(S) {
   }
 
 
-  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus };
-  return { api: api, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
+  // ==========================================
+  // ภารกิจด่วน (Urgent) — เวลาทั้งหมดใช้นาฬิกาเซิร์ฟเวอร์
+  // ==========================================
+  var URGENT_GRACE_MS = 5000;                // กดส่งตอน 00:00 พอดี เน็ตช้านิดหน่อยยังนับว่าทัน
+  var URGENT_ACTIVE = { pending: true, running: true };
+  function nowMs_() { return S.now ? S.now() : Date.now(); }
+  function msIso_(ms) { return new Date(ms).toISOString(); }
+  function urgentRows_(familyId) {
+    return getAllRows_('Urgent').filter(function(u) { return String(u.family_id) === String(familyId); });
+  }
+  // เตือนเด็กก่อนหมดเวลา: งาน ≤ 1 ชม. เตือนตอนเหลือ 20% · งานยาวกว่านั้นเตือนตอนเหลือ 1 ชม. · งานสั้นกว่า 3 นาทีไม่เตือน
+  function urgentRemindAt_(u) {
+    if (!u.deadline_at) return null;
+    var d = Number(u.duration_sec) * 1000;
+    if (!(d >= 3 * 60000)) return null;
+    var lead = d <= 3600000 ? Math.max(60000, Math.round(d * 0.2)) : 3600000;
+    return new Date(u.deadline_at).getTime() - lead;
+  }
+  function urgentNameOf_(id, fallback) { var m = getMember_(id); return m ? m.name : fallback; }
+  function urgentEvent_(type, u, extra) {
+    if (!S.events) return;
+    var kid = getMember_(u.child_id);
+    S.events.push(Object.assign({
+      type: type, familyId: String(u.family_id), urgentId: u.urgent_id, childId: String(u.child_id),
+      childName: kid ? kid.name : 'น้อง', childAvatar: kid ? kid.avatar : '🧒',
+      parentName: urgentNameOf_(u.created_by, 'ผู้ปกครอง'), title: u.title, icon: u.icon || '⚡', stars: Number(u.stars) || 0
+    }, extra || {}));
+  }
+  function urgentWake_(ms) { if (ms && (!S.urgentWake || ms < S.urgentWake)) S.urgentWake = ms; }
+
+  // ปิดภารกิจที่หมดเวลา + ส่งเตือนใกล้หมดเวลา → คืนเวลาที่ต้องตรวจครั้งถัดไป (ms) หรือ null
+  function urgentSweep(familyId) {
+    var now = nowMs_(), next = null;
+    function soon(ms) { if (ms && (next === null || ms < next)) next = ms; }
+    urgentRows_(familyId).forEach(function(u) {
+      if (u.status === 'pending') {
+        var until = new Date(u.open_until).getTime();
+        if (!(until > now)) {
+          updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'expired', ended_at: msIso_(now) });
+          urgentEvent_('urgent_expired', u, { unseen: true });
+        } else soon(until);
+      } else if (u.status === 'running') {
+        var dl = new Date(u.deadline_at).getTime();
+        if (dl + URGENT_GRACE_MS <= now) {
+          updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'expired', ended_at: msIso_(now) });
+          urgentEvent_('urgent_expired', u, { unseen: false });
+          return;
+        }
+        var r = urgentRemindAt_(u);
+        if (r && !u.reminded_at) {
+          if (r <= now) {
+            updateRow_('Urgent', 'urgent_id', u.urgent_id, { reminded_at: msIso_(now) });
+            if (dl - now > 30000) urgentEvent_('urgent_remind', u, { minutesLeft: Math.max(1, Math.round((dl - now) / 60000)) });
+          } else soon(r);
+        }
+        soon(dl + URGENT_GRACE_MS);
+      }
+    });
+    return next;
+  }
+
+  function urgentView_(u, now) {
+    return {
+      urgent_id: u.urgent_id, batch_id: u.batch_id, child_id: u.child_id, title: u.title, icon: u.icon || '⚡',
+      stars: Number(u.stars) || 0, duration_sec: Number(u.duration_sec) || 0, status: u.status,
+      open_until: u.open_until, seen_at: u.seen_at || null, deadline_at: u.deadline_at || null,
+      ended_at: u.ended_at || null, created_at: u.created_at, submission_id: u.submission_id || null,
+      from_name: urgentNameOf_(u.created_by, 'ผู้ปกครอง'),
+      left_ms: u.status === 'running' ? Math.max(0, new Date(u.deadline_at).getTime() - now) : null
+    };
+  }
+
+  function createUrgent(memberId, data) {
+    var parent = requireParent_(memberId);
+    var familyId = parent.family_id;
+    data = data || {};
+    var title = String(data.title || '').trim().slice(0, 60);
+    if (!title) throw new Error('ใส่ชื่อภารกิจก่อนนะ');
+    var stars = Math.round(Number(data.stars));
+    if (!(stars >= 1 && stars <= 100)) throw new Error('ดาวรางวัลต้องอยู่ระหว่าง 1–100');
+    var d = Math.max(0, Math.floor(Number(data.days) || 0)), h = Math.max(0, Math.floor(Number(data.hours) || 0)), mi = Math.max(0, Math.floor(Number(data.minutes) || 0));
+    var dur = d * 86400 + h * 3600 + mi * 60;
+    if (dur < 60) throw new Error('เวลาทำต้องอย่างน้อย 1 นาที');
+    if (dur > 7 * 86400) throw new Error('เวลาทำต้องไม่เกิน 7 วัน');
+    var openH = Number(data.openHours) || 24;
+    if (!(openH >= 1 && openH <= 168)) throw new Error('เวลาเปิดรับต้องอยู่ระหว่าง 1 ชั่วโมง – 7 วัน');
+    var kids = getAllRows_('Members').filter(function(m) { return String(m.family_id) === String(familyId) && m.role === 'child'; });
+    var want = Array.isArray(data.childIds) ? data.childIds.map(String) : [];
+    var targets = kids.filter(function(k) { return want.indexOf(String(k.member_id)) >= 0; });
+    if (!targets.length) throw new Error('เลือกลูกที่จะส่งภารกิจให้ก่อนนะ');
+    var now = nowMs_();
+    urgentSweep(familyId);   // ปิดของที่หมดเวลาไปแล้วก่อน จะได้ไม่ติดเงื่อนไข "ค้างอยู่"
+    var busy = targets.filter(function(k) {
+      return urgentRows_(familyId).some(function(u) { return String(u.child_id) === String(k.member_id) && URGENT_ACTIVE[u.status]; });
+    });
+    if (busy.length) throw new Error(busy.map(function(k) { return k.name; }).join(', ') + ' มีภารกิจด่วนค้างอยู่แล้ว (ทำได้ทีละ 1 อัน)');
+    var batchId = genId_();
+    var openUntil = msIso_(now + openH * 3600000);
+    targets.forEach(function(k) {
+      var row = {
+        urgent_id: genId_(), batch_id: batchId, family_id: familyId, child_id: k.member_id,
+        title: title, icon: String(data.icon || '⚡').slice(0, 8), stars: stars, duration_sec: dur,
+        open_until: openUntil, created_by: memberId, created_at: msIso_(now), status: 'pending',
+        seen_at: '', deadline_at: '', reminded_at: '', submission_id: '', ended_at: ''
+      };
+      appendRow_('Urgent', row);
+      urgentEvent_('urgent_new', row);
+    });
+    urgentWake_(new Date(openUntil).getTime());
+    return { batchId: batchId, count: targets.length };
+  }
+
+  function cancelUrgent(memberId, batchId) {
+    var parent = requireParent_(memberId);
+    var n = 0, now = nowMs_();
+    urgentRows_(parent.family_id).forEach(function(u) {
+      if (String(u.batch_id) === String(batchId) && URGENT_ACTIVE[u.status]) {
+        updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'cancelled', ended_at: msIso_(now) });
+        n++;
+      }
+    });
+    if (!n) throw new Error('ภารกิจนี้จบไปแล้ว');
+    return { cancelled: n };
+  }
+
+  function myUrgent_(childId, urgentId) {
+    var kid = requireChild_(childId);
+    var u = urgentRows_(kid.family_id).find(function(x) { return String(x.urgent_id) === String(urgentId) && String(x.child_id) === String(childId); });
+    if (!u) throw new Error('ไม่พบภารกิจด่วนนี้');
+    return u;
+  }
+
+  // เด็กเห็นป้ายครั้งแรก → เริ่มนับถอยหลัง (เรียกซ้ำได้ ไม่เริ่มใหม่)
+  function urgentSeen(childId, urgentId) {
+    var u = myUrgent_(childId, urgentId);
+    var now = nowMs_();
+    urgentSweep(u.family_id);
+    if (u.status === 'pending') {
+      var dl = now + Number(u.duration_sec) * 1000;
+      updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'running', seen_at: msIso_(now), deadline_at: msIso_(dl) });
+      urgentWake_(urgentRemindAt_(u) || dl + URGENT_GRACE_MS);
+      urgentWake_(dl + URGENT_GRACE_MS);
+    }
+    return { urgent: urgentView_(u, now), serverNow: msIso_(now) };
+  }
+
+  function submitUrgent(childId, urgentId) {
+    var u = myUrgent_(childId, urgentId);
+    var now = nowMs_();
+    urgentSweep(u.family_id);
+    if (u.status === 'expired') return { expired: true };
+    if (u.status === 'pending') {          // ส่งโดยไม่ได้เปิดป้าย (เช่น เครื่องเก่า) → ถือว่าเห็นตอนนี้
+      updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'running', seen_at: msIso_(now), deadline_at: msIso_(now + Number(u.duration_sec) * 1000) });
+    }
+    if (u.status !== 'running') throw new Error(u.status === 'cancelled' ? 'ผู้ปกครองยกเลิกภารกิจนี้แล้ว' : 'ภารกิจนี้จบไปแล้ว');
+    var kid = getMember_(childId);
+    var submissionId = genId_();
+    appendRow_('Submissions', {
+      submission_id: submissionId, mission_id: u.urgent_id, child_id: childId, family_id: u.family_id,
+      mission_title: '⚡ ' + u.title, status: 'pending', stars_earned: 0,
+      submitted_at: msIso_(now), reviewed_by: '', reviewed_at: ''
+    });
+    updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'submitted', submission_id: submissionId, ended_at: msIso_(now) });
+    var starsDisplay = Number(u.stars) + ' ดาว · ⚡ ภารกิจด่วน';
+    if (S.events) S.events.push({ type: 'submit', familyId: String(u.family_id), submissionId: submissionId, childName: kid ? kid.name : 'น้อง',
+      childAvatar: kid ? kid.avatar : '🧒', missionTitle: '⚡ ' + u.title, starsDisplay: starsDisplay });
+    var flexMsg = makeApprovalFlex_(submissionId, kid ? kid.name : 'น้อง', kid ? kid.avatar : '🧒', '⚡ ' + u.title, starsDisplay);
+    getAllRows_('Members').filter(function(m) { return String(m.family_id) === String(u.family_id) && m.role === 'parent' && m.line_user_id; })
+      .forEach(function(p) {
+        var ns = p.notify_submission;
+        if (ns !== false && ns !== 'false' && ns !== 'FALSE') { try { linePush_(p.line_user_id, [flexMsg]); } catch (e) {} }
+      });
+    return { submitted: true, submissionId: submissionId };
+  }
+
+  function declineUrgent(childId, urgentId) {
+    var u = myUrgent_(childId, urgentId);
+    urgentSweep(u.family_id);
+    if (!URGENT_ACTIVE[u.status]) return { status: u.status };
+    updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'declined', ended_at: msIso_(nowMs_()) });
+    urgentEvent_('urgent_declined', u);
+    return { status: 'declined' };
+  }
+
+  // ข้อมูลภารกิจด่วนสำหรับหน้าเด็ก: ที่ค้างอยู่ + ที่เพิ่งจบใน 48 ชม. (ไว้แสดงป้ายผลลัพธ์ครั้งเดียว)
+  function childUrgent_(member) {
+    var now = nowMs_();
+    var mine = urgentRows_(member.family_id).filter(function(u) { return String(u.child_id) === String(member.member_id); });
+    return {
+      active: mine.filter(function(u) { return URGENT_ACTIVE[u.status]; }).map(function(u) { return urgentView_(u, now); }),
+      recent: mine.filter(function(u) { return !URGENT_ACTIVE[u.status] && u.ended_at && now - new Date(u.ended_at).getTime() < 48 * 3600000; })
+        .map(function(u) { return urgentView_(u, now); }),
+      serverNow: msIso_(now)
+    };
+  }
+
+  // หน้าผู้ปกครอง: จัดกลุ่มตามครั้งที่สร้าง (ค้างอยู่ทั้งหมด + ที่สร้างใน 7 วัน)
+  function parentUrgent_(familyId) {
+    var now = nowMs_();
+    var subs = {};
+    getAllRows_('Submissions').forEach(function(s) { subs[String(s.submission_id)] = s; });
+    var groups = {};
+    urgentRows_(familyId).forEach(function(u) {
+      var g = groups[u.batch_id];
+      if (!g) g = groups[u.batch_id] = { batch_id: u.batch_id, title: u.title, icon: u.icon || '⚡', stars: Number(u.stars) || 0,
+        duration_sec: Number(u.duration_sec) || 0, created_at: u.created_at, from_name: urgentNameOf_(u.created_by, 'ผู้ปกครอง'),
+        open_until: u.open_until, kids: [], active: false };
+      var kid = getMember_(u.child_id);
+      var sub = u.submission_id ? subs[String(u.submission_id)] : null;
+      var v = urgentView_(u, now);
+      v.child_name = kid ? kid.name : 'น้อง'; v.child_avatar = kid ? kid.avatar : '🧒';
+      v.review = sub ? sub.status : null;
+      g.kids.push(v);
+      if (URGENT_ACTIVE[u.status]) g.active = true;
+    });
+    return Object.keys(groups).map(function(k) { return groups[k]; })
+      .filter(function(g) { return g.active || now - new Date(g.created_at).getTime() < 7 * 86400000; })
+      .sort(function(a, b) { return (b.active - a.active) || (new Date(b.created_at) - new Date(a.created_at)); })
+      .slice(0, 10);
+  }
+
+
+  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, submitUrgent, declineUrgent };
+  return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }

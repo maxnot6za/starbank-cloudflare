@@ -12,11 +12,12 @@ export const TABLES = {
   Redemptions: { pk: 'redemption_id', cols: ['redemption_id','reward_id','child_id','family_id','reward_title','stars_spent','secret_revealed','redeemed_at','acknowledged_at','acknowledged_by'], bools: [] },
   LineState:   { pk: 'user_id', cols: ['user_id','state','data','updated_at'], bools: [], global: true },
   DailyLog:    { pk: 'log_id', cols: ['log_id','family_id','date','child_id','child_name','stars_earned_today','stars_spent_today','balance','missions_completed_today','logged_at'], bools: [], upsert: true },
+  Urgent:      { pk: 'urgent_id', cols: ['urgent_id','batch_id','family_id','child_id','title','icon','stars','duration_sec','open_until','created_by','created_at','status','seen_at','deadline_at','reminded_at','submission_id','ended_at'], bools: [] },
   Spins:       { pk: 'spin_id', cols: ['spin_id','child_id','family_id','round_key','earned_at','used_at','prize_stars','prize_index','request_id'], bools: [], ignoreDup: true },
 };
 
 const NUM_COLS = new Set(['base_stars','multiplier','stars_earned','stars_cost','quantity','stars_spent','prize_stars','prize_index',
-  'stars_earned_today','stars_spent_today','balance','missions_completed_today']);
+  'stars_earned_today','stars_spent_today','balance','missions_completed_today','stars','duration_sec']);
 
 export class ConflictError extends Error {}
 
@@ -92,6 +93,14 @@ export class Store {
       if (scope.all) { stmts.push(this.db.prepare(`SELECT * FROM ${name} ORDER BY rowid`)); names.push(name); continue; }
       if (name === 'Submissions') continue;
       if (!ids.length) { this.rows[name] = []; continue; }
+      if (name === 'Urgent') {
+        // ภารกิจด่วน: ที่ยังค้างอยู่ + ที่จบใน 30 วันล่าสุด + ที่ยังรออนุมัติ (ต้องใช้ดาวตอนอนุมัติ)
+        const since = new Date(Date.now() - 30 * 86400000).toISOString();
+        stmts.push(this.db.prepare(`SELECT * FROM Urgent WHERE family_id IN (${q}) AND (status IN ('pending','running') OR created_at >= ?
+          OR urgent_id IN (SELECT mission_id FROM Submissions WHERE family_id IN (${q}) AND status = 'pending')) ORDER BY rowid`).bind(...ids, since, ...ids));
+        names.push(name);
+        continue;
+      }
       stmts.push(this.db.prepare(`SELECT * FROM ${name} WHERE family_id IN (${q}) ORDER BY rowid`).bind(...ids));
       names.push(name);
     }
