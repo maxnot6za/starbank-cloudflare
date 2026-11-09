@@ -18,7 +18,8 @@ const MEMBER_ARG = {
   webSaveMission: 1, webSaveReward: 1, webDeleteMission: 1, webDeleteReward: 1,
   toggleSubmissionNotify: 0, getDailySummary: 2,
   setWheelEnabled: 0, setWheelPrizes: 0, getWheelStatus: 0,
-  createUrgent: 0, cancelUrgent: 0, urgentSeen: 0, submitUrgent: 0, declineUrgent: 0,
+  createUrgent: 0, cancelUrgent: 0, urgentSeen: 0, acceptUrgent: 0, submitUrgent: 0, declineUrgent: 0,
+  sendGift: 0, cancelGift: 0, openGift: 0,
 };
 // คำสั่งเข้าระบบแบบเก่า (ลิงก์ ?auto=, รหัสครอบครัว) ถูกแทนด้วย /auth/* แล้ว
 

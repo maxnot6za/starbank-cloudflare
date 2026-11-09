@@ -456,6 +456,33 @@
     /* === STAR COUNT GOLD === */
     .star-hero .star-count { color:#FFFFFF; text-shadow:0 2px 0 rgba(0,0,0,0.08); }
 
+    /* ===== ของขวัญ ===== */
+    .g-card { display:flex; align-items:center; gap:12px; margin-bottom:14px; padding:12px; border-radius:20px; background:linear-gradient(135deg,#FFF0F3,#FFE3E8); border:3px dashed #FF8FA3; cursor:pointer; }
+    .g-card .g-svg { width:62px; height:62px; flex:none; animation:g-wiggle 1.6s ease-in-out infinite; }
+    @keyframes g-wiggle { 0%,60%,100% { transform:rotate(0) } 70% { transform:rotate(-8deg) } 80% { transform:rotate(8deg) } 90% { transform:rotate(-4deg) } }
+    #gift-stage { position:fixed; inset:0; z-index:3000; background:radial-gradient(circle at 50% 45%,#5a3d8a,#2a1d45 70%); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; padding:24px max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left)); animation:g-in .3s ease-out; }
+    @keyframes g-in { from { opacity:0 } to { opacity:1 } }
+    #gift-stage .g-from { font-size:1rem; opacity:.9; margin-bottom:6px; text-align:center; }
+    #gift-stage .g-msg { font-size:1.3rem; font-weight:700; margin-bottom:50px; text-align:center; max-width:340px; line-height:1.45; }
+    #gift-stage .g-close { position:absolute; top:calc(14px + env(safe-area-inset-top)); right:16px; border:none; background:rgba(255,255,255,.15); color:#fff; width:40px; height:40px; border-radius:50%; font-size:1.1rem; cursor:pointer; }
+    .g-wrap { position:relative; width:200px; height:200px; cursor:pointer; }
+    .g-wrap .g-svg { width:200px; height:200px; overflow:visible; }
+    .g-wrap.shake .g-svg { animation:g-shake .5s ease-in-out infinite; }
+    @keyframes g-shake { 0%,100% { transform:rotate(0) } 25% { transform:rotate(-4deg) } 75% { transform:rotate(4deg) } }
+    .g-wrap .g-lid { transform-box:view-box; transform-origin:100px 80px; transition:transform .7s cubic-bezier(.3,1.6,.5,1); }
+    .g-wrap.open .g-lid { transform:translate(-46px,-48px) rotate(-38deg); }
+    .g-burst { position:absolute; left:50%; top:45%; width:10px; height:10px; pointer-events:none; }
+    .g-fly { position:absolute; font-size:1.7rem; left:0; top:0; opacity:0; animation:g-fly 1.6s ease-out forwards; }
+    @keyframes g-fly { 0% { opacity:0; transform:translate(0,0) scale(.3) } 15% { opacity:1 } 100% { opacity:0; transform:translate(var(--x),var(--y)) scale(1.1) rotate(var(--r)) } }
+    .g-glow { position:absolute; left:50%; top:42%; width:10px; height:10px; border-radius:50%; transform:translate(-50%,-50%); }
+    .g-wrap.open .g-glow { animation:g-glow 1.2s ease-out forwards; }
+    @keyframes g-glow { 0% { box-shadow:0 0 0 0 rgba(255,214,107,.9) } 100% { box-shadow:0 0 0 170px rgba(255,214,107,0) } }
+    .g-amount { font-size:4rem; font-weight:700; color:#FFD66B; text-shadow:0 4px 0 #A86E00; opacity:0; transform:scale(.3); height:0; transition:all .6s cubic-bezier(.3,1.8,.5,1) .5s; font-variant-numeric:tabular-nums; }
+    .g-wrap.open ~ .g-amount { opacity:1; transform:scale(1); height:auto; }
+    .g-tap { margin-top:14px; opacity:.9; animation:g-pulse 1.2s ease-in-out infinite; }
+    @keyframes g-pulse { 50% { opacity:.45 } }
+    .g-after { opacity:0; pointer-events:none; transition:opacity .4s 1.6s; margin-top:12px; width:min(320px,85%); }
+    .g-wrap.open ~ .g-after { opacity:1; pointer-events:auto; }
     /* ===== ภารกิจด่วน ===== */
     .u-card { position:relative; overflow:hidden; background:#fff; border:3px solid #FF5A36; border-radius:20px; padding:14px; margin-bottom:14px; box-shadow:0 6px 18px rgba(255,90,54,.15); }
     .u-card .u-tag { position:absolute; right:-34px; top:12px; background:#FF5A36; color:#fff; font-size:.72rem; font-weight:700; transform:rotate(35deg); padding:3px 38px; }
@@ -494,6 +521,7 @@
     .u-dur input { width:100%; border:none; text-align:center; font:inherit; font-size:1.4rem; font-weight:700; background:transparent; color:var(--text); padding:0; }
     .u-dur span { font-size:.75rem; color:var(--text-muted); }
     .u-in { width:100%; border:2px solid var(--border); border-radius:12px; padding:11px 12px; font:inherit; font-size:1rem; background:#fff; color:var(--text); }
+    .u-dur-pill { display:inline-block; background:var(--gold-light); color:var(--gold-dark); border-radius:14px; padding:6px 16px; font-weight:700; font-size:1.2rem; margin:6px 0 4px; }
     .u-flabel { display:block; font-size:.82rem; font-weight:700; color:var(--text-muted); margin:12px 0 6px; }
   </style>
 </head>
@@ -606,6 +634,7 @@
     <div class="star-label">⭐ ดาวสะสม</div>
   </div>
 
+  <div id="child-gifts"></div>
   <div id="child-urgent"></div>
   <div id="child-wheel-card"></div>
   <div id="kid-push-slot"></div>
@@ -686,6 +715,7 @@
     <button class="btn btn-sm" style="background:linear-gradient(135deg,#FF5A36,#FF7A45);color:#fff" onclick="showCreateUrgent()">+ สร้าง</button>
   </div>
   <div id="parent-urgent"></div>
+  <div id="parent-gifts"></div>
 
   <div id="redemption-alert-box" style="display:none;background:#FFF8E6;border:2px solid var(--gold);border-radius:var(--radius);padding:16px;margin-bottom:16px;animation:pulse-border 2s ease-in-out infinite">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -992,6 +1022,7 @@ function renderChildHome(d) {
   document.getElementById('child-earned').textContent = d.stats.totalEarned;
   document.getElementById('child-completed').textContent = d.stats.missionsCompleted;
   renderWheelCard(d);
+  renderGiftsKid(d);
   renderUrgentKid(d);
   renderKidPush();
 
@@ -1103,11 +1134,18 @@ function doRedeem(rewardId) {
 function renderChildHistory(d) {
   renderWheelHistory(d);
   const list = document.getElementById('child-history-list');
-  const items = d.recentSubmissions || [];
+  const items = (d.recentSubmissions || []).map(s => Object.assign({ _t: s.submitted_at }, s))
+    .concat(((d.gifts && d.gifts.opened) || []).map(g => ({ _gift: g, _t: g.opened_at })))
+    .sort((a, b) => String(b._t || '').localeCompare(String(a._t || '')));
   if (!items.length) {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">📜</div>ยังไม่มีประวัติภารกิจ</div>';
   } else {
     list.innerHTML = items.map(s => {
+      if (s._gift) {
+        const g = s._gift, ts = g.opened_at ? new Date(g.opened_at).toLocaleDateString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+        return `<div class="mission-item"><div class="mi-info" style="flex:1"><div class="mi-title">🎁 ของขวัญจาก${esc(g.from_name)} (+${g.stars} ⭐)</div>
+          <div class="mi-desc">${esc(g.reason_label)}${g.message ? ' · ' + esc(g.message) : ''} · ${ts}</div></div><span class="tag tag-approved">🎁 ของขวัญ</span></div>`;
+      }
       const tagClass = s.status === 'approved' ? 'tag-approved' : s.status === 'rejected' ? 'tag-rejected' : 'tag-pending';
       const tagText = s.status === 'approved' ? '✅ อนุมัติ' : s.status === 'rejected' ? '❌ ไม่อนุมัติ' : '⏳ รอ';
       const starsText = s.status === 'approved' && s.stars_earned ? ` (+${s.stars_earned} ⭐)` : '';
@@ -1172,6 +1210,7 @@ function renderParentHome(d) {
   document.getElementById('parent-name').textContent = d.member.name;
   document.getElementById('parent-family-name').textContent = d.family.family_name;
   renderUrgentParent(d);
+  renderGiftsParent(d);
 
   // children stars
   const cl = document.getElementById('parent-children-list');
@@ -1191,7 +1230,10 @@ function renderParentHome(d) {
           <div style="font-size:0.8rem;color:var(--text-muted)">
             ได้รับ ${c.stats.totalEarned} · ใช้ไป ${c.stats.totalSpent}
           </div>
-          <button onclick="showChildQr('${c.member_id}','${escJs(c.name)}')" style="font-size:0.75rem;padding:4px 10px;border:1px solid var(--gold);background:var(--gold-light);color:var(--gold-dark);border-radius:12px;cursor:pointer;white-space:nowrap">📱 QR เข้าระบบ</button>
+          <div style="display:flex;gap:6px">
+            <button onclick="showSendGift('${c.member_id}')" style="font-size:0.75rem;padding:4px 10px;border:1px solid #FF8FA3;background:#FFF0F3;color:#E5484D;border-radius:12px;cursor:pointer;white-space:nowrap;font-weight:700">🎁 ส่งของขวัญ</button>
+            <button onclick="showChildQr('${c.member_id}','${escJs(c.name)}')" style="font-size:0.75rem;padding:4px 10px;border:1px solid var(--gold);background:var(--gold-light);color:var(--gold-dark);border-radius:12px;cursor:pointer;white-space:nowrap">📱 QR</button>
+          </div>
         </div>
       </div>
     `).join('');
@@ -2489,6 +2531,7 @@ function urgTick() {
       el.style.width = Math.max(0, Math.min(100, left / tot * 100)) + '%';
     } else el.textContent = left > 0 ? urgClock(left) : 'หมดเวลา';
     if (left <= 0 && el.getAttribute('data-kid') && !el.__ended) { el.__ended = true; ended = true; }
+    if (left <= 0 && el.id === 'u-auto' && !el.__ended) { el.__ended = true; el.textContent = '0:00'; setTimeout(function () { closeModal(); toast('⏱ เริ่มนับเวลาแล้ว!'); Live.request(); }, 1200); }
   });
   // ครบเวลาบนจอเด็ก → รอช่วงผ่อนผัน 6 วิ แล้วถามเซิร์ฟเวอร์ (ตัวตัดสินจริง)
   if (ended) setTimeout(function () { if (typeof Live !== 'undefined') Live.request(); }, 6500);
@@ -2505,7 +2548,7 @@ function renderUrgentKid(d) {
   else if (a.status === 'pending') {
     box.innerHTML = '<div class="u-card" onclick="showUrgentBanner()" style="cursor:pointer"><div class="u-tag">ด่วน!!</div>' +
       '<div class="u-row"><span class="u-ico">' + esc(a.icon) + '</span><div style="flex:1"><div class="u-title">⚡ ภารกิจด่วนจาก ' + esc(a.from_name) + '</div>' +
-      '<div class="u-sub">แตะเพื่อดูภารกิจ · ⭐ ' + a.stars + ' ดาว</div></div></div></div>';
+      '<div class="u-sub">' + (a.seen_at ? 'แตะเพื่อรับภารกิจ' : 'แตะเพื่อดูภารกิจ') + ' · ⭐ ' + a.stars + ' ดาว</div></div></div></div>';
   } else {
     var dl = new Date(a.deadline_at).getTime(), tot = a.duration_sec * 1000;
     box.innerHTML = '<div class="u-card"><div class="u-tag">ด่วน!!</div>' +
@@ -2526,28 +2569,36 @@ function renderUrgentKid(d) {
 function showUrgentBanner() {
   var a = window.__urgActive; if (!a) return;
   URG.shown[a.urgent_id] = true;
-  var tot = a.duration_sec * 1000;
-  var h = Math.floor(a.duration_sec / 3600), m = Math.floor(a.duration_sec % 3600 / 60);
-  var long = a.duration_sec >= 86400;
+  var autoAt = a.auto_start_at ? new Date(a.auto_start_at).getTime() : urgNow() + 60000;
   openModal('<div class="u-banner"><div class="u-ribbon">⚡ ภารกิจด่วน!!</div>' +
     '<img class="u-mascot bounce" src="' + URG_IMG.go + '" alt="น้องดาว">' +
     '<div class="u-sub" style="margin-top:4px">จาก ' + esc(a.from_name) + '</div>' +
     '<div style="font-size:1.35rem;font-weight:700;margin:2px 0">' + esc(a.icon) + ' ' + esc(a.title) + '</div>' +
     '<div class="u-reward">ได้ ⭐ ' + a.stars + ' ดาว</div>' +
-    '<div style="margin-top:10px">ทำภารกิจให้สำเร็จและกดส่งภายใน</div>' +
-    (long ? '<div class="u-timer" id="u-banner-cd" style="margin:8px 0 14px">' + urgDur(a.duration_sec) + '</div>'
-          : '<div class="u-cdbox" id="u-banner-cd"><div><b>' + String(h).padStart(2, '0') + '</b><span>ชั่วโมง</span></div><div><b>' + String(m).padStart(2, '0') + '</b><span>นาที</span></div><div><b>00</b><span>วินาที</span></div></div>') +
-    '<div style="display:flex;flex-direction:column;gap:10px">' +
-    '<button class="u-btn red" onclick="closeModal();Live.request()">💪 ไปทำเลย!</button>' +
-    '<button class="u-btn ghost" id="u-decline-btn" onclick="declineUrgentNow(\'' + a.urgent_id + '\')">😴 ไว้คราวหน้านะ ยุ่งอยู่</button></div></div>');
-  // เห็นป้ายแล้ว → บอกเซิร์ฟเวอร์ให้เริ่มนับ (ครั้งเดียว)
+    '<div style="margin-top:10px">มีเวลาทำ</div>' +
+    '<div class="u-dur-pill">⏱ ' + urgDur(a.duration_sec) + '</div>' +
+    '<div class="u-sub" style="margin-bottom:12px;line-height:1.5">นาฬิกาจะเริ่มนับเมื่อกด "รับภารกิจ"<br><span style="color:var(--danger)">ถ้ายังไม่กด จะเริ่มนับเองใน <span id="u-auto" data-dl="' + autoAt + '"></span></span></div>' +
+    '<div style="display:flex;gap:10px">' +
+    '<button class="u-btn ghost" style="flex:1;font-size:.92rem;padding:12px 6px" id="u-decline-btn" onclick="declineUrgentNow(\'' + a.urgent_id + '\')">😴 ไว้คราวหน้า</button>' +
+    '<button class="u-btn red" style="flex:1.3" id="u-accept-btn" onclick="acceptUrgentNow(\'' + a.urgent_id + '\')">💪 รับภารกิจ!</button></div></div>');
+  urgTick();
+  // เห็นป้ายแล้ว → บอกเซิร์ฟเวอร์ (เริ่มนับเวลาอ่าน 1 นาที) ครั้งเดียว
   if (URG.seenCalled[a.urgent_id]) return;
   URG.seenCalled[a.urgent_id] = true;
   google.script.run.withSuccessHandler(function (r) {
     urgSync(r.serverNow);
-    var el = document.getElementById('u-banner-cd');
-    if (el && r.urgent && r.urgent.deadline_at) { el.setAttribute('data-dl', new Date(r.urgent.deadline_at).getTime()); urgTick(); }
+    var el = document.getElementById('u-auto');
+    if (el && r.urgent && r.urgent.auto_start_at) { el.setAttribute('data-dl', new Date(r.urgent.auto_start_at).getTime()); urgTick(); }
+    if (r.urgent) window.__urgActive = r.urgent;
   }).withFailureHandler(function () { URG.seenCalled[a.urgent_id] = false; }).urgentSeen(currentMember.memberId, a.urgent_id);
+}
+
+function acceptUrgentNow(id) {
+  var b = document.getElementById('u-accept-btn'); if (b) { b.disabled = true; b.textContent = '⏳...'; }
+  google.script.run.withSuccessHandler(function (r) {
+    urgSync(r.serverNow); closeModal(); toast('💪 สู้ ๆ! เริ่มนับเวลาแล้ว'); Live.request();
+  }).withFailureHandler(function (e) { if (b) { b.disabled = false; b.textContent = '💪 รับภารกิจ!'; } toast(e.message, 4000); closeModal(); Live.request(); })
+    .acceptUrgent(currentMember.memberId, id);
 }
 
 document.addEventListener('visibilitychange', function () {
@@ -2647,7 +2698,7 @@ function enableKidPush(force) {
 
 // ---------------- ผู้ปกครอง ----------------
 function urgKidPill(k) {
-  if (k.status === 'pending') return '<span class="u-pill u-p-wait">ยังไม่เปิดดู</span>';
+  if (k.status === 'pending') return k.seen_at ? '<span class="u-pill u-p-run">เปิดดูแล้ว ยังไม่รับ</span>' : '<span class="u-pill u-p-wait">ยังไม่เปิดดู</span>';
   if (k.status === 'running') return '<span class="u-pill u-p-run">กำลังทำ · เหลือ <span data-dl="' + new Date(k.deadline_at).getTime() + '"></span></span>';
   if (k.status === 'submitted') {
     if (k.review === 'approved') return '<span class="u-pill u-p-sent">✅ อนุมัติแล้ว</span>';
@@ -2668,7 +2719,9 @@ function renderUrgentParent(d) {
       '<div class="u-row"><span class="u-ico" style="font-size:1.7rem">' + esc(x.icon) + '</span><div style="flex:1;min-width:0"><div class="u-title">' + esc(x.title) + '</div>' +
       '<div class="u-sub">⭐ ' + x.stars + ' ดาว · ' + urgDur(x.duration_sec) + ' · โดย ' + esc(x.from_name) + '</div></div></div>' +
       '<div style="margin-top:6px">' + x.kids.map(function (k) {
-        return '<div class="u-kid"><span style="font-size:1.4rem">' + esc(k.child_avatar) + '</span><span style="flex:1;font-weight:600">' + esc(k.child_name) + '</span>' + urgKidPill(k) + '</div>';
+        var sad = k.status === 'expired' || k.status === 'declined';
+        return '<div class="u-kid" style="flex-wrap:wrap"><span style="font-size:1.4rem">' + esc(k.child_avatar) + '</span><span style="flex:1;font-weight:600">' + esc(k.child_name) + '</span>' + urgKidPill(k) +
+          (sad ? '<button class="u-chip" style="width:100%;margin-top:6px;font-size:.82rem;border-color:#FF8FA3;color:#E5484D;background:#FFF0F3" onclick="showSendGift(\'' + k.child_id + '\',\'comfort\')">🎁 ส่งดาวปลอบใจ</button>' : '') + '</div>';
       }).join('') + '</div>' +
       (x.active ? '<button class="u-btn ghost" style="margin-top:8px;padding:9px;font-size:.9rem" onclick="cancelUrgentBatch(this,\'' + x.batch_id + '\')">ยกเลิกภารกิจด่วน</button>' : '') +
       '</div>';
@@ -2722,6 +2775,153 @@ function doCreateUrgent() {
 
 <script>
 // ===================================================================
+// 🎁 ของขวัญ — ผู้ปกครองส่งดาว · เด็กแตะเปิดกล่อง → ดาวพุ่งออกมา
+// ===================================================================
+var GIFT_BOX_SVG = '<svg viewBox="0 0 200 200" class="g-svg">' +
+  '<g class="g-body"><rect x="38" y="92" width="124" height="92" rx="10" fill="#FF5A7A" stroke="#1F3B35" stroke-width="5"/>' +
+  '<rect x="38" y="92" width="124" height="22" fill="#E8425F" stroke="#1F3B35" stroke-width="5"/>' +
+  '<rect x="88" y="92" width="24" height="92" fill="#FFC24B" stroke="#1F3B35" stroke-width="5"/>' +
+  '<circle cx="64" cy="146" r="5" fill="#fff" opacity=".6"/><circle cx="140" cy="160" r="4" fill="#fff" opacity=".6"/></g>' +
+  '<g class="g-lid"><path d="M100 66 C 70 30, 46 46, 64 66 Z" fill="#FFC24B" stroke="#1F3B35" stroke-width="5" stroke-linejoin="round"/>' +
+  '<path d="M100 66 C 130 30, 154 46, 136 66 Z" fill="#FFC24B" stroke="#1F3B35" stroke-width="5" stroke-linejoin="round"/>' +
+  '<rect x="30" y="66" width="140" height="30" rx="8" fill="#FF5A7A" stroke="#1F3B35" stroke-width="5"/>' +
+  '<rect x="86" y="66" width="28" height="30" fill="#FFC24B" stroke="#1F3B35" stroke-width="5"/></g></svg>';
+
+// ---------------- เด็ก ----------------
+function renderGiftsKid(d) {
+  var box = document.getElementById('child-gifts'); if (!box) return;
+  var list = (d.gifts && d.gifts.unopened) || [];
+  window.__gifts = list;
+  if (!list.length) { box.innerHTML = ''; return; }
+  var g = list[0];
+  box.innerHTML = '<div class="g-card" onclick="showGiftStage(\'' + g.gift_id + '\')">' + GIFT_BOX_SVG +
+    '<div style="flex:1;min-width:0"><b style="font-size:1.05rem">มีของขวัญ ' + list.length + ' กล่อง!</b>' +
+    '<div class="u-sub">จาก ' + esc(g.from_name) + ' · แตะเพื่อเปิด 🎉</div></div></div>';
+}
+
+function showGiftStage(id) {
+  var g = (window.__gifts || []).find(function (x) { return x.gift_id === id; }); if (!g) return;
+  closeModal();
+  var old = document.getElementById('gift-stage'); if (old) old.remove();
+  var st = document.createElement('div'); st.id = 'gift-stage';
+  st.innerHTML = '<div class="g-from">' + esc(g.reason_label) + ' จาก ' + esc(g.from_name) + '</div>' +
+    (g.message ? '<div class="g-msg">"' + esc(g.message) + '"</div>' : '<div class="g-msg">มีของขวัญมาให้หนู!</div>') +
+    '<div class="g-wrap shake" id="g-wrap" onclick="openGiftNow(\'' + g.gift_id + '\',' + g.stars + ')"><div class="g-glow"></div>' + GIFT_BOX_SVG + '<div class="g-burst" id="g-burst"></div></div>' +
+    '<div class="g-amount" id="g-amount">+0 ⭐</div>' +
+    '<div class="g-tap" id="g-tap">👆 แตะกล่องเพื่อเปิด</div>' +
+    '<div class="g-after" id="g-after"><button class="u-btn mint" id="g-done" onclick="closeGiftStage()">เก็บดาว!</button></div>' +
+    '<button class="g-close" onclick="closeGiftStage()" aria-label="ปิด">✕</button>';
+  document.body.appendChild(st);
+}
+
+function openGiftNow(id, stars) {
+  var w = document.getElementById('g-wrap'); if (!w || w.classList.contains('open')) return;
+  w.classList.remove('shake'); w.classList.add('open');
+  document.getElementById('g-tap').style.display = 'none';
+  var close = document.querySelector('#gift-stage .g-close'); if (close) close.style.display = 'none';
+  var b = document.getElementById('g-burst');
+  var n = Math.min(24, 10 + Math.round(Math.log2(Math.max(1, stars)) * 2));
+  for (var i = 0; i < n; i++) {
+    var sp = document.createElement('span'); sp.className = 'g-fly'; sp.textContent = i % 4 ? '⭐' : '✨';
+    var a = -Math.PI / 2 + (Math.random() - .5) * 2.6, dist = 110 + Math.random() * 110;
+    sp.style.setProperty('--x', Math.cos(a) * dist + 'px'); sp.style.setProperty('--y', Math.sin(a) * dist + 'px');
+    sp.style.setProperty('--r', (Math.random() * 360 - 180) + 'deg'); sp.style.animationDelay = (.15 + Math.random() * .4) + 's';
+    b.appendChild(sp);
+  }
+  try { if (navigator.vibrate) navigator.vibrate([30, 40, 60]); } catch (e) {}
+  // ตัวเลขนับขึ้นภายใน ~1.2 วินาทีไม่ว่าจำนวนเท่าไร
+  var el = document.getElementById('g-amount'), t0 = null;
+  setTimeout(function step(ts) {
+    requestAnimationFrame(function frame(now) {
+      if (!t0) t0 = now; var p = Math.min(1, (now - t0) / 1200), v = Math.round(stars * (1 - Math.pow(1 - p, 3)));
+      el.textContent = '+' + v.toLocaleString() + ' ⭐'; if (p < 1) requestAnimationFrame(frame);
+    });
+  }, 550);
+  google.script.run.withSuccessHandler(function (r) {
+    var btn = document.getElementById('g-done'); if (btn) btn.textContent = 'เก็บดาว! (มีทั้งหมด ' + Number(r.balance).toLocaleString() + ' ⭐)';
+    window.__gifts = (window.__gifts || []).filter(function (x) { return x.gift_id !== id; });
+  }).withFailureHandler(function (e) { closeGiftStage(); toast(e.message, 4000); }).openGift(currentMember.memberId, id);
+}
+
+function closeGiftStage() {
+  var st = document.getElementById('gift-stage'); if (st) st.remove();
+  if (typeof Live !== 'undefined') Live.request();
+}
+
+// ---------------- ผู้ปกครอง ----------------
+var GIFT_REASONS_UI = [['gift', '🎁 ของขวัญ'], ['great', '💪 เก่งมาก'], ['comfort', '🤗 ปลอบใจ'], ['birthday', '🎂 วันเกิด'], ['other', '✏️ อื่น ๆ']];
+function renderGiftsParent(d) {
+  var box = document.getElementById('parent-gifts'); if (!box) return;
+  var g = d.gifts || [];
+  if (!g.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="section-title">🎁 ของขวัญที่ส่ง</div><div class="card" style="padding:6px 14px">' + g.map(function (x) {
+    var pill = x.status === 'sent' ? '<span class="u-pill u-p-run">รอเปิด</span>' : x.status === 'opened' ? '<span class="u-pill u-p-sent">เปิดแล้ว 🎉</span>' : '<span class="u-pill u-p-wait">ยกเลิกแล้ว</span>';
+    return '<div class="u-kid" style="flex-wrap:wrap"><span style="font-size:1.4rem">' + esc(x.child_avatar) + '</span><div style="flex:1;min-width:0"><div style="font-weight:600">' + esc(x.child_name) + ' · ⭐ ' + Number(x.stars).toLocaleString() + '</div>' +
+      '<div class="u-sub">' + esc(x.reason_label) + ' · โดย ' + esc(x.from_name) + '</div></div>' + pill +
+      (x.status === 'sent' ? '<button class="u-chip" style="width:100%;margin-top:6px;font-size:.8rem" onclick="cancelGiftNow(this,\'' + x.gift_id + '\')">ยกเลิกของขวัญนี้</button>' : '') + '</div>';
+  }).join('') + '</div>';
+}
+
+function cancelGiftNow(btn, id) {
+  if (!btn.__armed) { btn.__armed = true; btn.textContent = 'แตะอีกครั้งเพื่อยืนยันยกเลิก'; btn.style.color = 'var(--danger)'; setTimeout(function () { btn.__armed = false; btn.textContent = 'ยกเลิกของขวัญนี้'; btn.style.color = ''; }, 4000); return; }
+  btn.disabled = true;
+  google.script.run.withSuccessHandler(function () { toast('ยกเลิกของขวัญแล้ว'); Live.request(); })
+    .withFailureHandler(function (e) { btn.disabled = false; toast(e.message); Live.request(); }).cancelGift(currentMember.memberId, id);
+}
+
+function showSendGift(childId, reason) {
+  var kids = (dashboardData && dashboardData.children) || [];
+  if (!kids.length) return toast('เพิ่มสมาชิกเด็กก่อนนะ');
+  window.__gf = { kids: childId ? [childId] : (kids.length === 1 ? [kids[0].member_id] : []), stars: reason === 'comfort' ? 3 : 10, reason: reason || 'gift' };
+  var f = window.__gf;
+  openModal('<h2>🎁 ส่งของขวัญ</h2>' +
+    '<label class="u-flabel">ให้ใคร</label><div class="u-chips">' + kids.map(function (k) {
+      return '<button type="button" class="u-chip' + (f.kids.indexOf(k.member_id) >= 0 ? ' on' : '') + '" onclick="gfKid(this,\'' + k.member_id + '\')">' + esc(k.avatar) + ' ' + esc(k.name) + '</button>'; }).join('') + '</div>' +
+    '<label class="u-flabel">จำนวนดาว</label><div style="display:flex;align-items:center;gap:10px"><button type="button" class="u-chip" onclick="gfStep(-1)">−</button>' +
+    '<input id="gf-stars" type="number" min="1" inputmode="numeric" class="u-in" style="width:110px;text-align:center;font-weight:700;font-size:1.3rem" value="' + f.stars + '" oninput="window.__gf.stars=Math.round(Number(this.value))||0">' +
+    '<button type="button" class="u-chip" onclick="gfStep(1)">+</button></div>' +
+    '<div class="u-chips" style="margin-top:8px">' + [3, 5, 10, 20, 50].map(function (n) { return '<button type="button" class="u-chip" style="font-size:.85rem;padding:4px 12px" onclick="gfSet(' + n + ')">' + n + '</button>'; }).join('') + '</div>' +
+    '<label class="u-flabel">โอกาส</label><div class="u-chips" id="gf-reasons">' + GIFT_REASONS_UI.map(function (r) {
+      return '<button type="button" class="u-chip' + (r[0] === f.reason ? ' on' : '') + '" onclick="gfReason(this,\'' + r[0] + '\')">' + r[1] + '</button>'; }).join('') + '</div>' +
+    '<label class="u-flabel">ข้อความถึงลูก (ไม่ใส่ก็ได้)</label><input id="gf-msg" class="u-in" maxlength="80" placeholder="' + (f.reason === 'comfort' ? 'ไม่เป็นไรนะ ครั้งหน้าเอาใหม่' : 'เช่น วันนี้ช่วยแม่เยอะเลย ขอบคุณนะ') + '">' +
+    '<button class="u-btn" style="margin-top:16px;background:linear-gradient(135deg,#FF6B8B,#E5484D);box-shadow:0 4px 0 #b8323a" onclick="gfConfirm()">🎁 ส่งของขวัญ</button>' +
+    '<p style="text-align:center;font-size:.8rem;color:var(--text-muted);margin-top:8px">ลูกได้แจ้งเตือน · ดาวเข้าเมื่อลูกเปิดกล่อง</p>');
+}
+function gfKid(b, id) { var a = window.__gf.kids, i = a.indexOf(id); if (i >= 0) { a.splice(i, 1); b.classList.remove('on'); } else { a.push(id); b.classList.add('on'); } }
+function gfSet(n) { window.__gf.stars = n; document.getElementById('gf-stars').value = n; }
+function gfStep(n) { gfSet(Math.max(1, (window.__gf.stars || 0) + n)); }
+function gfReason(b, r) { document.querySelectorAll('#gf-reasons .u-chip').forEach(function (x) { x.classList.remove('on'); }); b.classList.add('on'); window.__gf.reason = r; }
+
+// ยืนยันอีกครั้งก่อนส่ง (ไม่จำกัดจำนวนดาว)
+function gfConfirm() {
+  var f = window.__gf; f.message = (document.getElementById('gf-msg') || {}).value || '';
+  var kids = ((dashboardData && dashboardData.children) || []).filter(function (k) { return f.kids.indexOf(k.member_id) >= 0; });
+  if (!kids.length) return toast('เลือกลูกที่จะส่งให้ก่อนนะ');
+  if (!(f.stars >= 1)) return toast('ใส่จำนวนดาวก่อนนะ');
+  if (f.stars > 9999) return toast('จำนวนดาวมากเกินไป (สูงสุด 9,999)');
+  window.__gfSaved = JSON.parse(JSON.stringify(f));
+  openModal('<div style="text-align:center">' + GIFT_BOX_SVG.replace('class="g-svg"', 'style="width:96px;height:96px"') +
+    '<h2 style="margin:6px 0">ยืนยันส่งของขวัญ?</h2>' +
+    '<p style="line-height:1.8;font-size:1.05rem">จะส่ง <b style="color:#E5484D;font-size:1.3rem">⭐ ' + f.stars.toLocaleString() + ' ดาว</b><br>ให้ <b>' + kids.map(function (k) { return esc(k.name); }).join(', ') + '</b>' +
+    (kids.length > 1 ? '<br><span class="u-sub">(คนละ ' + f.stars.toLocaleString() + ' ดาว)</span>' : '') + '<br>ยืนยันใช่ไหม?</p>' +
+    '<div style="display:flex;gap:10px;margin-top:14px"><button class="u-btn ghost" style="flex:1" onclick="gfBack()">ยกเลิก</button>' +
+    '<button class="u-btn mint" style="flex:1" id="gf-ok" onclick="gfSend()">ตกลง</button></div></div>');
+}
+function gfBack() { var f = window.__gfSaved; showSendGift(null, f.reason); window.__gf = f; document.getElementById('gf-stars').value = f.stars; document.getElementById('gf-msg').value = f.message || '';
+  document.querySelectorAll('#gf-reasons .u-chip').forEach(function (x) { x.classList.toggle('on', x.getAttribute('onclick').indexOf("'" + f.reason + "'") >= 0); });
+  var kids = (dashboardData && dashboardData.children) || [];
+  document.querySelectorAll('.modal-content .u-chips')[0].querySelectorAll('.u-chip').forEach(function (b, i) { b.classList.toggle('on', kids[i] && f.kids.indexOf(kids[i].member_id) >= 0); }); }
+function gfSend() {
+  var f = window.__gfSaved, b = document.getElementById('gf-ok'); b.disabled = true; b.textContent = '⏳...';
+  google.script.run.withSuccessHandler(function (r) {
+    closeModal(); toast('🎁 ส่งของขวัญให้ลูก ' + r.count + ' คนแล้ว!'); Live.request();
+  }).withFailureHandler(function (e) { b.disabled = false; b.textContent = 'ตกลง'; toast(e.message, 4000); })
+    .sendGift(currentMember.memberId, { childIds: f.kids, stars: f.stars, reason: f.reason, message: f.message });
+}
+</script>
+
+<script>
+// ===================================================================
 // อัปเดตหน้าจอทันที: เมื่อเครื่องอื่นในครอบครัวเปลี่ยนข้อมูล (อนุมัติ/ส่งภารกิจ/แลกรางวัล ฯลฯ)
 // เซิร์ฟเวอร์ส่งสัญญาณมา → ดึงข้อมูลใหม่แบบเงียบ ๆ (ไม่เปลี่ยนแท็บ ไม่ขึ้น "กำลังโหลด")
 // + ทุกครั้งที่กลับมาเปิดแอป ดึงข้อมูลใหม่ (มือถือมักตัดการเชื่อมต่อตอนแอปอยู่เบื้องหลัง)
@@ -2768,6 +2968,7 @@ var Live = (function () {
 
   // อย่าวาดหน้าจอทับตอนเปิดหน้าต่าง/กำลังหมุนกงล้อ — รอปิดก่อนแล้วค่อยอัปเดต
   function busy() {
+    if (document.getElementById('gift-stage')) return true;
     var ov = document.getElementById('modal-overlay');
     if (ov && ov.classList.contains('show')) return true;
     var wheel = document.getElementById('screen-child-wheel');
@@ -2837,7 +3038,7 @@ function enterAs(m) {
   document.getElementById('auto-login-status').style.display = 'none';
   if (m.role === 'child') loadChildDashboard(); else loadParentDashboard();
   if (m.role === 'parent' && location.hash === '#approvals') { parentNav('approvals'); cleanUrl(); }
-  if (location.hash === '#urgent') cleanUrl();
+  if (location.hash === '#urgent' || location.hash === '#gift') cleanUrl();
   musicAfterLogin();
   if (!isStandalone()) checkHandoff();
 }

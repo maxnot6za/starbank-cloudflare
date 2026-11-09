@@ -11,7 +11,8 @@ export const PUBLIC_API = [
   'getParentDashboard', 'acknowledgeRedemptions', 'checkRejectImpact', 'reviewSubmission',
   'webSaveMission', 'webSaveReward', 'webDeleteMission', 'webDeleteReward',
   'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
-  'createUrgent', 'cancelUrgent', 'urgentSeen', 'submitUrgent', 'declineUrgent'
+  'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
+  'sendGift', 'cancelGift', 'openGift'
 ];
 
 export function createCore(S) {
@@ -773,17 +774,26 @@ export function createCore(S) {
     const spent = getAllRows_('Redemptions')
       .filter(r => String(r.child_id) === String(childId))
       .reduce((sum, r) => sum + Number(r.stars_spent || 0), 0);
-    return earned + getWheelStars_(childId) - spent;
+    return earned + getWheelStars_(childId) + getGiftStars_(childId) - spent;
+  }
+
+  // ดาวจากของขวัญที่เปิดแล้ว (ไม่นับเป็นภารกิจ · ไม่นับในวันสะสมกงล้อ)
+  function getGiftStars_(childId) {
+    var g = S.store && S.store.giftStars ? S.store.giftStars(childId) : null;
+    if (g !== null && g !== undefined) return g;
+    return getAllRows_('Gifts').filter(function(x) { return String(x.child_id) === String(childId) && x.status === 'opened'; })
+      .reduce(function(sum, x) { return sum + Number(x.stars || 0); }, 0);
   }
 
   function getChildStats_(childId) {
     const agg = subAgg_(childId);
     const wheelStars = getWheelStars_(childId);
-    const totalEarned = agg.earned + wheelStars;
+    const giftStars = getGiftStars_(childId);
+    const totalEarned = agg.earned + wheelStars + giftStars;
     const totalSpent = getAllRows_('Redemptions').filter(r => String(r.child_id) === String(childId))
       .reduce((sum, r) => sum + Number(r.stars_spent || 0), 0);
     return {
-      balance: totalEarned - totalSpent, totalEarned, totalSpent, wheelStars,
+      balance: totalEarned - totalSpent, totalEarned, totalSpent, wheelStars, giftStars,
       missionsCompleted: agg.approved,
       pendingCount: agg.pending
     };
@@ -800,7 +810,7 @@ export function createCore(S) {
     const wheel = syncChildWheel_(member, family);   // ก่อน stats: อาจเพิ่มสิทธิ์หมุนใหม่
     urgentSweep(familyId);
     return {
-      urgent: childUrgent_(member),
+      urgent: childUrgent_(member), gifts: childGifts_(member),
       member, family: family, wheel: wheel, stats: getChildStats_(memberId),
       missions: getMissions_(familyId), rewards: getRewardsForChild_(familyId),
       recentSubmissions: getChildSubmissions_(memberId).slice(-20).reverse(),
@@ -878,7 +888,7 @@ export function createCore(S) {
       recentRedemptions: getUnacknowledgedRedemptions_(familyId),
       reviewHistory: getReviewHistory_(familyId),
       redemptionHistory: getRedemptionHistory_(familyId),
-      wheel: wheel, urgent: urgent, serverNow: new Date(nowMs_()).toISOString()
+      wheel: wheel, urgent: urgent, gifts: parentGifts_(familyId), serverNow: new Date(nowMs_()).toISOString()
     };
   }
 
@@ -1404,6 +1414,7 @@ export function createCore(S) {
   // ภารกิจด่วน (Urgent) — เวลาทั้งหมดใช้นาฬิกาเซิร์ฟเวอร์
   // ==========================================
   var URGENT_GRACE_MS = 5000;                // กดส่งตอน 00:00 พอดี เน็ตช้านิดหน่อยยังนับว่าทัน
+  var URGENT_READ_MS = 60000;               // เห็นป้ายแล้วไม่กดรับ → เริ่มนับเองหลัง 1 นาที
   var URGENT_ACTIVE = { pending: true, running: true };
   function nowMs_() { return S.now ? S.now() : Date.now(); }
   function msIso_(ms) { return new Date(ms).toISOString(); }
@@ -1435,13 +1446,19 @@ export function createCore(S) {
     var now = nowMs_(), next = null;
     function soon(ms) { if (ms && (next === null || ms < next)) next = ms; }
     urgentRows_(familyId).forEach(function(u) {
+      if (u.status === 'pending' && u.seen_at) {
+        var auto = new Date(u.seen_at).getTime() + URGENT_READ_MS;
+        if (auto <= now) urgentStart_(u, auto);   // เริ่มนับนับจากเวลาครบ 1 นาที (ไม่ใช่ตอนตรวจ)
+        else { soon(auto); return; }
+      }
       if (u.status === 'pending') {
         var until = new Date(u.open_until).getTime();
         if (!(until > now)) {
           updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'expired', ended_at: msIso_(now) });
           urgentEvent_('urgent_expired', u, { unseen: true });
         } else soon(until);
-      } else if (u.status === 'running') {
+      }
+      if (u.status === 'running') {
         var dl = new Date(u.deadline_at).getTime();
         if (dl + URGENT_GRACE_MS <= now) {
           updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'expired', ended_at: msIso_(now) });
@@ -1467,6 +1484,7 @@ export function createCore(S) {
       stars: Number(u.stars) || 0, duration_sec: Number(u.duration_sec) || 0, status: u.status,
       open_until: u.open_until, seen_at: u.seen_at || null, deadline_at: u.deadline_at || null,
       ended_at: u.ended_at || null, created_at: u.created_at, submission_id: u.submission_id || null,
+      accepted_at: u.accepted_at || null, auto_start_at: (u.status === 'pending' && u.seen_at) ? msIso_(new Date(u.seen_at).getTime() + URGENT_READ_MS) : null,
       from_name: urgentNameOf_(u.created_by, 'ผู้ปกครอง'),
       left_ms: u.status === 'running' ? Math.max(0, new Date(u.deadline_at).getTime() - now) : null
     };
@@ -1532,17 +1550,33 @@ export function createCore(S) {
     return u;
   }
 
-  // เด็กเห็นป้ายครั้งแรก → เริ่มนับถอยหลัง (เรียกซ้ำได้ ไม่เริ่มใหม่)
+  // เริ่มนับถอยหลัง (กดรับ หรือครบเวลาอ่านป้าย)
+  function urgentStart_(u, startMs) {
+    var dl = startMs + Number(u.duration_sec) * 1000;
+    updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'running', accepted_at: msIso_(startMs), deadline_at: msIso_(dl), seen_at: u.seen_at || msIso_(startMs) });
+    urgentWake_(urgentRemindAt_(u) || dl + URGENT_GRACE_MS);
+    urgentWake_(dl + URGENT_GRACE_MS);
+  }
+
+  // เด็กเห็นป้ายครั้งแรก → ยังไม่นับ ให้เวลาอ่าน 1 นาที (กดรับก่อนได้) · เรียกซ้ำได้
   function urgentSeen(childId, urgentId) {
     var u = myUrgent_(childId, urgentId);
     var now = nowMs_();
     urgentSweep(u.family_id);
-    if (u.status === 'pending') {
-      var dl = now + Number(u.duration_sec) * 1000;
-      updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'running', seen_at: msIso_(now), deadline_at: msIso_(dl) });
-      urgentWake_(urgentRemindAt_(u) || dl + URGENT_GRACE_MS);
-      urgentWake_(dl + URGENT_GRACE_MS);
+    if (u.status === 'pending' && !u.seen_at) {
+      updateRow_('Urgent', 'urgent_id', u.urgent_id, { seen_at: msIso_(now) });
+      urgentWake_(now + URGENT_READ_MS);
     }
+    return { urgent: urgentView_(u, now), serverNow: msIso_(now) };
+  }
+
+  // กด "รับภารกิจ" → เริ่มนับทันที
+  function acceptUrgent(childId, urgentId) {
+    var u = myUrgent_(childId, urgentId);
+    var now = nowMs_();
+    urgentSweep(u.family_id);
+    if (u.status === 'pending') urgentStart_(u, now);
+    else if (u.status !== 'running') throw new Error(u.status === 'cancelled' ? 'ผู้ปกครองยกเลิกภารกิจนี้แล้ว' : 'ภารกิจนี้จบไปแล้ว');
     return { urgent: urgentView_(u, now), serverNow: msIso_(now) };
   }
 
@@ -1551,9 +1585,7 @@ export function createCore(S) {
     var now = nowMs_();
     urgentSweep(u.family_id);
     if (u.status === 'expired') return { expired: true };
-    if (u.status === 'pending') {          // ส่งโดยไม่ได้เปิดป้าย (เช่น เครื่องเก่า) → ถือว่าเห็นตอนนี้
-      updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'running', seen_at: msIso_(now), deadline_at: msIso_(now + Number(u.duration_sec) * 1000) });
-    }
+    if (u.status === 'pending') urgentStart_(u, now);   // ส่งโดยยังไม่ได้กดรับ → ถือว่ารับตอนนี้
     if (u.status !== 'running') throw new Error(u.status === 'cancelled' ? 'ผู้ปกครองยกเลิกภารกิจนี้แล้ว' : 'ภารกิจนี้จบไปแล้ว');
     var kid = getMember_(childId);
     var submissionId = genId_();
@@ -1622,7 +1654,78 @@ export function createCore(S) {
   }
 
 
-  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, submitUrgent, declineUrgent };
+  // ==========================================
+  // ของขวัญ (Gift) — ผู้ปกครองส่งดาวให้ · ดาวเข้าเมื่อเด็กเปิดกล่อง
+  // ==========================================
+  var GIFT_REASONS = { gift: '🎁 ของขวัญ', great: '💪 เก่งมาก', comfort: '🤗 ปลอบใจ', birthday: '🎂 วันเกิด', other: '✏️ อื่น ๆ' };
+  function giftView_(g) {
+    var kid = getMember_(g.child_id);
+    return { gift_id: g.gift_id, child_id: g.child_id, child_name: kid ? kid.name : 'น้อง', child_avatar: kid ? kid.avatar : '🧒',
+      stars: Number(g.stars) || 0, reason: g.reason || 'gift', reason_label: GIFT_REASONS[g.reason] || GIFT_REASONS.gift,
+      message: g.message || '', from_name: urgentNameOf_(g.created_by, 'ผู้ปกครอง'), status: g.status,
+      created_at: g.created_at, opened_at: g.opened_at || null };
+  }
+  function familyGifts_(familyId) { return getAllRows_('Gifts').filter(function(g) { return String(g.family_id) === String(familyId); }); }
+
+  function sendGift(memberId, data) {
+    var parent = requireParent_(memberId);
+    data = data || {};
+    var stars = Math.round(Number(data.stars));
+    if (!(stars >= 1)) throw new Error('จำนวนดาวต้องอย่างน้อย 1');
+    if (stars > 9999) throw new Error('จำนวนดาวมากเกินไป (สูงสุด 9,999)');
+    var reason = GIFT_REASONS[data.reason] ? data.reason : 'gift';
+    var message = String(data.message || '').trim().slice(0, 80);
+    var want = Array.isArray(data.childIds) ? data.childIds.map(String) : [];
+    var kids = getAllRows_('Members').filter(function(m) { return String(m.family_id) === String(parent.family_id) && m.role === 'child' && want.indexOf(String(m.member_id)) >= 0; });
+    if (!kids.length) throw new Error('เลือกลูกที่จะส่งของขวัญให้ก่อนนะ');
+    var now = msIso_(nowMs_());
+    kids.forEach(function(k) {
+      var g = { gift_id: genId_(), family_id: parent.family_id, child_id: k.member_id, stars: stars, reason: reason, message: message,
+        created_by: memberId, created_at: now, status: 'sent', opened_at: '', ended_at: '' };
+      appendRow_('Gifts', g);
+      if (S.events) S.events.push({ type: 'gift_new', familyId: String(parent.family_id), childId: String(k.member_id), giftId: g.gift_id,
+        parentName: parent.name, reasonLabel: GIFT_REASONS[reason], stars: stars });
+    });
+    return { count: kids.length };
+  }
+
+  function cancelGift(memberId, giftId) {
+    var parent = requireParent_(memberId);
+    var g = familyGifts_(parent.family_id).find(function(x) { return String(x.gift_id) === String(giftId); });
+    if (!g) throw new Error('ไม่พบของขวัญนี้');
+    if (g.status !== 'sent') throw new Error(g.status === 'opened' ? 'ลูกเปิดของขวัญไปแล้ว ยกเลิกไม่ได้' : 'ยกเลิกไปแล้ว');
+    updateRow_('Gifts', 'gift_id', g.gift_id, { status: 'cancelled', ended_at: msIso_(nowMs_()) });
+    return { cancelled: true };
+  }
+
+  function openGift(childId, giftId) {
+    var kid = requireChild_(childId);
+    var g = familyGifts_(kid.family_id).find(function(x) { return String(x.gift_id) === String(giftId) && String(x.child_id) === String(childId); });
+    if (!g) throw new Error('ไม่พบของขวัญนี้');
+    if (g.status === 'cancelled') throw new Error('ผู้ปกครองยกเลิกของขวัญนี้แล้ว');
+    if (g.status === 'sent') {
+      updateRow_('Gifts', 'gift_id', g.gift_id, { status: 'opened', opened_at: msIso_(nowMs_()) });
+      if (S.events) S.events.push({ type: 'gift_opened', familyId: String(kid.family_id), childName: kid.name, childAvatar: kid.avatar,
+        stars: Number(g.stars) || 0, giftId: g.gift_id });
+    }
+    return { stars: Number(g.stars) || 0, balance: getStarBalance_(childId) };
+  }
+
+  function childGifts_(member) {
+    var mine = familyGifts_(member.family_id).filter(function(g) { return String(g.child_id) === String(member.member_id); });
+    return {
+      unopened: mine.filter(function(g) { return g.status === 'sent'; }).map(giftView_),
+      opened: mine.filter(function(g) { return g.status === 'opened'; })
+        .sort(function(a, b) { return String(b.opened_at).localeCompare(String(a.opened_at)); }).slice(0, 20).map(giftView_)
+    };
+  }
+  function parentGifts_(familyId) {
+    var now = nowMs_();
+    return familyGifts_(familyId).filter(function(g) { return g.status === 'sent' || now - new Date(g.ended_at || g.opened_at || g.created_at).getTime() < 7 * 86400000; })
+      .sort(function(a, b) { return String(b.created_at).localeCompare(String(a.created_at)); }).slice(0, 15).map(giftView_);
+  }
+
+  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }

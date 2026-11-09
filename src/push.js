@@ -149,6 +149,12 @@ export async function notifyApp(env, origin, events) {
       await deliver(env, subs, payload, origin);
       continue;
     }
+    if (ev.type === 'gift_new') {
+      const { results: subs } = await env.DB.prepare('SELECT * FROM PushSubs WHERE member_id = ?').bind(String(ev.childId)).all();
+      if (subs.length) await deliver(env, subs, { title: `🎁 ${ev.parentName} ส่งของขวัญมาให้!`, body: `${ev.reasonLabel} · แตะเพื่อเปิดกล่อง`,
+        tag: 'gift-' + ev.giftId, url: '/#gift', kind: 'gift' }, origin);
+      continue;
+    }
     const { results: parents } = await env.DB.prepare(
       "SELECT member_id, line_user_id, notify_channel, notify_submission FROM Members WHERE family_id = ? AND role = 'parent'").bind(ev.familyId).all();
     // ค่าเริ่มต้น: ผูก LINE = LINE (แบบเดิม) · ไม่ผูก LINE = แอป
@@ -166,6 +172,8 @@ export async function notifyApp(env, origin, events) {
         tag: 'sub-' + ev.submissionId, url: '/#approvals', subId: ev.submissionId, kind: 'submit', badge };
     } else if (ev.type === 'redeem') {
       payload = { title: `🎁 ${ev.childName} แลกรางวัล`, body: `${ev.rewardTitle} (${ev.stars} ดาว)`, tag: 'redeem-' + Date.now(), url: '/', kind: 'redeem', badge };
+    } else if (ev.type === 'gift_opened') {
+      payload = { title: `🎁 ${ev.childName} เปิดของขวัญแล้ว!`, body: `ได้ ⭐ ${ev.stars} ดาว`, tag: 'gift-' + ev.giftId, url: '/', kind: 'gift', badge };
     } else if (ev.type === 'urgent_declined') {
       payload = { title: `😴 ${ev.childName}: ไว้คราวหน้านะ ยุ่งอยู่`, body: `ภารกิจด่วน ${ev.icon} ${ev.title}`, tag: 'urgent-' + ev.urgentId, url: '/#urgent', kind: 'urgent', badge };
     } else if (ev.type === 'urgent_expired') {
