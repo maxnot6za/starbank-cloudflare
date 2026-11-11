@@ -104,7 +104,7 @@
 
   P.say = function (text) { this.bubble.textContent = text || ''; this.bubble.classList.toggle('on', !!text); };
   P.face = function (dir) { this.dir = dir < 0 ? -1 : 1; this._frame(this.sheet, this._f || 0); };
-  P.stop = function () { this.token++; this.say(''); };
+  P.stop = function () { this.token++; this.say(''); this.target = null; this.current = 'idle'; };
 
   // เล่นท่าเดียว 1 รอบ (หรือวนจนครบ forMs ถ้าส่งมา)
   P._run = function (name, t, forMs) {
@@ -146,7 +146,7 @@
     return new Promise(function (res, rej) {
       var i = 0, acc = 0, last = performance.now();
       (function fr(now) {
-        if (self.token !== t) return rej('stop');
+        if (self.token !== t) { self.target = null; return rej('stop'); }
         var dt = Math.min(50, now - last) * self.speed; last = now; acc += dt;
         while (acc >= steps[i].ms) { acc -= steps[i].ms; i = (i + 1) % steps.length; }
         var nx = self.x + self.dir * dt * pxPerMs;
@@ -168,8 +168,10 @@
     // อยู่ในฉากกับตัวอื่น → เดินได้แค่ในช่องว่างระหว่างเพื่อนซ้ายขวา (ไม่เดินผ่านกัน จึงไม่ทับกัน)
     if (this.range) { var r = this.range(); lo = Math.max(lo, r[0]); hi = Math.min(hi, r[1]); }
     if (hi <= lo) return this.x;
-    var minGap = Math.min((hi - lo) / 2, this.size * 1.5), n = 0;
-    do { x = rand(lo, hi); } while (Math.abs(x - this.x) < minGap && ++n < 20);
+    var minGap = Math.min((hi - lo) / 2, this.size * 1.5), n = 0, free = this.isFree;
+    // isFree (จาก Scene) = จุดนี้ไม่มีใครยืนอยู่หรือกำลังเดินไปหยุด → เดินผ่านกันได้ แต่ไม่หยุดที่เดียวกัน
+    do { x = rand(lo, hi); } while ((Math.abs(x - this.x) < minGap || (free && !free(x))) && ++n < 40);
+    if (free && !free(x)) return this.x;   // หาจุดว่างไม่ได้ → อยู่ที่เดิม
     return x;
   };
 

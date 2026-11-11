@@ -48,8 +48,14 @@
       });
       a.id = c.id;
       a.el.style.zIndex = 10 + i;
-      a.range = function () { return self.range(a); };
-      a.blocked = function (nx) { return self.blocked(a, nx); };
+      if (cfg.passThrough === false) {
+        // โหมดเข้ม: ห้ามเดินผ่านกันเลย
+        a.range = function () { return self.range(a); };
+        a.blocked = function (nx) { return self.blocked(a, nx); };
+      } else {
+        // โหมดปกติ: เดินสวนผ่านกันได้ แต่จุดที่หยุดต้องว่าง
+        a.isFree = function (x) { return self.isFree(a, x); };
+      }
       a.onChange = function (actor) { if (self.running) self.check(actor); };
       a.spr.style.pointerEvents = 'auto';
       a.spr.style.cursor = 'pointer';
@@ -108,6 +114,14 @@
       return ahead && Math.abs(o.x - nx) < self.space(a, o) * 0.97;
     });
   };
+  // จุดที่ "หยุด" ของแต่ละตัว: กำลังเดิน = จุดหมาย, ไม่ได้เดิน = ที่ยืนอยู่
+  P.spot = function (o) { return o.target != null ? o.target : o.x; };
+  P.isFree = function (a, x, except) {
+    var self = this;
+    return this._others(a).every(function (o) {
+      return (except && except.indexOf(o) >= 0) || Math.abs(self.spot(o) - x) >= self.space(a, o);
+    });
+  };
   P._between = function (p, q) {
     var lo = Math.min(p.x, q.x), hi = Math.max(p.x, q.x);
     return this._others(p).some(function (o) { return o !== q && o.x > lo && o.x < hi; });
@@ -128,7 +142,7 @@
       var xs = cast.map(function (a) { return a.x; });
       if (Math.max.apply(null, xs) - Math.min.apply(null, xs) > (r.near || 3) * this.size) continue;
       if (!cast.every(function (a) { return allowed((r.when || {})[a.id], a.current); })) continue;
-      if (cast.length === 2 && this._between(cast[0], cast[1])) continue;   // มีคนยืนคั่นกลาง → ไม่เดินทะลุไปหา
+      if (this.cfg.passThrough === false && cast.length === 2 && this._between(cast[0], cast[1])) continue;   // โหมดห้ามผ่าน: มีคนคั่นกลาง → ไม่ไปหา
       // ไม่ผ่านโอกาส → พักบทนี้สักครู่ ไม่สุ่มใหม่ทุกครั้งที่เปลี่ยนท่า
       if (Math.random() > (r.chance != null ? r.chance : 1)) { this.cool[r.id] = now + 4000; continue; }
       this.run(r);
@@ -136,8 +150,13 @@
     }
   };
 
-  P.run = function (r) {
+  P.run = function (r, tries) {
     var self = this, lock = (r.lock || r.who).map(function (id) { return self.actors[id]; });
+    // ตัวที่ต้องใช้ยังเล่นบทอื่นอยู่ → รอให้จบก่อน (สูงสุด ~10 วิ) ไม่แย่งตัวกลางบท
+    if (lock.some(function (a) { return self.busy[a.id]; })) {
+      if ((tries || 0) < 20) setTimeout(function () { self.run(r, (tries || 0) + 1); }, 500);
+      return;
+    }
     this.cool[r.id] = Date.now() + (r.cooldown || 20000);
     lock.forEach(function (a) { self.busy[a.id] = true; a.stop(); });
     this._event(r.label || r.id);
@@ -173,26 +192,72 @@
     var gap = Math.max(gapHeads * this.size, this.space(left, right));
     var w = this.stage.clientWidth, m = this.size * 0.9;
     // ขอบเขตที่คู่นี้ใช้ได้ (ไม่ล้ำเข้าไปหาตัวที่สาม)
-    var lo = Math.max(m, this.range(left, [right])[0]), hi = Math.min(w - m, this.range(right, [left])[1]);
+    var strict = this.cfg.passThrough === false, self = this, pair = [left, right];
+    var lo = strict ? Math.max(m, this.range(left, [right])[0]) : m;
+    var hi = strict ? Math.min(w - m, this.range(right, [left])[1]) : w - m;
+    // โหมดปกติ: เลือกจุดพบที่ทั้งสองตำแหน่งว่าง (ไม่ไปหยุดทับตัวที่สาม) ลองขยับซ้ายขวาทีละนิด
+    function spotOk(x, who) { return strict || self.isFree(who, x, pair); }
     if (locked(left) && locked(right)) {
-      var mid = Math.min(hi - gap / 2, Math.max(lo + gap / 2, (left.x + right.x) / 2));
+      var mid0 = Math.min(hi - gap / 2, Math.max(lo + gap / 2, (left.x + right.x) / 2)), mid = mid0;
+      for (var d = 0; d < w; d += this.size * 0.25) {
+        var c1 = Math.min(hi - gap / 2, Math.max(lo + gap / 2, mid0 + d)), c2 = Math.min(hi - gap / 2, Math.max(lo + gap / 2, mid0 - d));
+        if (spotOk(c1 - gap / 2, left) && spotOk(c1 + gap / 2, right)) { mid = c1; break; }
+        if (spotOk(c2 - gap / 2, left) && spotOk(c2 + gap / 2, right)) { mid = c2; break; }
+      }
+      // ไม่มีที่ว่างพอ (จอแคบ มีตัวที่สามยืนขวาง) → ขอให้ตัวที่ขวางและว่างอยู่หลบไปจุดอื่น
       left.target = mid - gap / 2; right.target = mid + gap / 2;
       moves.push(left.walkTo(mid - gap / 2), right.walkTo(mid + gap / 2));
+      this._shoo(pair);
     } else if (locked(left)) {
-      moves.push(left.walkTo(Math.max(lo, right.x - gap)));
+      var tl = right.x - gap;   // ยืนด้านซ้ายของเพื่อน ถ้าไม่ว่าง/ชิดขอบ ไปด้านขวาแทน
+      if (tl < lo || !spotOk(tl, left)) tl = Math.min(hi, right.x + gap);
+      left.target = tl; moves.push(left.walkTo(tl)); this._shoo(pair);
     } else if (locked(right)) {
-      moves.push(right.walkTo(Math.min(hi, left.x + gap)));
+      var tr = left.x + gap;
+      if (tr > hi || !spotOk(tr, right)) tr = Math.max(lo, left.x - gap);
+      right.target = tr; moves.push(right.walkTo(tr)); this._shoo(pair);
     }
     return Promise.all(moves).then(function () {
-      if (locked(left)) left.face(1);
-      if (locked(right)) right.face(-1);
+      // หันหน้าเข้าหากันตามตำแหน่งจริงหลังเดิน
+      var l = left.x <= right.x ? left : right, r2 = l === left ? right : left;
+      if (locked(l)) l.face(1);
+      if (locked(r2)) r2.face(-1);
     });
+  };
+
+  // ตัวอื่นที่ยืน/กำลังจะหยุดทับจุดพบของคู่นี้ และไม่ได้เล่นบทอยู่ → เดินหลบไปจุดว่าง แล้วใช้ชีวิตต่อ
+  P._shoo = function (pair) {
+    var self = this;
+    this._others(pair[0]).forEach(function (o) {
+      if (pair.indexOf(o) >= 0 || self.busy[o.id]) return;
+      var x = self.spot(o);
+      var clash = pair.some(function (p) { return Math.abs(self.spot(p) - x) < self.space(p, o); });
+      if (!clash) return;
+      o.stop();
+      var t = o.randomX();
+      if (!self.isFree(o, t)) t = self.bestSpot(o);
+      self.busy[o.id] = true;
+      o.target = t;
+      o.walkTo(t).then(function () { self.busy[o.id] = false; if (self.running) o.life(); });
+    });
+  };
+
+  // จุดที่ห่างจากทุกตัวมากที่สุด (ใช้เมื่อสุ่มหาจุดว่างไม่เจอ) — ไล่ดูทั้งฉาก
+  P.bestSpot = function (o) {
+    var self = this, w = this.stage.clientWidth, m = this.size * 0.9, best = o.x, bestScore = -Infinity;
+    for (var x = m; x <= w - m; x += this.size / 4) {
+      var score = Math.min.apply(null, this._others(o).map(function (p) { return Math.abs(self.spot(p) - x) - self.space(p, o); }));
+      if (score > bestScore) { bestScore = score; best = x; }
+    }
+    return best;
   };
 
   // แตะตัวละคร → เล่นท่า manifest.tap แล้วกลับไปใช้ชีวิตต่อ
   P.tap = function (id) {
     var a = this.actors[id], self = this, t = a.m.tap;
     if (!t || this.busy[id]) return;
+    // กำลังเดินอยู่ → ทักทายด้วยคำพูดอย่างเดียว ไม่หยุดกลางทาง (กันหยุดทับตัวอื่น)
+    if (a.target != null) { a.say(t.say || '👋'); setTimeout(function () { a.say(''); }, 1200); return; }
     this.busy[id] = true;
     a.stop();
     this._event('แตะ ' + (a.m.name || id));
