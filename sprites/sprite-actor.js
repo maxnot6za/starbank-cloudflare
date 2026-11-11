@@ -139,6 +139,7 @@
     var self = this, a = this.m.anims[this.m.walk || 'walk'], steps = stepsOf(a);
     var pxPerMs = (a.speed || 1) * this.size / 1000, bob = a.bob || [];
     this.dir = tx >= this.x ? 1 : -1;
+    this.target = tx;
     this.current = this.m.walk || 'walk';
     this._state(this.dir > 0 ? 'เดินไปทางขวา' : 'เดินไปทางซ้าย');
     if (REDUCED) { this.x = tx; this._place(); return Promise.resolve(); }
@@ -148,12 +149,15 @@
         if (self.token !== t) return rej('stop');
         var dt = Math.min(50, now - last) * self.speed; last = now; acc += dt;
         while (acc >= steps[i].ms) { acc -= steps[i].ms; i = (i + 1) % steps.length; }
-        self.x += self.dir * dt * pxPerMs;
-        var done = self.dir > 0 ? self.x >= tx : self.x <= tx;
-        if (done) self.x = tx;
+        var nx = self.x + self.dir * dt * pxPerMs;
+        // กันชน: ถ้าก้าวต่อไปจะเข้าใกล้ตัวข้างหน้าเกินระยะ → หยุดตรงนี้ (ไม่เดินทะลุ/ทับกัน)
+        var blocked = self.blocked && self.blocked(nx);
+        if (!blocked) self.x = nx;
+        var done = blocked || (self.dir > 0 ? self.x >= tx : self.x <= tx);
+        if (done && !blocked) self.x = tx;
         self._bob = (bob[i] || 0) * self.scale * 2;
         self._f = steps[i].f; self._frame(a.sheet, steps[i].f); self._place();
-        if (done) { self._bob = 0; return res(); }
+        if (done) { self._bob = 0; self.target = null; return res(); }
         requestAnimationFrame(fr);
       })(last);
     });
@@ -161,10 +165,11 @@
   P.walkTo = function (x) { this.token++; return this._walk(x, this.token).catch(function () {}); };
   P.randomX = function () {
     var w = this.stage.clientWidth, lo = this.margin, hi = Math.max(lo, w - this.margin), x;
-    var minGap = Math.min(hi - lo, this.size * 1.5), n = 0;
-    var others = this.avoid ? this.avoid() : [], space = this.size * 1.4;
-    do { x = rand(lo, hi); } while ((Math.abs(x - this.x) < minGap ||
-      others.some(function (o) { return Math.abs(o - x) < space; })) && ++n < 30);
+    // อยู่ในฉากกับตัวอื่น → เดินได้แค่ในช่องว่างระหว่างเพื่อนซ้ายขวา (ไม่เดินผ่านกัน จึงไม่ทับกัน)
+    if (this.range) { var r = this.range(); lo = Math.max(lo, r[0]); hi = Math.min(hi, r[1]); }
+    if (hi <= lo) return this.x;
+    var minGap = Math.min((hi - lo) / 2, this.size * 1.5), n = 0;
+    do { x = rand(lo, hi); } while (Math.abs(x - this.x) < minGap && ++n < 20);
     return x;
   };
 

@@ -17,7 +17,11 @@
         222,
         342
       ],
-      "facing": "right"
+      "facing": "right",
+      "extent": [
+        94,
+        107
+      ]
     },
     "walk": {
       "file": "walk.webp",
@@ -26,7 +30,11 @@
         213,
         355
       ],
-      "facing": "right"
+      "facing": "right",
+      "extent": [
+        102,
+        84
+      ]
     },
     "cheer": {
       "file": "cheer.webp",
@@ -35,7 +43,11 @@
         196,
         356
       ],
-      "facing": "right"
+      "facing": "right",
+      "extent": [
+        93,
+        94
+      ]
     },
     "water": {
       "file": "water.webp",
@@ -44,7 +56,11 @@
         296,
         341
       ],
-      "facing": "right"
+      "facing": "right",
+      "extent": [
+        96,
+        144
+      ]
     }
   },
   "anims": {

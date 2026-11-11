@@ -10,7 +10,11 @@
         230,
         286
       ],
-      "facing": "right"
+      "facing": "right",
+      "extent": [
+        111,
+        109
+      ]
     },
     "write": {
       "file": "write.webp",
@@ -19,7 +23,11 @@
         201,
         265
       ],
-      "facing": "left"
+      "facing": "left",
+      "extent": [
+        96,
+        96
+      ]
     },
     "walk": {
       "file": "walk.webp",
@@ -28,7 +36,11 @@
         212,
         291
       ],
-      "facing": "right"
+      "facing": "right",
+      "extent": [
+        88,
+        82
+      ]
     },
     "cheer": {
       "file": "cheer.webp",
@@ -37,7 +49,11 @@
         242,
         305
       ],
-      "facing": "right"
+      "facing": "right",
+      "extent": [
+        117,
+        94
+      ]
     }
   },
   "anims": {

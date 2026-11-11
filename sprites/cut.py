@@ -224,6 +224,18 @@ def group(cores, n):
     return groups
 
 
+def extent(sheet, frames, W):
+    """ความกว้างจริงของตัวละคร (รวมขอบขาวและของที่ถือ) ซ้าย/ขวาจากกึ่งกลางช่อง สูงสุดทุกเฟรม (px)"""
+    a = np.array(sheet)[:, :, 3] > 128
+    L = R = 0
+    for k in range(frames):
+        xs = np.where(a[:, k * W:(k + 1) * W].any(0))[0]
+        if len(xs):
+            L = max(L, W / 2 - xs.min())
+            R = max(R, xs.max() + 1 - W / 2)
+    return [int(round(L)), int(round(R))]
+
+
 def parse_list(s):
     return [int(x) for x in s.split(',') if x.strip()] if s else []
 
@@ -289,7 +301,8 @@ def main():
         'id': a_.char, 'name': a_.char, 'headWidth': HEAD_W, 'sheets': {}, 'anims': {}, 'life': []}
     prev = man['sheets'].get(a_.sheet, {})
     man['sheets'][a_.sheet] = {'file': fn, 'frames': len(out), 'cell': [W, H],
-                               'facing': a_.facing or prev.get('facing', 'right')}
+                               'facing': a_.facing or prev.get('facing', 'right'),
+                               'extent': extent(sheet, len(out), W)}
     with open(mpath, 'w', encoding='utf-8') as fh:
         json.dump(man, fh, ensure_ascii=False, indent=2)
         fh.write('\n')

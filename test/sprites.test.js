@@ -44,7 +44,13 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
     const errors = []; p.on('pageerror', e => errors.push(e.message));
     await p.route('**/fonts.*/**', r => r.abort());
     await p.goto('file://' + path.join(ROOT, 'scenes', name + '.html'));
+    await p.evaluate(() => { const A = Object.values(scene.actors); for (const a of A) a.speed = 3; window.worst = 1e9;
+      setInterval(() => { const s = [...A].sort((a, b) => a.x - b.x);
+        for (let i = 1; i < s.length; i++) worst = Math.min(worst, s[i].x - s[i - 1].x - scene.half(s[i - 1]) - scene.half(s[i])); }, 40); });
     for (const b of await p.$$('#force button')) { await b.click(); await p.waitForTimeout(2500); }
+    await p.waitForTimeout(12000);
+    const worst = await p.evaluate(() => worst);
+    ok(worst >= -1, name + ': ตัวละครไม่ยืนทับกันเลย (ระยะห่างขอบตัวที่แคบสุด px)', Math.round(worst));
     await p.click('.sa-spr'); await p.waitForTimeout(800);
     const logs = await p.$$eval('#log li', l => l.length);
     ok(!errors.length && logs >= sc.interactions.length, name + ': สั่งทุกบท + แตะตัวละคร ไม่มี error', { errors, logs });

@@ -48,9 +48,8 @@
       });
       a.id = c.id;
       a.el.style.zIndex = 10 + i;
-      a.avoid = function () {
-        return Object.keys(self.actors).filter(function (k) { return k !== c.id; }).map(function (k) { return self.actors[k].x; });
-      };
+      a.range = function () { return self.range(a); };
+      a.blocked = function (nx) { return self.blocked(a, nx); };
       a.onChange = function (actor) { if (self.running) self.check(actor); };
       a.spr.style.pointerEvents = 'auto';
       a.spr.style.cursor = 'pointer';
@@ -71,6 +70,48 @@
     var A = this.actors;
     Object.keys(A).forEach(function (k) { A[k].stop(); });
   };
+  // ครึ่งความกว้างจริงของตัวละคร (รวมขอบขาวและของที่ถือ ทุกท่า) จาก extent ที่ cut.py วัดไว้ (px บนจอ)
+  P.half = function (a) {
+    if (a._half) return a._half;
+    var mx = 0, sh = a.m.sheets;
+    Object.keys(sh).forEach(function (k) {
+      var e = sh[k].extent || [sh[k].cell[0] / 2, sh[k].cell[0] / 2];
+      mx = Math.max(mx, e[0], e[1]);
+    });
+    return (a._half = mx * a.scale);
+  };
+  // ระยะห่างขั้นต่ำระหว่างกึ่งกลางของสองตัว = ครึ่งตัว A + ครึ่งตัว B + ช่องว่างเล็กน้อย → ไม่ทับกันเลย
+  P.space = function (a, b) {
+    if (!a) { var A = this.actors, k = Object.keys(A); return this.space(A[k[0]], A[k[1]]); }
+    return this.half(a) + this.half(b) + this.size * (this.cfg.gap != null ? this.cfg.gap : 0.08);
+  };
+  P._others = function (a) {
+    var A = this.actors;
+    return Object.keys(A).filter(function (k) { return A[k] !== a; }).map(function (k) { return A[k]; });
+  };
+  // ช่องว่างที่ตัวนี้เดินได้: ระหว่างเพื่อนตัวซ้ายสุดที่ใกล้สุดกับตัวขวาที่ใกล้สุด (นับจุดที่เพื่อนกำลังเดินไปด้วย)
+  P.range = function (a, except) {
+    var self = this, lo = -Infinity, hi = Infinity;
+    this._others(a).forEach(function (o) {
+      if (except && except.indexOf(o) >= 0) return;
+      var sp = self.space(a, o), far = o.target != null ? o.target : o.x;
+      if (o.x < a.x) lo = Math.max(lo, Math.max(o.x, far) + sp);
+      else hi = Math.min(hi, Math.min(o.x, far) - sp);
+    });
+    return [lo, hi];
+  };
+  // ก้าวไป nx แล้วจะชิดตัวที่อยู่ข้างหน้าเกินไปไหม
+  P.blocked = function (a, nx) {
+    var self = this;
+    return this._others(a).some(function (o) {
+      var ahead = (o.x - a.x) * a.dir > 0;
+      return ahead && Math.abs(o.x - nx) < self.space(a, o) * 0.97;
+    });
+  };
+  P._between = function (p, q) {
+    var lo = Math.min(p.x, q.x), hi = Math.max(p.x, q.x);
+    return this._others(p).some(function (o) { return o !== q && o.x > lo && o.x < hi; });
+  };
   P._event = function (t) { if (this.cfg.onEvent) this.cfg.onEvent(t); };
 
   function allowed(list, cur) { return !list || list.indexOf('*') >= 0 || list.indexOf(cur) >= 0; }
@@ -87,6 +128,7 @@
       var xs = cast.map(function (a) { return a.x; });
       if (Math.max.apply(null, xs) - Math.min.apply(null, xs) > (r.near || 3) * this.size) continue;
       if (!cast.every(function (a) { return allowed((r.when || {})[a.id], a.current); })) continue;
+      if (cast.length === 2 && this._between(cast[0], cast[1])) continue;   // มีคนยืนคั่นกลาง → ไม่เดินทะลุไปหา
       // ไม่ผ่านโอกาส → พักบทนี้สักครู่ ไม่สุ่มใหม่ทุกครั้งที่เปลี่ยนท่า
       if (Math.random() > (r.chance != null ? r.chance : 1)) { this.cool[r.id] = now + 4000; continue; }
       this.run(r);
@@ -126,17 +168,20 @@
   // ตัวที่ล็อกเดินเข้าหากัน แล้วหันหน้าเข้าหากัน
   P._meet = function (r, lock, gapHeads) {
     var self = this, cast = r.who.map(function (id) { return self.actors[id]; });
-    var gap = gapHeads * this.size, moves = [];
-    var locked = function (a) { return lock.indexOf(a) >= 0; };
+    var locked = function (a) { return lock.indexOf(a) >= 0; }, moves = [];
     var left = cast[0].x <= cast[1].x ? cast[0] : cast[1], right = left === cast[0] ? cast[1] : cast[0];
+    var gap = Math.max(gapHeads * this.size, this.space(left, right));
     var w = this.stage.clientWidth, m = this.size * 0.9;
+    // ขอบเขตที่คู่นี้ใช้ได้ (ไม่ล้ำเข้าไปหาตัวที่สาม)
+    var lo = Math.max(m, this.range(left, [right])[0]), hi = Math.min(w - m, this.range(right, [left])[1]);
     if (locked(left) && locked(right)) {
-      var mid = Math.min(w - m - gap / 2, Math.max(m + gap / 2, (left.x + right.x) / 2));
+      var mid = Math.min(hi - gap / 2, Math.max(lo + gap / 2, (left.x + right.x) / 2));
+      left.target = mid - gap / 2; right.target = mid + gap / 2;
       moves.push(left.walkTo(mid - gap / 2), right.walkTo(mid + gap / 2));
     } else if (locked(left)) {
-      moves.push(left.walkTo(Math.max(m, right.x - gap)));
+      moves.push(left.walkTo(Math.max(lo, right.x - gap)));
     } else if (locked(right)) {
-      moves.push(right.walkTo(Math.min(w - m, left.x + gap)));
+      moves.push(right.walkTo(Math.min(hi, left.x + gap)));
     }
     return Promise.all(moves).then(function () {
       if (locked(left)) left.face(1);
