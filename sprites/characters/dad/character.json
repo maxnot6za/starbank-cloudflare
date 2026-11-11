@@ -15,7 +15,13 @@
       "extent": [
         101,
         111
-      ]
+      ],
+      "cut": {
+        "src": "src/walk.webp",
+        "frames": 6,
+        "method": "split",
+        "facing": "right"
+      }
     },
     "coffee": {
       "file": "coffee.webp",
@@ -28,7 +34,15 @@
       "extent": [
         91,
         110
-      ]
+      ],
+      "cut": {
+        "src": "src/coffee.webp",
+        "frames": 6,
+        "facing": "right",
+        "replace": [
+          "3=src/coffee-3.webp"
+        ]
+      }
     },
     "thumb": {
       "file": "thumb.webp",
@@ -41,7 +55,12 @@
       "extent": [
         92,
         109
-      ]
+      ],
+      "cut": {
+        "src": "src/thumb.webp",
+        "frames": 1,
+        "facing": "right"
+      }
     },
     "gift": {
       "file": "gift.webp",
@@ -54,7 +73,13 @@
       "extent": [
         102,
         128
-      ]
+      ],
+      "cut": {
+        "src": "src/gift.webp",
+        "frames": 6,
+        "method": "split",
+        "facing": "right"
+      }
     }
   },
   "anims": {

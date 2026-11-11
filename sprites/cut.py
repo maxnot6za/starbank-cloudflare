@@ -96,7 +96,19 @@ def cores_color(a, bg):
     lab, n = nd.label(fg)
     sz = nd.sum(fg, lab, range(1, n + 1))
     body = body_color_mask(a, bg)
-    return [clean_core((lab == i + 1) & body, keep_parts=True) for i in range(n) if sz[i] > 1500]
+    light = ((a.min(2) > 160) & ((a.max(2) - a.min(2)) < 55)) | (a.min(2) > 230)
+    out = []
+    for i in range(n):
+        if sz[i] <= 1500:
+            continue
+        comp = lab == i + 1
+        # สีขาว/อ่อนที่ล้อมด้วยเส้นเข้ม (รองเท้าขาว ตาขาว กระดาษ) ไม่แตะขอบนอก → เก็บไว้
+        edge = comp & ~nd.binary_erosion(comp, iterations=2)
+        ll, _ = nd.label(comp & light)
+        outer = set(np.unique(ll[edge & (ll > 0)])) - {0}
+        inner = (ll > 0) & ~np.isin(ll, list(outer))
+        out.append(clean_core(comp & (body | inner), keep_parts=True))
+    return out
 
 
 def cores_split(a, bg, n):
@@ -155,11 +167,23 @@ def render(im, core):
 
 
 def head_span(f):
+    """ความกว้างหัว: ในช่วงบนของตัว ใช้เฉพาะช่วงพิกเซลต่อเนื่องที่ยาวที่สุดของแต่ละแถว
+    (มือที่ชูขึ้น/ของที่ถือข้างหัว เป็นช่วงแยก จึงไม่ถูกนับเป็นหัว)"""
     a = np.array(f)[:, :, 3] > 128
-    ys, xs = np.where(a)
-    top, h = ys.min(), ys.max() - ys.min()
-    sel = ys < top + h * HEAD_BAND
-    return xs[sel].min(), xs[sel].max()
+    rows = np.where(a.any(1))[0]
+    top, h = rows.min(), rows.max() - rows.min()
+    L, R = None, None
+    for y in range(top, int(top + h * HEAD_BAND) + 1):
+        xs = np.where(a[y])[0]
+        if not len(xs):
+            continue
+        cuts = np.where(np.diff(xs) > 1)[0]
+        starts = np.r_[xs[0], xs[cuts + 1]]
+        ends = np.r_[xs[cuts], xs[-1]]
+        k = np.argmax(ends - starts)
+        L = starts[k] if L is None else min(L, starts[k])
+        R = ends[k] if R is None else max(R, ends[k])
+    return L, R
 
 
 def slim(f, top=0.95, body=0.87, feet=0.9):
@@ -200,6 +224,7 @@ def cut_frames(path, n, method):
     for c in cores:
         f = render(im, c)
         f.info['bottom'] = int(np.where(c.any(1))[0].max())   # ตำแหน่งเท้าในภาพต้นฉบับ (ใช้กับ --keep-y)
+        f.info['src'] = path                                    # เฟรมจากภาพเดียวกัน = วาดขนาดเดียวกัน
         out.append(f)
     return out
 
@@ -240,6 +265,32 @@ def parse_list(s):
     return [int(x) for x in s.split(',') if x.strip()] if s else []
 
 
+def recut(char):
+    """ตัดทุกชีตของตัวละครใหม่ด้วยคำสั่งเดิมที่บันทึกไว้ (ใช้หลังปรับปรุง cut.py)"""
+    cdir = os.path.join(ROOT, 'characters', char)
+    man = json.load(open(os.path.join(cdir, 'character.json'), encoding='utf-8'))
+    for name, sh in list(man['sheets'].items()):
+        c = sh.get('cut')
+        if not c:
+            print('ข้าม', name, '(ไม่มีคำสั่งตัดที่บันทึกไว้)')
+            continue
+        cmd = [sys.executable, os.path.abspath(__file__), os.path.join(cdir, c['src']), '--char', char, '--sheet', name]
+        for k, v in c.items():
+            if k == 'src':
+                continue
+            flag = '--' + k.replace('_', '-')
+            if v is True:
+                cmd.append(flag)
+            elif isinstance(v, list):
+                for x in v:
+                    cmd += [flag, x.replace('$CHAR', cdir) if isinstance(x, str) else str(x)]
+            else:
+                cmd += [flag, str(v)]
+        print('ตัดใหม่', name)
+        import subprocess
+        subprocess.run(cmd, check=True, cwd=cdir)
+
+
 def main():
     p = argparse.ArgumentParser(description='ตัดชีตท่าทางเป็นแถบเฟรม')
     p.add_argument('src', help='ภาพต้นฉบับจาก AI (png/webp/jpg)')
@@ -257,8 +308,16 @@ def main():
     p.add_argument('--keep-y', action='store_true',
                    help='คงความสูงจากพื้นตามภาพต้นฉบับ (ท่ากระโดด) แทนการวางเท้าแตะพื้นทุกเฟรม')
     p.add_argument('--quality', type=int, default=90)
+    if len(sys.argv) > 2 and sys.argv[1] == '--recut':
+        return recut(sys.argv[2])
     a_ = p.parse_args()
 
+    # เก็บคำสั่งตัดไว้ใน character.json → ตัดใหม่ทั้งตัวละครได้ด้วย --recut
+    cut_args = {k: v for k, v in vars(a_).items() if k not in ('char', 'sheet', 'recut') and v not in (None, False, [], 'auto', 90)}
+    cdir0 = os.path.join(ROOT, 'characters', a_.char)
+    cut_args['src'] = os.path.relpath(os.path.abspath(a_.src), cdir0)
+    if a_.replace:
+        cut_args['replace'] = [r.split('=', 1)[0] + '=' + os.path.relpath(os.path.abspath(r.split('=', 1)[1]), cdir0) for r in a_.replace]
     frames = cut_frames(a_.src, a_.frames, a_.method)
     if a_.order:
         frames = [frames[i - 1] for i in parse_list(a_.order)]
@@ -273,9 +332,16 @@ def main():
 
     # ปรับขนาดให้หัวกว้าง HEAD_W ทุกเฟรม
     out = []
-    for f in frames:
-        l, r = head_span(f)
-        s = HEAD_W / (r - l)
+    # ขนาดต่อเฟรม: ปรับให้หัวกว้าง HEAD_W · แต่ถ้าเฟรมไหนต่างจากค่ากลางของชีตเกิน 7%
+    # (มักเพราะมือ/ของที่ชูข้างหัวถูกนับเป็นหัว) ใช้ค่ากลางของชีตแทน
+    scales = [HEAD_W / (r - l) for l, r in map(head_span, frames)]
+    for i, f in enumerate(frames):
+        s = scales[i]
+        same = [scales[j] for j, g in enumerate(frames) if g.info.get('src') == f.info.get('src')]
+        med = float(np.median(same))
+        if abs(s / med - 1) > 0.07:
+            print('เฟรม', i + 1, 'วัดหัวเพี้ยน (%.0f%%) ใช้ขนาดเดียวกับเฟรมอื่น' % ((s / med - 1) * 100))
+            s = med
         g = f.resize((round(f.width * s), round(f.height * s)), Image.LANCZOS)
         g.info['lift'] = 0
         if a_.keep_y:
@@ -302,7 +368,8 @@ def main():
     prev = man['sheets'].get(a_.sheet, {})
     man['sheets'][a_.sheet] = {'file': fn, 'frames': len(out), 'cell': [W, H],
                                'facing': a_.facing or prev.get('facing', 'right'),
-                               'extent': extent(sheet, len(out), W)}
+                               'extent': extent(sheet, len(out), W),
+                               'cut': cut_args}
     with open(mpath, 'w', encoding='utf-8') as fh:
         json.dump(man, fh, ensure_ascii=False, indent=2)
         fh.write('\n')

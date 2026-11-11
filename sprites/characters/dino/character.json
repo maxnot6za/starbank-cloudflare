@@ -14,7 +14,12 @@
       "extent": [
         111,
         109
-      ]
+      ],
+      "cut": {
+        "src": "src/sit.webp",
+        "frames": 6,
+        "facing": "right"
+      }
     },
     "write": {
       "file": "write.webp",
@@ -27,7 +32,13 @@
       "extent": [
         96,
         96
-      ]
+      ],
+      "cut": {
+        "src": "src/write.webp",
+        "frames": 10,
+        "flip": "7,9",
+        "facing": "left"
+      }
     },
     "walk": {
       "file": "walk.webp",
@@ -40,20 +51,33 @@
       "extent": [
         88,
         82
-      ]
+      ],
+      "cut": {
+        "src": "src/walk.webp",
+        "frames": 6,
+        "method": "split",
+        "slim": "1",
+        "facing": "right"
+      }
     },
     "cheer": {
       "file": "cheer.webp",
       "frames": 6,
       "cell": [
         242,
-        305
+        314
       ],
       "facing": "right",
       "extent": [
         117,
-        94
-      ]
+        105
+      ],
+      "cut": {
+        "src": "src/cheer.webp",
+        "frames": 6,
+        "facing": "right",
+        "keep_y": true
+      }
     }
   },
   "anims": {

@@ -21,7 +21,12 @@
       "extent": [
         94,
         107
-      ]
+      ],
+      "cut": {
+        "src": "src/wave.webp",
+        "frames": 1,
+        "facing": "right"
+      }
     },
     "walk": {
       "file": "walk.webp",
@@ -34,20 +39,31 @@
       "extent": [
         102,
         84
-      ]
+      ],
+      "cut": {
+        "src": "src/walk.webp",
+        "frames": 6,
+        "facing": "right"
+      }
     },
     "cheer": {
       "file": "cheer.webp",
       "frames": 6,
       "cell": [
-        196,
+        239,
         356
       ],
       "facing": "right",
       "extent": [
-        93,
-        94
-      ]
+        116,
+        102
+      ],
+      "cut": {
+        "src": "src/cheer.webp",
+        "frames": 6,
+        "method": "split",
+        "facing": "right"
+      }
     },
     "water": {
       "file": "water.webp",
@@ -58,9 +74,15 @@
       ],
       "facing": "right",
       "extent": [
-        96,
+        95,
         144
-      ]
+      ],
+      "cut": {
+        "src": "src/water.webp",
+        "frames": 6,
+        "method": "color",
+        "facing": "right"
+      }
     }
   },
   "anims": {
