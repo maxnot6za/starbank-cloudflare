@@ -12,6 +12,8 @@
 | `public/index.html` | หน้าแอปเดิม + ตัวแปลง google.script.run → fetch |
 | `migrations/0001_init.sql` | ตารางใน D1 (ตรงกับแท็บในชีตเดิม) |
 
+เอกสารส่งต่องาน: ดู `HANDOFF.md`
+
 ความลับ (ตั้งใน Cloudflare Dashboard → Settings → Variables and Secrets เท่านั้น):
 `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_CHANNEL_SECRET` (Messaging API — ส่งแจ้งเตือนเฉพาะเมื่อ Webhook ชี้มาที่ระบบนี้)
 `LINE_LOGIN_CHANNEL_ID`, `LINE_LOGIN_CHANNEL_SECRET` (LINE Login สำหรับผู้ปกครอง)
