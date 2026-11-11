@@ -1,0 +1,159 @@
+{
+  "id": "family",
+  "name": "ครอบครัวไดโน",
+  "cast": [
+    "dad",
+    "mom",
+    "dino"
+  ],
+  "interactions": [
+    {
+      "id": "dadGift",
+      "label": "พ่อเอาของขวัญมาให้ลูก",
+      "who": [
+        "dad",
+        "dino"
+      ],
+      "near": 3.5,
+      "chance": 0.6,
+      "cooldown": 30000,
+      "when": {
+        "dino": [
+          "walk",
+          "stand",
+          "cheer"
+        ],
+        "dad": [
+          "walk",
+          "coffee",
+          "thumbsUp"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.0
+        },
+        {
+          "dad": "gift"
+        },
+        {
+          "dino": "cheer"
+        },
+        {
+          "dino": "say",
+          "say": "ขอบคุณค่ะพ่อ 💚",
+          "ms": 1300
+        }
+      ]
+    },
+    {
+      "id": "momPraise",
+      "label": "แม่เดินมาชมลูกที่ตั้งใจทำการบ้าน",
+      "who": [
+        "mom",
+        "dino"
+      ],
+      "lock": [
+        "mom"
+      ],
+      "near": 5,
+      "chance": 0.6,
+      "cooldown": 30000,
+      "when": {
+        "dino": [
+          "writeThink",
+          "writeFace"
+        ],
+        "mom": [
+          "walk",
+          "water",
+          "wave"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.1
+        },
+        {
+          "mom": "cheer"
+        },
+        {
+          "dino": "say",
+          "say": "😊",
+          "ms": 1000
+        }
+      ]
+    },
+    {
+      "id": "momHello",
+      "label": "แม่ทักลูก",
+      "who": [
+        "mom",
+        "dino"
+      ],
+      "near": 3,
+      "chance": 0.5,
+      "cooldown": 25000,
+      "when": {
+        "dino": [
+          "walk",
+          "stand"
+        ],
+        "mom": [
+          "walk",
+          "wave",
+          "water"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.0
+        },
+        {
+          "mom": "wave",
+          "say": "ไปไหนจ๊ะลูก"
+        },
+        {
+          "dino": "cheer"
+        }
+      ]
+    },
+    {
+      "id": "parentsHello",
+      "label": "พ่อแม่ทักกัน",
+      "who": [
+        "mom",
+        "dad"
+      ],
+      "near": 3,
+      "chance": 0.5,
+      "cooldown": 25000,
+      "when": {
+        "mom": [
+          "walk",
+          "water"
+        ],
+        "dad": [
+          "walk",
+          "coffee"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.1
+        },
+        {
+          "together": [
+            {
+              "mom": "wave",
+              "say": "เหนื่อยไหมคะ"
+            },
+            {
+              "dad": "thumbsUp"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

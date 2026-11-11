@@ -28,6 +28,28 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
     ok(states.size >= 2, c + ': เปลี่ยนท่าเองได้', [...states]);
     await p.close();
   }
+  // ฉากรวมหลายตัวละคร: ทุกคนในบทต้องมีอยู่จริง ท่าในบทต้องมีอยู่จริง และสั่งบทแล้วไม่ error
+  for (const f of fs.readdirSync(path.join(ROOT, 'scenes')).filter(f => f.endsWith('.json'))) {
+    const sc = JSON.parse(fs.readFileSync(path.join(ROOT, 'scenes', f), 'utf8'));
+    const ms = Object.fromEntries(sc.cast.map(c => [c, JSON.parse(fs.readFileSync(path.join(ROOT, 'characters', c, 'character.json'), 'utf8'))]));
+    for (const r of sc.interactions) {
+      ok(r.who.every(w => ms[w]), f + ': บท ' + r.id + ' ตัวละครครบ');
+      const anims = [];
+      (function walk(list) { for (const s of list) { if (s.together) walk(s.together); for (const k of Object.keys(s)) if (ms[k] && s[k] !== 'say') anims.push([k, s[k]]); } })(r.script);
+      ok(anims.every(([k, a]) => ms[k].anims[a]), f + ': บท ' + r.id + ' ใช้ท่าที่มีอยู่จริง', anims);
+    }
+    const name = f.slice(0, -5);
+    execFileSync('python3', [path.join(ROOT, 'build.py'), '--scene', name], { stdio: 'pipe' });
+    const p = await browser.newPage({ viewport: { width: 420, height: 900 } });
+    const errors = []; p.on('pageerror', e => errors.push(e.message));
+    await p.route('**/fonts.*/**', r => r.abort());
+    await p.goto('file://' + path.join(ROOT, 'scenes', name + '.html'));
+    for (const b of await p.$$('#force button')) { await b.click(); await p.waitForTimeout(2500); }
+    await p.click('.sa-spr'); await p.waitForTimeout(800);
+    const logs = await p.$$eval('#log li', l => l.length);
+    ok(!errors.length && logs >= sc.interactions.length, name + ': สั่งทุกบท + แตะตัวละคร ไม่มี error', { errors, logs });
+    await p.close();
+  }
   await browser.close();
   console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด');
   process.exit(fails ? 1 : 0);

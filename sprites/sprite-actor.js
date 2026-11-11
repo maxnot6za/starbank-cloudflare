@@ -97,7 +97,10 @@
       setTimeout(function () { self.token === t ? res() : rej('stop'); }, ms / self.speed);
     });
   };
-  P._state = function (s) { if (this.onState) this.onState(s); };
+  P._state = function (s) {
+    if (this.onState) this.onState(s);
+    if (this.onChange) this.onChange(this);   // ให้ Scene ตรวจว่าใกล้ตัวอื่นไหม
+  };
 
   P.say = function (text) { this.bubble.textContent = text || ''; this.bubble.classList.toggle('on', !!text); };
   P.face = function (dir) { this.dir = dir < 0 ? -1 : 1; this._frame(this.sheet, this._f || 0); };
@@ -108,6 +111,7 @@
     var a = this.m.anims[name];
     if (!a) return Promise.reject(new Error('ไม่มีท่า ' + name));
     var steps = stepsOf(a), self = this, i = 0, end = forMs ? performance.now() + forMs / this.speed : 0;
+    this.current = name;
     this._state(a.label || name);
     if (REDUCED) { this._f = steps[steps.length - 1].f; this._frame(a.sheet, this._f); return Promise.resolve(); }
     function next() {
@@ -135,6 +139,7 @@
     var self = this, a = this.m.anims[this.m.walk || 'walk'], steps = stepsOf(a);
     var pxPerMs = (a.speed || 1) * this.size / 1000, bob = a.bob || [];
     this.dir = tx >= this.x ? 1 : -1;
+    this.current = this.m.walk || 'walk';
     this._state(this.dir > 0 ? 'เดินไปทางขวา' : 'เดินไปทางซ้าย');
     if (REDUCED) { this.x = tx; this._place(); return Promise.resolve(); }
     return new Promise(function (res, rej) {
@@ -157,7 +162,9 @@
   P.randomX = function () {
     var w = this.stage.clientWidth, lo = this.margin, hi = Math.max(lo, w - this.margin), x;
     var minGap = Math.min(hi - lo, this.size * 1.5), n = 0;
-    do { x = rand(lo, hi); } while (Math.abs(x - this.x) < minGap && ++n < 20);
+    var others = this.avoid ? this.avoid() : [], space = this.size * 1.4;
+    do { x = rand(lo, hi); } while ((Math.abs(x - this.x) < minGap ||
+      others.some(function (o) { return Math.abs(o - x) < space; })) && ++n < 30);
     return x;
   };
 
@@ -180,7 +187,7 @@
       if (s.walk) return self._walk(s.walk === 'random' ? self.randomX() : s.walk, t);
       if (s.play) return self._run(s.play, t);
       if (s.pick) return self._run(pick(s.pick), t, dur(s.for) || 0);
-      if (s.wait) { self._state('อยู่นิ่ง ๆ'); return self._wait(dur(s.wait), t); }
+      if (s.wait) { self.current = 'wait'; self._state('อยู่นิ่ง ๆ'); return self._wait(dur(s.wait), t); }
       if (s.chance != null) return Math.random() < s.chance ? runSteps(s.do || []) : Promise.resolve();
       return Promise.resolve();
     }

@@ -2,3 +2,4 @@
 *.check.png
 preview.html
 __pycache__/
+scenes/*.html

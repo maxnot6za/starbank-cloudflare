@@ -70,20 +70,33 @@ def body_color_mask(a, bg):
     return (a.min(2) <= 238) & (dbg > 30) & ~greenpale
 
 
-def clean_core(m):
+def clean_core(m, keep_parts=False):
     m = nd.binary_opening(m, iterations=2)
     m = nd.binary_closing(m, iterations=3)
-    return nd.binary_fill_holes(biggest(m))
+    if not keep_parts:
+        return nd.binary_fill_holes(biggest(m))
+    # เก็บของชิ้นเล็กที่อยู่กับตัวละครด้วย (กระถาง ต้นไม้ สายน้ำ) ทิ้งแค่เศษจิ๋ว
+    l, n = nd.label(m)
+    if n == 0:
+        return m
+    s = nd.sum(m, l, range(1, n + 1))
+    return nd.binary_fill_holes(np.isin(l, [i + 1 for i, v in enumerate(s) if v >= 250]))
 
 
 def cores_color(a, bg):
     """วิธีสำรอง: เมื่อเส้นขาวขาด (ตัวละครแยกกันชัดแต่ขอบไม่ต่อเนื่อง)"""
     dbg = np.abs(a - bg).sum(2)
-    fg = nd.binary_fill_holes(nd.binary_closing(dbg > 18, iterations=3))
+    raw = dbg > 18
+    # เส้นพื้นยาวพาดทั้งภาพ (AI ชอบวาดให้) เชื่อมทุกเฟรมเข้าด้วยกัน → ลบเฉพาะส่วนที่บางแนวตั้ง
+    rows = raw.sum(1) > raw.shape[1] * 0.4
+    if rows.any():
+        thin = raw & ~nd.binary_opening(raw, structure=np.ones((9, 1)))
+        raw = raw & ~(thin & rows[:, None])
+    fg = nd.binary_fill_holes(nd.binary_closing(raw, iterations=3))
     lab, n = nd.label(fg)
     sz = nd.sum(fg, lab, range(1, n + 1))
     body = body_color_mask(a, bg)
-    return [clean_core((lab == i + 1) & body) for i in range(n) if sz[i] > 8000]
+    return [clean_core((lab == i + 1) & body, keep_parts=True) for i in range(n) if sz[i] > 1500]
 
 
 def cores_split(a, bg, n):
@@ -177,11 +190,38 @@ def cut_frames(path, n, method):
         cores = cores_color(a, bg)
     if method == 'split':
         cores = cores_split(a, bg, n)
+    if len(cores) > n and method in ('auto', 'color'):
+        cores = group(cores, n)
     cores = order(cores)
     print(os.path.basename(path), 'ตัดได้', len(cores), 'เฟรม')
     if len(cores) != n:
         sys.exit('จำนวนเฟรมไม่ตรง (ต้องการ %d) — ลอง --method color หรือ --method split หรือเจนภาพใหม่ให้ตัวละครห่างกัน' % n)
-    return [render(im, c) for c in cores]
+    out = []
+    for c in cores:
+        f = render(im, c)
+        f.info['bottom'] = int(np.where(c.any(1))[0].max())   # ตำแหน่งเท้าในภาพต้นฉบับ (ใช้กับ --keep-y)
+        out.append(f)
+    return out
+
+
+def group(cores, n):
+    """มีชิ้นมากกว่าจำนวนเฟรม (เช่น กระถางต้นไม้แยกจากตัว) → รวมชิ้นที่อยู่คอลัมน์เดียวกัน
+    โดยตัดแบ่งตรงช่องว่างแนวนอนที่กว้างที่สุด n-1 ช่อง"""
+    spans = []
+    for m in cores:
+        xs = np.where(m.any(0))[0]
+        spans.append((xs.min(), xs.max(), m))
+    spans.sort(key=lambda t: (t[0] + t[1]) / 2)
+    gaps = [(spans[i + 1][0] - spans[i][1], i) for i in range(len(spans) - 1)]
+    cuts = sorted(i for _, i in sorted(gaps, reverse=True)[:n - 1])
+    groups, start = [], 0
+    for c in cuts + [len(spans) - 1]:
+        m = np.zeros_like(spans[0][2])
+        for t in spans[start:c + 1]:
+            m |= t[2]
+        groups.append(m)
+        start = c + 1
+    return groups
 
 
 def parse_list(s):
@@ -202,6 +242,8 @@ def main():
     p.add_argument('--facing', choices=['left', 'right'], help='ตัวละครในชีตหันไปทางไหน (ใส่ใน character.json)')
     p.add_argument('--replace', action='append', default=[],
                    help='แทนเฟรมด้วยภาพเดี่ยว เช่น 3=src/coffee-3.webp (ใช้ได้หลายครั้ง, นับหลัง --order)')
+    p.add_argument('--keep-y', action='store_true',
+                   help='คงความสูงจากพื้นตามภาพต้นฉบับ (ท่ากระโดด) แทนการวางเท้าแตะพื้นทุกเฟรม')
     p.add_argument('--quality', type=int, default=90)
     a_ = p.parse_args()
 
@@ -213,22 +255,26 @@ def main():
         frames[int(i) - 1] = cut_frames(path, 1, 'auto')[0]
         print('แทนเฟรม', i, 'ด้วย', path)
     for i in parse_list(a_.flip):
-        frames[i - 1] = ImageOps.mirror(frames[i - 1])
+        g = ImageOps.mirror(frames[i - 1]); g.info.update(frames[i - 1].info); frames[i - 1] = g
     for i in parse_list(a_.slim):
-        frames[i - 1] = slim(frames[i - 1])
+        g = slim(frames[i - 1]); g.info.update(frames[i - 1].info); frames[i - 1] = g
 
     # ปรับขนาดให้หัวกว้าง HEAD_W ทุกเฟรม
     out = []
     for f in frames:
         l, r = head_span(f)
         s = HEAD_W / (r - l)
-        out.append(f.resize((round(f.width * s), round(f.height * s)), Image.LANCZOS))
+        g = f.resize((round(f.width * s), round(f.height * s)), Image.LANCZOS)
+        g.info['lift'] = 0
+        if a_.keep_y:
+            g.info['lift'] = round((max(x.info.get('bottom', 0) for x in frames) - f.info.get('bottom', 0)) * s)
+        out.append(g)
     cx = [sum(head_span(f)) / 2 for f in out]
     W = int(2 * max(max(cx), max(f.width - c for f, c in zip(out, cx)))) + 8
-    H = max(f.height for f in out) + BASE + 3
+    H = max(f.height + f.info['lift'] for f in out) + BASE + 3
     sheet = Image.new('RGBA', (W * len(out), H))
     for k, (f, c) in enumerate(zip(out, cx)):
-        sheet.alpha_composite(f, (k * W + int(round(W / 2 - c)), H - f.height - BASE))
+        sheet.alpha_composite(f, (k * W + int(round(W / 2 - c)), H - f.height - BASE - f.info['lift']))
 
     cdir = os.path.join(ROOT, 'characters', a_.char)
     os.makedirs(cdir, exist_ok=True)

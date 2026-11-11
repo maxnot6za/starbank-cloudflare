@@ -3,6 +3,7 @@
 
   python3 sprites/build.py dino          → sprites/characters/dino/preview.html
   python3 sprites/build.py               → ทำทุกตัวละคร
+  python3 sprites/build.py --scene family → sprites/scenes/family.html (หลายตัวละคร + บทโต้ตอบ)
 """
 import base64, json, os, sys
 
@@ -107,7 +108,71 @@ def build(char):
     return out
 
 
+SCENE_PAGE = r'''<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__NAME__ · ฉากโต้ตอบ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@500;700&display=swap">
+<style>
+:root{--bg:#EEF8F4;--card:#fff;--ink:#1F3B35;--mute:#5C7C74;--accent:#FF5A36;--ground:#CFEBDF;--line:#CDE9E1}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Mali,'Noto Sans Thai',system-ui,sans-serif;padding:20px max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:900px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+h1{font-size:24px;margin:0} h2{font-size:17px;margin:0 0 8px} .mute{color:var(--mute);font-size:13px}
+.card{background:var(--card);border-radius:24px;padding:18px;box-shadow:0 4px 16px rgba(31,59,53,.07)}
+.stage{position:relative;height:300px;border-radius:16px;overflow:hidden;background:linear-gradient(#F6FCF9 0 70%,var(--ground) 70%)}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:14px}
+button{font:inherit;border:0;border-radius:999px;padding:7px 13px;background:#E2F5EE;color:var(--ink);cursor:pointer}
+#log{margin:8px 0 0;padding-left:18px;font-size:14px;line-height:1.7;color:var(--mute)} #log li:first-child{color:var(--accent);font-weight:700}
+</style></head><body><div class="wrap">
+<div><h1>__NAME__</h1><p class="mute">ทุกตัวใช้ชีวิตเอง เมื่อเดินมาใกล้กันจะเกิดบทโต้ตอบ · แตะตัวละครเพื่อทัก</p></div>
+<div class="card"><div class="stage" id="stage"></div>
+ <div class="ctl"><b>สั่งบททันที:</b><span id="force"></span></div>
+ <ol id="log" reversed></ol></div>
+<div class="card"><h2>บทโต้ตอบ</h2><ul id="rules" class="mute" style="line-height:1.8;margin:0;padding-left:18px"></ul></div>
+</div>
+<script>__RUNTIME__</script>
+<script>__SCENE__</script>
+<script>
+const S = __DATA__;
+const log = document.getElementById('log');
+function ev(t){ const li=document.createElement('li'); li.textContent=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+'  '+t; log.prepend(li); while(log.children.length>8) log.lastChild.remove(); }
+const scene = SpriteScene.create(document.getElementById('stage'), {
+  size: Math.max(40, Math.min(56, document.getElementById('stage').clientWidth / 9)), ground: 30,
+  cast: S.cast.map(id => ({ id, manifest: S.chars[id] })), interactions: S.interactions, onEvent: ev });
+scene.start();
+for (const r of S.interactions) {
+  const b=document.createElement('button'); b.textContent=r.label; b.onclick=()=>scene.run(r); document.getElementById('force').appendChild(b);
+  const li=document.createElement('li'); li.textContent=r.label+' — '+r.who.map(id=>S.chars[id].name).join(' + ')+' ห่างไม่เกิน '+r.near+' หัว · โอกาส '+Math.round((r.chance??1)*100)+'%'; document.getElementById('rules').appendChild(li);
+}
+</script></body></html>
+'''
+
+
+def build_scene(name):
+    sp = os.path.join(ROOT, 'scenes', name + '.json')
+    sc = json.load(open(sp, encoding='utf-8'))
+    chars = {}
+    for c in sc['cast']:
+        cdir = os.path.join(ROOT, 'characters', c)
+        m = json.load(open(os.path.join(cdir, 'character.json'), encoding='utf-8'))
+        for s in m['sheets'].values():
+            s['src'] = 'data:image/webp;base64,' + base64.b64encode(open(os.path.join(cdir, s['file']), 'rb').read()).decode()
+        chars[c] = m
+    data = {'cast': sc['cast'], 'interactions': sc['interactions'], 'chars': chars}
+    html = (SCENE_PAGE.replace('__NAME__', sc.get('name', name))
+            .replace('__RUNTIME__', open(os.path.join(ROOT, 'sprite-actor.js'), encoding='utf-8').read())
+            .replace('__SCENE__', open(os.path.join(ROOT, 'scene.js'), encoding='utf-8').read())
+            .replace('__DATA__', json.dumps(data, ensure_ascii=False)))
+    out = os.path.join(ROOT, 'scenes', name + '.html')
+    open(out, 'w', encoding='utf-8').write(html)
+    print(out, '(%d KB)' % (os.path.getsize(out) // 1024))
+    return out
+
+
 if __name__ == '__main__':
-    chars = sys.argv[1:] or sorted(os.listdir(os.path.join(ROOT, 'characters')))
-    for c in chars:
-        build(c)
+    args = sys.argv[1:]
+    if args[:1] == ['--scene']:
+        for n in (args[1:] or [f[:-5] for f in sorted(os.listdir(os.path.join(ROOT, 'scenes'))) if f.endswith('.json')]):
+            build_scene(n)
+    else:
+        for c in (args or sorted(os.listdir(os.path.join(ROOT, 'characters')))):
+            build(c)
