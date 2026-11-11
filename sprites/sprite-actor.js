@@ -46,7 +46,7 @@
     this.m = manifest;
     this.base = opts.basePath || '';
     this.size = opts.size || 70;                     // ความกว้างหัวบนจอ
-    this.scale = this.size / (manifest.headWidth || 150);
+    this.scale = this.size * (manifest.scale || 1) / (manifest.headWidth || 150);   // manifest.scale = หัวใหญ่กว่าตัวอื่นกี่เท่า (ผู้ใหญ่ > เด็ก)
     this.speed = opts.speed || 1;                    // ตัวคูณความเร็ว (0.5 = ช้าลงครึ่งหนึ่ง)
     this.margin = opts.margin != null ? opts.margin : this.size * 0.9;
     this.onState = opts.onState || null;             // callback(ชื่อท่า) ไว้แสดงสถานะ/ดีบัก

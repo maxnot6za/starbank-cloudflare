@@ -103,16 +103,16 @@ def cores_split(a, bg, n):
         cx = int(x0 + (x1 - x0) * (k + 0.5) / n)
         markers[yc - 8:yc + 8, cx - 5:cx + 5] = k + 1
     seg = watershed(a.min(2).astype(float), markers, mask=sprite)
-    # พื้นที่สีอ่อนที่ติดเส้นขาวโดยตรง = พื้นหลังที่ติดอยู่ระหว่างสองตัว → ทิ้ง
-    # พุงสีอ่อนมีเส้นตัดสีเข้มคั่นก่อนถึงเส้นขาว จึงไม่โดนตัด
-    nearwhite = nd.binary_dilation(a.min(2) > 230, iterations=2)
-    pale = (a.min(2) > 160) & ((a.max(2) - a.min(2)) < 55) & (a.min(2) <= 230)
+    # สีอ่อน/ขาวที่แตะขอบนอกของชิ้น = เส้นขาวขอบสติกเกอร์ หรือพื้นหลังที่ติดอยู่ระหว่างสองตัว → ทิ้ง
+    # สีอ่อน/ขาวที่ล้อมด้วยเส้นตัดสีเข้ม (พุง รองเท้าขาว ตาขาว กระดาษ) ไม่แตะขอบนอก → เก็บไว้
+    light = ((a.min(2) > 160) & ((a.max(2) - a.min(2)) < 55)) | (a.min(2) > 230)
     out = []
     for k in range(n):
         comp = seg == k + 1
-        pl, pn = nd.label(comp & pale)
-        bad = set(np.unique(pl[nearwhite & (pl > 0)])) - {0}
-        core = comp & (a.min(2) <= 230) & ~np.isin(pl, list(bad))
+        edge = comp & ~nd.binary_erosion(comp, iterations=2)
+        ll, _ = nd.label(comp & light)
+        bad = set(np.unique(ll[edge & (ll > 0)])) - {0}
+        core = comp & ~np.isin(ll, list(bad))
         out.append(clean_core(core))
     return out
 
@@ -167,6 +167,23 @@ def slim(f, top=0.95, body=0.87, feet=0.9):
     return Image.fromarray(np.clip(out, 0, 255).astype('uint8'))
 
 
+def cut_frames(path, n, method):
+    im, a = load(path)
+    bg = background(a)
+    cores = []
+    if method in ('auto', 'outline'):
+        cores = cores_outline(a)
+    if method == 'color' or (method == 'auto' and len(cores) != n):
+        cores = cores_color(a, bg)
+    if method == 'split':
+        cores = cores_split(a, bg, n)
+    cores = order(cores)
+    print(os.path.basename(path), 'ตัดได้', len(cores), 'เฟรม')
+    if len(cores) != n:
+        sys.exit('จำนวนเฟรมไม่ตรง (ต้องการ %d) — ลอง --method color หรือ --method split หรือเจนภาพใหม่ให้ตัวละครห่างกัน' % n)
+    return [render(im, c) for c in cores]
+
+
 def parse_list(s):
     return [int(x) for x in s.split(',') if x.strip()] if s else []
 
@@ -183,26 +200,18 @@ def main():
     p.add_argument('--flip', help='พลิกซ้ายขวาเฉพาะเฟรม เช่น 7,9 (หลัง --order)')
     p.add_argument('--slim', help='บีบเฟรมที่อ้วนเกิน เช่น 1')
     p.add_argument('--facing', choices=['left', 'right'], help='ตัวละครในชีตหันไปทางไหน (ใส่ใน character.json)')
+    p.add_argument('--replace', action='append', default=[],
+                   help='แทนเฟรมด้วยภาพเดี่ยว เช่น 3=src/coffee-3.webp (ใช้ได้หลายครั้ง, นับหลัง --order)')
     p.add_argument('--quality', type=int, default=90)
     a_ = p.parse_args()
 
-    im, a = load(a_.src)
-    bg = background(a)
-    cores = []
-    if a_.method in ('auto', 'outline'):
-        cores = cores_outline(a)
-    if a_.method == 'color' or (a_.method == 'auto' and len(cores) != a_.frames):
-        cores = cores_color(a, bg)
-    if a_.method == 'split':
-        cores = cores_split(a, bg, a_.frames)
-    cores = order(cores)
-    print('ตัดได้', len(cores), 'เฟรม')
-    if len(cores) != a_.frames:
-        sys.exit('จำนวนเฟรมไม่ตรง (ต้องการ %d) — ลอง --method color หรือ --method split หรือเจนภาพใหม่ให้ตัวละครห่างกัน' % a_.frames)
-
-    frames = [render(im, c) for c in cores]
+    frames = cut_frames(a_.src, a_.frames, a_.method)
     if a_.order:
         frames = [frames[i - 1] for i in parse_list(a_.order)]
+    for r in a_.replace:
+        i, path = r.split('=', 1)
+        frames[int(i) - 1] = cut_frames(path, 1, 'auto')[0]
+        print('แทนเฟรม', i, 'ด้วย', path)
     for i in parse_list(a_.flip):
         frames[i - 1] = ImageOps.mirror(frames[i - 1])
     for i in parse_list(a_.slim):
