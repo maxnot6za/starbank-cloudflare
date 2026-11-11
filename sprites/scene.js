@@ -57,6 +57,10 @@
         a.isFree = function (x) { return self.isFree(a, x); };
       }
       a.onChange = function (actor) { if (self.running) self.check(actor); };
+      if (cfg.offstage !== false) {
+        a.exitStep = { exit: cfg.offstageMs || [6000, 15000] };
+        a.canExit = function () { return self.canExit(a); };
+      }
       a.spr.style.pointerEvents = 'auto';
       a.spr.style.cursor = 'pointer';
       a.spr.addEventListener('click', function () { self.tap(c.id); });
@@ -66,7 +70,24 @@
   SpriteScene.create = function (stage, cfg) { return new SpriteScene(stage, cfg); };
   var P = SpriteScene.prototype;
 
+  // ออกข้างจอได้ไหม: ต้องเหลือในจออย่างน้อย minOnStage ตัว (ค่าเริ่มต้น 1)
+  // ยิ่งจอแน่น (ตัวละครกินที่มากเมื่อเทียบกับความกว้างฉาก) ยิ่งมีโอกาสออก
+  P.onStage = function () {
+    var A = this.actors;
+    return Object.keys(A).map(function (k) { return A[k]; }).filter(function (a) { return !a.offstage && !a.leaving; });
+  };
+  P.canExit = function (a) {
+    if (this.busy[a.id]) return false;
+    var on = this.onStage();
+    if (on.length - 1 < (this.cfg.minOnStage || 1)) return false;
+    var self = this, used = on.reduce(function (s, o) { return s + 2 * self.half(o); }, 0);
+    var crowd = used / Math.max(1, this.stage.clientWidth);
+    var p = this.cfg.exitChance != null ? this.cfg.exitChance : Math.min(0.6, Math.max(0.08, (crowd - 0.3) * 1.3));
+    return Math.random() < p;
+  };
+
   P.start = function () {
+    this.stage.style.overflow = 'hidden';
     this.running = true;
     var A = this.actors;
     Object.keys(A).forEach(function (k) { A[k].life(); });
@@ -93,7 +114,7 @@
   };
   P._others = function (a) {
     var A = this.actors;
-    return Object.keys(A).filter(function (k) { return A[k] !== a; }).map(function (k) { return A[k]; });
+    return Object.keys(A).filter(function (k) { return A[k] !== a && !A[k].offstage; }).map(function (k) { return A[k]; });
   };
   // ช่องว่างที่ตัวนี้เดินได้: ระหว่างเพื่อนตัวซ้ายสุดที่ใกล้สุดกับตัวขวาที่ใกล้สุด (นับจุดที่เพื่อนกำลังเดินไปด้วย)
   P.range = function (a, except) {
@@ -138,7 +159,7 @@
       if (r.who.indexOf(actor.id) < 0) continue;
       if ((this.cool[r.id] || 0) > now) continue;
       var cast = r.who.map(function (id) { return self.actors[id]; });
-      if (cast.some(function (a) { return !a || self.busy[a.id]; })) continue;
+      if (cast.some(function (a) { return !a || self.busy[a.id] || a.offstage || a.leaving; })) continue;
       var xs = cast.map(function (a) { return a.x; });
       if (Math.max.apply(null, xs) - Math.min.apply(null, xs) > (r.near || 3) * this.size) continue;
       if (!cast.every(function (a) { return allowed((r.when || {})[a.id], a.current); })) continue;
@@ -153,12 +174,14 @@
   P.run = function (r, tries) {
     var self = this, lock = (r.lock || r.who).map(function (id) { return self.actors[id]; });
     // ตัวที่ต้องใช้ยังเล่นบทอื่นอยู่ → รอให้จบก่อน (สูงสุด ~10 วิ) ไม่แย่งตัวกลางบท
-    if (lock.some(function (a) { return self.busy[a.id]; })) {
+    var who = r.who.map(function (id) { return self.actors[id]; });
+    if (who.some(function (a) { return lock.indexOf(a) < 0 && (a.offstage || a.leaving); }) ||
+        lock.some(function (a) { return self.busy[a.id]; })) {
       if ((tries || 0) < 20) setTimeout(function () { self.run(r, (tries || 0) + 1); }, 500);
       return;
     }
     this.cool[r.id] = Date.now() + (r.cooldown || 20000);
-    lock.forEach(function (a) { self.busy[a.id] = true; a.stop(); });
+    lock.forEach(function (a) { a.comeBack(); self.busy[a.id] = true; a.stop(); });
     this._event(r.label || r.id);
     var steps = r.script || [];
     function one(s) {

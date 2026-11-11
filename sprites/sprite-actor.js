@@ -196,10 +196,48 @@
       if (s.pick) return self._run(pick(s.pick), t, dur(s.for) || 0);
       if (s.wait) { self.current = 'wait'; self._state('อยู่นิ่ง ๆ'); return self._wait(dur(s.wait), t); }
       if (s.chance != null) return Math.random() < s.chance ? runSteps(s.do || []) : Promise.resolve();
+      if (s.exit) return self._exitAndReturn(s, t);
       return Promise.resolve();
     }
-    function forever() { return runSteps(self.m.life || []).then(forever); }
-    return forever().catch(function () {});
+    // exitStep (Scene ใส่ให้): ท้ายแต่ละรอบ อาจเดินออกข้างจอ หายไปพักหนึ่ง แล้วกลับเข้ามา
+    function forever() { return runSteps((self.m.life || []).concat(self.exitStep ? [self.exitStep] : [])).then(forever); }
+    // ถ้ายังอยู่นอกจอ (เช่น ถูกหยุดระหว่างพัก) ให้เดินกลับเข้ามาก่อน
+    return (self.offstage ? self._enter(t) : Promise.resolve()).then(forever).catch(function () {});
+  };
+
+  // เดินออกข้างจอที่ใกล้กว่า → ซ่อน → รอ → โผล่จากข้างใดข้างหนึ่ง เดินเข้ามาจุดว่าง
+  P._exitAndReturn = function (s, t) {
+    var self = this;
+    if (this.canExit && !this.canExit()) return Promise.resolve();
+    var w = this.stage.clientWidth, out = this.size * 2.2 * (this.m.scale || 1);
+    this.leaving = true;
+    return this._walk(this.x < w / 2 ? -out : w + out, t).then(function () {
+      self.leaving = false; self.offstage = true;
+      self.el.style.visibility = 'hidden';
+      self._state('ออกไปข้างนอก');
+      var d = Array.isArray(s.exit) ? rand(s.exit[0], s.exit[1]) : (s.exit === true ? 8000 : s.exit);
+      return self._wait(d, t);
+    }).then(function () { return self._enter(t); })
+      .catch(function (e) { self.leaving = false; throw e; });
+  };
+  P._enter = function (t) {
+    var w = this.stage.clientWidth, out = this.size * 2.2 * (this.m.scale || 1);
+    this.x = Math.random() < 0.5 ? -out : w + out;
+    this._place();
+    this.offstage = false;
+    this.el.style.visibility = '';
+    var to = this.randomX();
+    return this._walk(to, t);
+  };
+  // ดึงกลับเข้าขอบจอทันที (ใช้เมื่อต้องเล่นบทแต่ตัวนี้อยู่นอกจอ)
+  P.comeBack = function () {
+    if (!this.offstage && !this.leaving) return;
+    this.stop();
+    var w = this.stage.clientWidth;
+    this.x = this.x < w / 2 ? this.size : w - this.size;
+    this.offstage = this.leaving = false;
+    this.el.style.visibility = '';
+    this._place();
   };
 
   P.destroy = function () { this.stop(); this.el.remove(); };

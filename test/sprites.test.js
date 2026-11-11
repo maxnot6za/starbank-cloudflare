@@ -45,7 +45,10 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
     await p.route('**/fonts.*/**', r => r.abort());
     await p.goto('file://' + path.join(ROOT, 'scenes', name + '.html'));
     await p.evaluate(() => { const A = Object.values(scene.actors); for (const a of A) a.speed = 3; window.worst = 1e9;
-      setInterval(() => { const s = [...A].sort((a, b) => a.x - b.x);
+      window.minOn = 99; window.exits = 0; const seen = {};
+      setInterval(() => { const on = A.filter(a => !a.offstage && !a.leaving).length; minOn = Math.min(minOn, on);
+        A.forEach(a => { if (a.offstage && !seen[a.id]) { seen[a.id] = 1; exits++; } if (!a.offstage) seen[a.id] = 0; }); }, 40);
+      setInterval(() => { const s = [...A].filter(a => !a.offstage).sort((a, b) => a.x - b.x);
         for (let i = 1; i < s.length; i++) {
           // นับเฉพาะตอนที่ทั้งคู่หยุดอยู่ (เดินสวนกันได้ แต่ห้ามหยุดทับกัน)
           const still = x => x.target == null && x.current !== (x.m.walk || 'walk');
@@ -54,6 +57,8 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
     for (const b of await p.$$('#force button')) { await b.click(); await p.waitForTimeout(2500); }
     await p.waitForTimeout(12000);
     const worst = await p.evaluate(() => worst);
+    const st = await p.evaluate(() => ({ minOn, exits }));
+    ok(st.minOn >= 1, name + ': มีตัวละครอยู่ในจออย่างน้อย 1 ตัวเสมอ', st);
     ok(worst >= -1, name + ': ตัวละครไม่หยุดยืนทับกัน (ระยะห่างขอบตัวที่แคบสุดตอนหยุด px)', Math.round(worst));
     await p.click('.sa-spr'); await p.waitForTimeout(800);
     const logs = await p.$$eval('#log li', l => l.length);
