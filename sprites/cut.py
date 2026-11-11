@@ -71,7 +71,8 @@ def body_color_mask(a, bg):
 
 
 def clean_core(m, keep_parts=False):
-    m = nd.binary_opening(m, iterations=2)
+    # keep_parts: ของชิ้นเล็กที่มีก้าน/เส้นบาง (ต้นไม้ในกระถาง) → เปิดเบากว่า ก้านจะได้ไม่ขาด
+    m = nd.binary_opening(m, iterations=1 if keep_parts else 2)
     m = nd.binary_closing(m, iterations=3)
     if not keep_parts:
         return nd.binary_fill_holes(biggest(m))
@@ -80,7 +81,7 @@ def clean_core(m, keep_parts=False):
     if n == 0:
         return m
     s = nd.sum(m, l, range(1, n + 1))
-    return nd.binary_fill_holes(np.isin(l, [i + 1 for i, v in enumerate(s) if v >= 250]))
+    return nd.binary_fill_holes(np.isin(l, [i + 1 for i, v in enumerate(s) if v >= 80]))
 
 
 def cores_color(a, bg):
