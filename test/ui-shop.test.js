@@ -2,7 +2,7 @@
 const { chromium } = require('playwright');
 const { seedFamily, FAM, P2, C } = require('./lib/fixture.js');
 const { start, sessionFor } = require('./lib/mf.js');
-const routes = require('./lib/routes.js');
+const routes = require(process.env.SB_ROUTES || './lib/routes.js');   // SB_ROUTES = ใช้ไฟล์จริงตอนถ่ายภาพ
 const OUT = require('os').tmpdir() + '/starbank-shots/'; require('fs').mkdirSync(OUT, { recursive: true });
 let fails = 0;
 const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? '' : JSON.stringify(x).slice(0, 300)); if (!c) fails++; };
