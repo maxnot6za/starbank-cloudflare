@@ -1,0 +1,4 @@
+# สร้างใหม่ได้เสมอด้วย cut.py / build.py
+*.check.png
+preview.html
+__pycache__/

@@ -6,7 +6,7 @@
 ```bash
 cd test
 npm install
-node run.js --quick   # ~30 วิ: api, page, password
+node run.js --quick   # ~40 วิ: api, page, password, sprites
 node run.js           # ทั้งหมด ~2 นาที: + urgent (รอนาฬิกาปลุกจริง ~65 วิ), ui-urgent (เบราว์เซอร์สองเครื่อง)
 node urgent.test.js   # รันไฟล์เดียว
 ```
@@ -19,6 +19,7 @@ node urgent.test.js   # รันไฟล์เดียว
 | `page.test.js` | inline `<script>` ใน index.html parse ได้ทุกบล็อก + เปิดหน้าเด็ก/ผู้ปกครองไม่มี JS error |
 | `password.test.js` | สมัคร/เข้าด้วยชื่อผู้ใช้+รหัสผ่าน, ล็อกเมื่อผิดหลายครั้ง, recovery code, reset link |
 | `urgent.test.js` | ภารกิจด่วนครบทุกสถานะ, นาฬิกาปลุก DO, แจ้งเตือน, kid push, ของขวัญ |
+| `sprites.test.js` | ตัวละครใน `sprites/`: เลขเฟรมใน character.json ถูกต้อง + หน้าตัวอย่างเปิดได้ เปลี่ยนท่าเองได้ |
 | `ui-urgent.test.js` | ภารกิจด่วนแบบสองเครื่อง (แม่ + ลูก) ผ่านเบราว์เซอร์ พร้อม live update |
 
 ตัวช่วย:

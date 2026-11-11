@@ -1,0 +1,221 @@
+{
+  "id": "dino",
+  "name": "น้องไดโน",
+  "headWidth": 150,
+  "sheets": {
+    "sit": {
+      "file": "sit.webp",
+      "frames": 6,
+      "cell": [
+        230,
+        286
+      ],
+      "facing": "right"
+    },
+    "write": {
+      "file": "write.webp",
+      "frames": 10,
+      "cell": [
+        201,
+        265
+      ],
+      "facing": "left"
+    },
+    "walk": {
+      "file": "walk.webp",
+      "frames": 6,
+      "cell": [
+        212,
+        291
+      ],
+      "facing": "right"
+    }
+  },
+  "anims": {
+    "walk": {
+      "label": "เดิน",
+      "sheet": "walk",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "ms": 130,
+      "loop": true,
+      "speed": 1.05,
+      "bob": [
+        0,
+        -1,
+        -1.5,
+        0,
+        -1,
+        -1.5
+      ]
+    },
+    "stand": {
+      "label": "ยืน",
+      "sheet": "sit",
+      "frames": [
+        0
+      ],
+      "ms": 600
+    },
+    "sitDown": {
+      "label": "นั่งลง",
+      "sheet": "sit",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "ms": [
+        600,
+        160,
+        160,
+        220,
+        160,
+        300
+      ]
+    },
+    "standUp": {
+      "label": "ลุกขึ้น",
+      "sheet": "sit",
+      "frames": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ],
+      "ms": [
+        150,
+        140,
+        140,
+        140,
+        140,
+        300
+      ]
+    },
+    "writeThink": {
+      "label": "นั่งเขียน แล้วหยุดคิด",
+      "sheet": "write",
+      "loop": true,
+      "steps": [
+        [
+          0,
+          220
+        ],
+        [
+          1,
+          220
+        ],
+        [
+          2,
+          220
+        ],
+        [
+          1,
+          220
+        ],
+        [
+          0,
+          220
+        ],
+        [
+          2,
+          220
+        ],
+        [
+          1,
+          220
+        ],
+        [
+          3,
+          350,
+          "ยกดินสอ"
+        ],
+        [
+          4,
+          1100,
+          "อืม..."
+        ],
+        [
+          3,
+          250
+        ],
+        [
+          5,
+          350
+        ]
+      ]
+    },
+    "writeFace": {
+      "label": "นั่งเขียน เปลี่ยนสีหน้า",
+      "sheet": "write",
+      "loop": true,
+      "steps": [
+        [
+          6,
+          900
+        ],
+        [
+          8,
+          700,
+          "โอ้!"
+        ],
+        [
+          7,
+          1000,
+          "เข้าใจแล้ว 😊"
+        ],
+        [
+          9,
+          1000,
+          "อืม..."
+        ]
+      ]
+    }
+  },
+  "life": [
+    {
+      "walk": "random"
+    },
+    {
+      "chance": 0.3,
+      "do": [
+        {
+          "play": "stand"
+        },
+        {
+          "walk": "random"
+        }
+      ]
+    },
+    {
+      "play": "sitDown"
+    },
+    {
+      "pick": [
+        "writeThink",
+        "writeFace"
+      ],
+      "for": [
+        4000,
+        7000
+      ]
+    },
+    {
+      "play": "standUp"
+    }
+  ],
+  "idle": "stand",
+  "walk": "walk",
+  "notes": "ท่าเดินยังไม่มีแว่น (ท่าอื่นมี) — เจนท่าเดินใหม่แบบมีแว่นแล้วรัน cut.py ทับ sheet walk"
+}

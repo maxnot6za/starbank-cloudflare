@@ -9,4 +9,5 @@
 - ฟังก์ชัน `/api` ใหม่ต้องเพิ่มทั้ง `PUBLIC_API` (src/core.js) และ `MEMBER_ARG` (src/index.js)
 - ห้าม polling ด้วย timer ให้ใช้ WebSocket ที่มีอยู่
 - repo เป็น public: ห้ามใส่ secret หรือข้อมูลครอบครัวจริง
+- ตัวละครเคลื่อนไหวอยู่ใน `sprites/` (อ่าน `sprites/README.md`) ภาพใหม่ตัดด้วย `cut.py` ไม่ต้องเขียนโค้ดตัดเอง
 - อัปเดต `HANDOFF.md` เมื่อเพิ่มฟีเจอร์หรือเปลี่ยนสถานะงานค้าง
