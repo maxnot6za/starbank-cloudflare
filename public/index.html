@@ -524,6 +524,59 @@
     .u-dur-pill { display:inline-block; background:var(--gold-light); color:var(--gold-dark); border-radius:14px; padding:6px 16px; font-weight:700; font-size:1.2rem; margin:6px 0 4px; }
     .u-flabel { display:block; font-size:.82rem; font-weight:700; color:var(--text-muted); margin:12px 0 6px; }
   </style>
+  <style>
+    /* === ภารกิจประจำวัน + ดาวม่วง + ร้านค้า + ตัวละครเดินด้านล่าง === */
+    :root { --purple:#8B5CF6; --purple-d:#6D3FD9; --purple-l:#EFE7FF; --strip-h:96px; --nav-h:64px; }
+    .pstar { width:1.05em; height:1.05em; display:inline-block; vertical-align:-0.15em; }
+    .coin { width:1em; height:1em; border-radius:50%; display:inline-block; vertical-align:-0.12em;
+      background:radial-gradient(circle at 35% 35%,#FFE38A,#FFC24B 60%,#D99A1A); border:1.5px solid #A86E00; }
+    .wallet-pill { display:inline-flex; align-items:center; gap:4px; background:#fff; border-radius:999px; padding:4px 10px;
+      font-weight:700; font-size:.9rem; box-shadow:var(--shadow); }
+    .dq-card { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px; margin-bottom:12px; }
+    .dq-card h3 { font-size:1rem; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+    .dq-card h3 small { margin-left:auto; font-size:.75rem; color:var(--text-muted); font-weight:500; }
+    .dq { display:flex; gap:10px; align-items:center; padding:6px 0; }
+    .dq + .dq { border-top:1px dashed var(--border); padding-top:10px; }
+    .dq-i { width:42px; height:42px; border-radius:14px; background:var(--purple-l); display:grid; place-items:center; font-size:1.3rem; flex:none; }
+    .dq-t { flex:1; min-width:0; font-weight:600; font-size:.92rem; line-height:1.35; }
+    .dq-t small { display:block; color:var(--text-muted); font-weight:500; font-size:.75rem; }
+    .dq-bar { height:8px; border-radius:99px; background:#EDE7F9; margin-top:6px; overflow:hidden; }
+    .dq-bar i { display:block; height:100%; background:linear-gradient(90deg,#A78BFA,#8B5CF6); border-radius:99px; transition:width .4s; }
+    .dq-r { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex:none; font-weight:700; color:var(--purple-d); font-size:.85rem; }
+    .dq-claim { border:0; border-radius:999px; background:var(--purple); color:#fff; font:inherit; font-weight:700; font-size:.85rem; padding:7px 12px; cursor:pointer; box-shadow:0 3px 10px rgba(139,92,246,.35); animation:dq-pulse 1.6s ease-in-out infinite; }
+    @keyframes dq-pulse { 50% { transform:scale(1.06); } }
+    .dq-done { color:var(--mint-dark); }
+    .dq-pop { text-align:center; }
+    .dq-pop .sun { font-size:3rem; line-height:1; }
+    .dq-pop h2 { margin:6px 0 2px !important; }
+    .dq-pop .sub { color:var(--text-muted); font-size:.85rem; margin-bottom:12px; }
+    .dq-pop .dq-card { text-align:left; background:#FAF7FF; border:2px solid #E4D8FF; box-shadow:none; }
+    .dq-btn { flex:1; border:0; border-radius:999px; padding:12px; font:inherit; font-weight:700; font-size:1rem; cursor:pointer; }
+    .dq-btn.p { background:var(--purple); color:#fff; } .dq-btn.g { background:#E2F5EE; color:var(--text); }
+    .shop-top { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+    .shop-top h2 { flex:1; font-size:1.25rem; }
+    .shop-tabs { display:flex; gap:6px; margin-bottom:12px; }
+    .shop-tabs button { flex:1; border:0; border-radius:14px; padding:8px 0; background:#fff; color:var(--text-muted); font:inherit; font-weight:700; font-size:.85rem; cursor:pointer; box-shadow:var(--shadow); }
+    .shop-tabs button.on { background:var(--mint); color:#fff; }
+    .shop-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .shop-item { background:#fff; border-radius:20px; padding:10px; box-shadow:var(--shadow); text-align:center; position:relative; cursor:pointer; border:0; font:inherit; color:inherit; }
+    .shop-stage { position:relative; height:130px; border-radius:14px; overflow:hidden; background:linear-gradient(#F6FCF9 0 74%,#CFEBDF 74%); }
+    .shop-stage .sa-actor { bottom:10px; }
+    .shop-item b { display:block; font-size:.95rem; margin-top:6px; }
+    .shop-price { display:inline-flex; align-items:center; gap:4px; margin-top:6px; background:var(--purple-l); color:var(--purple-d); border-radius:999px; padding:3px 10px; font-weight:700; font-size:.85rem; }
+    .shop-price s { color:var(--text-muted); font-weight:500; font-size:.75rem; }
+    .shop-tag { position:absolute; top:8px; left:8px; z-index:3; border-radius:999px; font-size:.7rem; padding:2px 8px; font-weight:700; background:var(--mint); color:#fff; }
+    .shop-tag.w { left:auto; right:8px; background:#FFE4EC; color:#E5484D; }
+    .shop-note { font-size:.8rem; color:var(--text-muted); text-align:center; margin:12px 0; }
+    .shop-sale { background:linear-gradient(135deg,#F3EDFF,#fff); border:2px dashed #C9B5FF; border-radius:16px; padding:8px 12px; font-size:.85rem; font-weight:600; color:var(--purple-d); text-align:center; margin-bottom:12px; }
+    .shop-big { position:relative; height:190px; border-radius:18px; overflow:hidden; background:linear-gradient(#F6FCF9 0 74%,#CFEBDF 74%); margin:4px 0 12px; }
+    .shop-big .sa-actor { bottom:18px; }
+    .shop-who { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:8px 0 14px; }
+    #avatar-strip { position:fixed; left:0; right:0; bottom:var(--nav-h); height:var(--strip-h); z-index:90; pointer-events:none; display:none; overflow:hidden; }
+    #avatar-strip.on { display:block; }
+    #avatar-strip .sa-actor { bottom:4px; }
+    body.has-strip .screen { padding-bottom:calc(100px + var(--strip-h)); }
+  </style>
 </head>
 <body>
 
@@ -634,6 +687,7 @@
     <div class="star-label">⭐ ดาวสะสม</div>
   </div>
 
+  <div id="child-daily"></div>
   <div id="child-gifts"></div>
   <div id="child-urgent"></div>
   <div id="child-wheel-card"></div>
@@ -707,7 +761,12 @@
     </div>
   </div>
 
-  <div class="section-title">👧 สมาชิกเด็ก</div>
+  <div id="parent-daily"></div>
+
+  <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+    <span>👧 สมาชิกเด็ก</span>
+    <button class="btn btn-sm" style="background:#fff;border:1.5px solid var(--border);color:var(--text)" onclick="openSummary()">📊 สรุปรายวัน</button>
+  </div>
   <div id="parent-children-list"></div>
 
   <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
@@ -776,6 +835,9 @@
   <button onclick="childNav('history')" id="cnav-history">
     <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M200,176H104s8,6,8,16a24,24,0,0,1-48,0V64A24,24,0,0,0,40,40H176a24,24,0,0,1,24,24Z" opacity="0.2"/><path d="M96,104a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H104A8,8,0,0,1,96,104Zm8,40h64a8,8,0,0,0,0-16H104a8,8,0,0,0,0,16Zm128,48a32,32,0,0,1-32,32H88a32,32,0,0,1-32-32V64a16,16,0,0,0-32,0c0,5.74,4.83,9.62,4.88,9.66h0A8,8,0,0,1,24,88a7.89,7.89,0,0,1-4.79-1.61h0C18.05,85.54,8,77.61,8,64A32,32,0,0,1,40,32H176a32,32,0,0,1,32,32V168h8a8,8,0,0,1,4.8,1.6C222,170.46,232,178.39,232,192ZM96.26,173.48A8.07,8.07,0,0,1,104,168h88V64a16,16,0,0,0-16-16H67.69A31.71,31.71,0,0,1,72,64V192a16,16,0,0,0,32,0c0-5.74-4.83-9.62-4.88-9.66A7.82,7.82,0,0,1,96.26,173.48ZM216,192a12.58,12.58,0,0,0-3.23-8h-94a26.92,26.92,0,0,1,1.21,8,31.82,31.82,0,0,1-4.29,16H200A16,16,0,0,0,216,192Z"/></svg></span> ประวัติ
   </button>
+  <button onclick="childNav('shop')" id="cnav-shop">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M224,96l-16,96H48L32,96Z" opacity="0.2"/><path d="M236.09,90.79A8,8,0,0,0,232,88H190.85L134.25,23.31a8,8,0,0,0-12.5,0L65.15,88H24a8,8,0,0,0-7.89,9.32l16,96A16,16,0,0,0,47.88,208H208.12a16,16,0,0,0,15.77-14.68l16-96A8,8,0,0,0,236.09,90.79ZM128,40.15,169.6,88H86.4ZM208.12,192H47.88L33.44,104H222.56ZM104,128v32a8,8,0,0,1-16,0V128a8,8,0,0,1,16,0Zm32,0v32a8,8,0,0,1-16,0V128a8,8,0,0,1,16,0Zm32,0v32a8,8,0,0,1-16,0V128a8,8,0,0,1,16,0Z"/></svg></span> ร้านค้า
+  </button>
 </div>
 
 <!-- ==================== BOTTOM NAV: PARENT ==================== -->
@@ -793,15 +855,17 @@
   <button onclick="parentNav('rewards')" id="pnav-rewards">
     <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M208,128v72a8,8,0,0,1-8,8H56a8,8,0,0,1-8-8V128Z" opacity="0.2"/><path d="M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08a13.69,13.69,0,0,1-4.5,10c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51Zm-64.09.36A16.63,16.63,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92-9.72-1-25.44-4-34.92-12.39a13.69,13.69,0,0,1-4.5-10A16.6,16.6,0,0,1,84.87,36.87ZM40,88h80v32H40Zm16,48h64v64H56Zm144,64H136V136h64Zm16-80H136V88h80v32Z"/></svg></span> รางวัล
   </button>
-  <button onclick="parentNav('summary')" id="pnav-summary">
-    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M208,40V208H152V40Z" opacity="0.2"/><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></svg></span> สรุป
+  <button onclick="parentNav('shop')" id="pnav-shop">
+    <span class="nav-icon" data-no-fe><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" class="li"><path d="M224,96l-16,96H48L32,96Z" opacity="0.2"/><path d="M236.09,90.79A8,8,0,0,0,232,88H190.85L134.25,23.31a8,8,0,0,0-12.5,0L65.15,88H24a8,8,0,0,0-7.89,9.32l16,96A16,16,0,0,0,47.88,208H208.12a16,16,0,0,0,15.77-14.68l16-96A8,8,0,0,0,236.09,90.79ZM128,40.15,169.6,88H86.4ZM208.12,192H47.88L33.44,104H222.56ZM104,128v32a8,8,0,0,1-16,0V128a8,8,0,0,1,16,0Zm32,0v32a8,8,0,0,1-16,0V128a8,8,0,0,1,16,0Zm32,0v32a8,8,0,0,1-16,0V128a8,8,0,0,1,16,0Z"/></svg></span> ร้านค้า
+    <span class="nav-badge" id="shop-badge" style="display:none"></span>
   </button>
 </div>
 
 <!-- ==================== PARENT: DAILY SUMMARY ==================== -->
 <div id="screen-parent-summary" class="screen">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-    <div class="section-title" style="margin:0">📊 สรุปประจำวัน</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px">
+    <button type="button" class="wheel-back" onclick="parentNav('home')" aria-label="กลับหน้าหลัก">←</button>
+    <div class="section-title" style="margin:0;flex:1">📊 สรุปประจำวัน</div>
     <select id="summary-days" onchange="loadDailySummary()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:0.85rem">
       <option value="7">7 วัน</option>
       <option value="14">14 วัน</option>
@@ -810,6 +874,13 @@
   </div>
   <div id="daily-summary-list"><div class="loading">⏳ กำลังโหลด...</div></div>
 </div>
+
+<!-- ==================== SHOP (เด็กดูอย่างเดียว · ผู้ปกครองซื้อได้) ==================== -->
+<div id="screen-child-shop" class="screen"><div class="shop-root"></div></div>
+<div id="screen-parent-shop" class="screen"><div class="shop-root"></div></div>
+
+<!-- ตัวละครของครอบครัวเดินด้านล่างของจอ (แสดงเมื่อมีคนใช้อวาตาร์จากร้านค้า) -->
+<div id="avatar-strip" aria-hidden="true"></div>
 
 <!-- ==================== MODALS ==================== -->
 <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
@@ -862,6 +933,7 @@ function childNav(tab) {
   document.querySelectorAll('#nav-child button').forEach(b => b.classList.remove('active'));
   document.getElementById('cnav-' + tab).classList.add('active');
   showScreen('child-' + tab);
+  if (tab === 'shop') loadShop();
 }
 
 function parentNav(tab) {
@@ -869,6 +941,12 @@ function parentNav(tab) {
   document.getElementById('pnav-' + tab).classList.add('active');
   showScreen('parent-' + tab);
   if (tab === 'summary') loadDailySummary();
+  if (tab === 'shop') loadShop();
+}
+function openSummary() {
+  document.querySelectorAll('#nav-parent button').forEach(b => b.classList.remove('active'));
+  showScreen('parent-summary');
+  loadDailySummary();
 }
 
 // === TOAST ===
@@ -1022,6 +1100,7 @@ function renderChildHome(d) {
   document.getElementById('child-earned').textContent = d.stats.totalEarned;
   document.getElementById('child-completed').textContent = d.stats.missionsCompleted;
   renderWheelCard(d);
+  renderDaily(d);
   renderGiftsKid(d);
   renderUrgentKid(d);
   renderKidPush();
@@ -1209,6 +1288,7 @@ function renderParentHome(d) {
   document.getElementById('parent-avatar').textContent = d.member.avatar;
   document.getElementById('parent-name').textContent = d.member.name;
   document.getElementById('parent-family-name').textContent = d.family.family_name;
+  renderDaily(d);
   renderUrgentParent(d);
   renderGiftsParent(d);
 
@@ -3020,7 +3100,225 @@ var Live = (function () {
 })();
 </script>
 
+<script>
+// ===================================================================
+// ภารกิจประจำวัน + ดาวม่วง (เงินของครอบครัว) + ร้านค้าตัวละคร + ตัวละครเดินด้านล่างจอ
+// ===================================================================
+var PSTAR = '<svg class="pstar" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="#8B5CF6" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+var COIN = '<i class="coin" aria-hidden="true"></i>';
+
+function dqRow(q, canClaim) {
+  var pct = Math.round(100 * Math.min(q.progress, q.target) / q.target);
+  var right;
+  if (q.status === 'claimed') right = '<span class="dq-done">รับแล้ว ✓</span>';
+  else if (q.status === 'done') right = canClaim ? '<button class="dq-claim" onclick="claimQuestNow(this,\'' + escJs(q.quest_id) + '\')">รับ +' + q.reward + ' ' + PSTAR + '</button>' : '<span class="dq-done">สำเร็จ ✓</span>';
+  else right = '<span>' + q.progress + '/' + q.target + '</span><span style="font-size:.75rem">+' + q.reward + ' ' + PSTAR + '</span>';
+  var who = q.child ? esc(q.child.name) + ' · ' : '';
+  return '<div class="dq"><div class="dq-i">' + q.icon + '</div><div class="dq-t">' + who + esc(q.title) +
+    (q.hint ? '<small>' + esc(q.hint) + '</small>' : '') + '<div class="dq-bar"><i style="width:' + pct + '%"></i></div></div>' +
+    '<div class="dq-r">' + right + '</div></div>';
+}
+
+function renderDaily(d) {
+  var dl = d && d.daily; if (!dl) return;
+  var isKid = currentMember && currentMember.role === 'child';
+  var el = document.getElementById(isKid ? 'child-daily' : 'parent-daily');
+  if (!el) return;
+  var head = '<h3>🌞 ภารกิจประจำวัน <small>' + PSTAR + ' ' + dl.wallet.purple + ' ของครอบครัว</small></h3>';
+  var html;
+  if (isKid) {
+    html = '<div class="dq-card">' + head + (dl.mine.length ? dl.mine.map(function (q) { return dqRow(q, true); }).join('') : '<div class="dq-t" style="color:var(--text-muted)">วันนี้ยังไม่มีภารกิจ</div>') + '</div>';
+  } else {
+    html = '<div class="dq-card">' + head + (dl.parents ? dqRow(dl.parents, true) : '') +
+      (dl.parents ? '<div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">ภารกิจร่วมของผู้ปกครอง ใครทำก็นับ</div>' : '') + '</div>';
+    if (dl.kids.length) html += '<div class="dq-card"><h3>👧 ภารกิจของลูกวันนี้</h3>' + dl.kids.map(function (q) { return dqRow(q, true); }).join('') + '</div>';
+  }
+  el.innerHTML = html;
+  feReplace(el);
+  // รอให้ป้ายภารกิจด่วน/กล่องของขวัญ (สำคัญกว่า) เปิดก่อน แล้วค่อยเด้งภารกิจประจำวัน
+  setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 700);
+  stripUpdate(d.avatars || []);
+}
+
+// popup วันละครั้ง (เซิร์ฟเวอร์จำว่าเห็นแล้ว → เครื่องอื่นไม่เด้งซ้ำ)
+var __dqPopped = {};
+function maybeQuestPopup(d) {
+  var dl = d.daily, m = currentMember;
+  if (!dl || dl.seen || !m) return;
+  var key = m.memberId + '|' + dl.date;
+  if (__dqPopped[key]) return;
+  var ov = document.getElementById('modal-overlay');
+  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show'))) {
+    setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 1500);   // รอหน้าต่างอื่นปิดก่อน
+    return;
+  }
+  __dqPopped[key] = true;
+  google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).questSeen(m.memberId);
+  var isKid = m.role === 'child';
+  var list = isKid ? dl.mine : [dl.parents].filter(Boolean).concat(dl.kids);
+  var day = new Date(dl.date + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' });
+  openModal('<div class="dq-pop"><div class="sun">🌞</div><h2>ภารกิจประจำวัน</h2><div class="sub">' + day + ' · ทำสำเร็จรับดาวม่วง</div>' +
+    '<div class="dq-card">' + list.map(function (q) { return dqRow(q, false); }).join('') + '</div>' +
+    '<div style="font-size:.8rem;color:var(--text-muted);margin:4px 0 14px">ดาวม่วงเป็นของทั้งครอบครัว ใช้ซื้อตัวละครในร้านค้า 🛍️</div>' +
+    '<div style="display:flex;gap:8px"><button class="dq-btn g" onclick="closeModal()">ดูทีหลัง</button><button class="dq-btn p" style="flex:1.4" onclick="closeModal()">ไปทำเลย! 💪</button></div></div>');
+  feReplace(document.getElementById('modal-content'));
+}
+
+function claimQuestNow(btn, id) {
+  btn.disabled = true;
+  var r = btn.getBoundingClientRect();
+  google.script.run.withSuccessHandler(function (res) {
+    if (!res.already) { confetti(r.left + r.width / 2, r.top); toast('💜 +' + res.reward + ' ดาวม่วง เข้ากระเป๋าครอบครัวแล้ว!'); }
+    Live.request();
+  }).withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'รับไม่สำเร็จ'); }).claimQuest(currentMember.memberId, id);
+}
+
+// ---------- โหลดตัวละคร ----------
+var __spriteCache = {};
+function spriteManifest(id) {
+  if (!__spriteCache[id]) __spriteCache[id] = fetch('/sprites/characters/' + id + '/character.json').then(function (r) { return r.json(); });
+  return __spriteCache[id];
+}
+function spriteReady() { return typeof SpriteActor !== 'undefined'; }
+
+// ---------- ร้านค้า ----------
+var SHOP = { data: null, tab: 'all', actors: [] };
+function shopRoot() { var s = document.querySelector('.screen.active .shop-root'); return s; }
+function shopClearActors() { SHOP.actors.forEach(function (a) { try { a.destroy(); } catch (e) {} }); SHOP.actors = []; }
+function loadShop() {
+  var root = shopRoot(); if (!root) return;
+  if (!SHOP.data) root.innerHTML = '<div class="loading">⏳ กำลังเปิดร้าน...</div>';
+  google.script.run.withSuccessHandler(function (d) { SHOP.data = d; renderShop(); })
+    .withFailureHandler(function (e) { root.innerHTML = '<div class="empty-state"><div class="es-icon">❌</div>เปิดร้านไม่สำเร็จ</div>'; })
+    .getShop(currentMember.memberId);
+}
+function shopTab(t) { SHOP.tab = t; renderShop(); }
+function shopPrice(it) {
+  if (it.owned) return '';
+  return '<span class="shop-price">' + (it.currency === 'gold' ? COIN : PSTAR) + ' ' + it.pay + (it.pay !== it.price ? ' <s>' + it.price + '</s>' : '') + '</span>';
+}
+function renderShop() {
+  var root = shopRoot(), d = SHOP.data; if (!root || !d) return;
+  shopClearActors();
+  var tabs = [['all', 'ทั้งหมด'], ['dad', '👨 พ่อ'], ['mom', '👩 แม่'], ['kid', '👧 ลูก']];
+  var items = d.items.filter(function (i) { return SHOP.tab === 'all' || i.type === SHOP.tab; });
+  var wishCount = d.items.reduce(function (n, i) { return n + (i.owned ? 0 : i.wishedBy.length); }, 0);
+  var b = document.getElementById('shop-badge');
+  if (b) { b.style.display = wishCount ? 'inline-flex' : 'none'; b.textContent = wishCount; }
+  root.innerHTML = '<div class="shop-top"><h2>🛍️ ร้านค้า</h2><span class="wallet-pill">' + COIN + ' ' + d.wallet.gold + '</span><span class="wallet-pill">' + PSTAR + ' ' + d.wallet.purple + '</span></div>' +
+    (d.firstDiscount ? '<div class="shop-sale">🎉 ตัวละครตัวแรกของครอบครัว ลด ' + d.discountPct + '%</div>' : '') +
+    '<div class="shop-tabs">' + tabs.map(function (t) { return '<button class="' + (SHOP.tab === t[0] ? 'on' : '') + '" onclick="shopTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
+    '<div class="shop-grid">' + items.map(function (it) {
+      var tag = it.assigned_to ? '<span class="shop-tag">' + esc(it.assigned_to.name) + ' ใช้อยู่</span>' : it.owned ? '<span class="shop-tag">มีแล้ว</span>' : '';
+      var wish = !it.owned && (it.iWish || (d.canBuy && it.wishedBy.length)) ? '<span class="shop-tag w">💜 ' + (d.canBuy ? esc(it.wishedBy.join(', ')) + ' อยากได้' : 'อยากได้') + '</span>' : '';
+      return '<button type="button" class="shop-item" onclick="openShopItem(\'' + it.id + '\')">' + tag + wish +
+        '<div class="shop-stage" data-sprite="' + it.sprite + '"></div><b>' + esc(it.name) + '</b>' + shopPrice(it) + '</button>';
+    }).join('') + '</div>' +
+    '<div class="shop-note">' + (d.canBuy ? 'ซื้อแล้วเลือกได้ว่าให้ใครในบ้านใช้ ตัวละครจะเดินอยู่ด้านล่างจอของทุกคนในครอบครัว'
+      : 'ผู้ปกครองเป็นคนซื้อ · กด "อยากได้" ให้พ่อแม่รู้ได้นะ 💜') + '<br>เหรียญทอง: เร็ว ๆ นี้</div>';
+  feReplace(root);
+  if (!spriteReady()) return;
+  root.querySelectorAll('.shop-stage').forEach(function (st) {
+    var id = st.getAttribute('data-sprite');
+    spriteManifest(id).then(function (m) {
+      if (!st.isConnected) return;
+      var a = SpriteActor.create(st, m, { size: 34, basePath: '/sprites/characters/' + id + '/', x: st.clientWidth / 2 });
+      a.loop(m.walk || 'walk'); SHOP.actors.push(a);
+    });
+  });
+}
+function openShopItem(id) {
+  var d = SHOP.data, it = d.items.find(function (x) { return x.id === id; }); if (!it) return;
+  var fits = d.members.filter(function (m) { return it.type === 'kid' ? m.role === 'child' : m.role === 'parent'; });
+  window.__shopPick = it.assigned_to ? it.assigned_to.member_id : (fits.length === 1 ? fits[0].member_id : '');
+  var whoHtml = d.canBuy ? '<div style="font-weight:700;margin-top:4px">' + (it.owned ? 'ให้ใครใช้?' : 'ซื้อแล้วให้ใครใช้?') + '</div><div class="shop-who" id="shop-who">' +
+    fits.map(function (m) { return '<button type="button" class="u-chip' + (window.__shopPick === m.member_id ? ' on' : '') + '" onclick="shopPick(this,\'' + m.member_id + '\')">' + m.avatar + ' ' + esc(m.name) + '</button>'; }).join('') +
+    (it.owned ? '<button type="button" class="u-chip' + (!window.__shopPick ? ' on' : '') + '" onclick="shopPick(this,\'\')">ยังไม่ให้ใคร</button>' : '') + '</div>' : '';
+  var lack = !it.owned && d.wallet.purple < it.pay ? it.pay - d.wallet.purple : 0;
+  var actions;
+  if (!d.canBuy) {
+    actions = it.owned ? '<button class="dq-btn g" onclick="closeModal()">ปิด</button>'
+      : '<button class="dq-btn g" onclick="closeModal()">ปิด</button><button class="dq-btn p" style="flex:1.6" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '💔 ยกเลิกอยากได้' : '💜 อยากได้!') + '</button>';
+  } else if (it.owned) {
+    actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button><button class="dq-btn p" style="flex:1.6" onclick="shopAssign(this,\'' + it.id + '\')">บันทึก</button>';
+  } else {
+    actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') +
+      ' onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + it.pay + ' ดาวม่วง</button>';
+  }
+  openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2><div class="shop-big" id="shop-big"></div>' +
+    '<div style="font-size:.85rem;color:var(--text-muted)">' + (it.type === 'kid' ? 'ตัวละครสำหรับเด็ก' : 'ตัวละครสำหรับผู้ปกครอง') + ' · ซื้อครั้งเดียวใช้ได้ตลอด</div>' +
+    (it.owned ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') + whoHtml +
+    '<div style="display:flex;gap:8px;margin-top:6px">' + actions + '</div>' +
+    (d.canBuy && lack ? '<div style="font-size:.8rem;color:var(--text-muted);margin-top:8px">มี ' + d.wallet.purple + ' ดาวม่วง · ขาดอีก ' + lack + ' (ทำภารกิจประจำวันเพื่อเก็บเพิ่ม)</div>' : '') + '</div>');
+  feReplace(document.getElementById('modal-content'));
+  var big = document.getElementById('shop-big');
+  if (spriteReady() && big) spriteManifest(it.sprite).then(function (m) {
+    var a = SpriteActor.create(big, m, { size: 48, basePath: '/sprites/characters/' + it.sprite + '/', x: big.clientWidth / 2 });
+    a.loop(m.walk || 'walk'); SHOP.actors.push(a);
+  });
+}
+function shopPick(btn, id) {
+  window.__shopPick = id;
+  document.querySelectorAll('#shop-who .u-chip').forEach(function (b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+}
+function shopDone(res, msg) { closeModal(); SHOP.data = res.shop; renderShop(); toast(msg); Live.request(); }   // อัปเดตหน้าหลัก/ตัวละครด้านล่างแบบเงียบ ๆ
+function shopBuy(btn, id) {
+  btn.disabled = true;
+  google.script.run.withSuccessHandler(function (res) { confetti(); shopDone(res, '🎉 ได้ตัวละครใหม่แล้ว!'); })
+    .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'ซื้อไม่สำเร็จ'); })
+    .buyItem(currentMember.memberId, id, window.__shopPick || '');
+}
+function shopAssign(btn, id) {
+  btn.disabled = true;
+  google.script.run.withSuccessHandler(function (res) { shopDone(res, '✅ บันทึกแล้ว'); })
+    .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'บันทึกไม่สำเร็จ'); })
+    .assignAvatar(currentMember.memberId, id, window.__shopPick || '');
+}
+function shopWish(btn, id) {
+  btn.disabled = true;
+  google.script.run.withSuccessHandler(function (res) { closeModal(); SHOP.data = res.shop; renderShop(); toast(res.wished ? '💜 บอกพ่อแม่แล้วว่าอยากได้!' : 'ยกเลิกแล้ว'); })
+    .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); })
+    .wishItem(currentMember.memberId, id);
+}
+
+// ---------- ตัวละครของครอบครัวเดินด้านล่างจอ ----------
+var STRIP = { key: '', scene: null, rules: null };
+function stripUpdate(avatars) {
+  var el = document.getElementById('avatar-strip');
+  if (!el) return;
+  var list = (avatars || []).slice().sort(function (a, b) { return a.sprite < b.sprite ? -1 : 1; });
+  var key = list.map(function (a) { return a.sprite + ':' + a.member_id; }).join(',');
+  if (key === STRIP.key) return;
+  STRIP.key = key;
+  if (STRIP.scene) { STRIP.scene.stop(); el.innerHTML = ''; STRIP.scene = null; }
+  var nav = document.getElementById(currentMember && currentMember.role === 'child' ? 'nav-child' : 'nav-parent');
+  if (nav && nav.offsetHeight) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
+  if (!list.length || !spriteReady() || typeof SpriteScene === 'undefined') {
+    el.classList.remove('on'); document.body.classList.remove('has-strip');
+    if (list.length) setTimeout(function () { STRIP.key = ''; stripUpdate(avatars); }, 800);   // สคริปต์ตัวละครยังโหลดไม่เสร็จ
+    return;
+  }
+  el.classList.add('on'); document.body.classList.add('has-strip');
+  var rulesP = STRIP.rules || (STRIP.rules = fetch('/sprites/scenes/family.json').then(function (r) { return r.json(); }).catch(function () { return { interactions: [] }; }));
+  Promise.all([rulesP].concat(list.map(function (a) { return spriteManifest(a.sprite); }))).then(function (res) {
+    if (STRIP.key !== key) return;
+    var sc = res[0], ids = list.map(function (a) { return a.sprite; });
+    var cast = list.map(function (a, i) {
+      var m = JSON.parse(JSON.stringify(res[i + 1]));
+      m.name = a.name;
+      for (var k in m.sheets) m.sheets[k].src = '/sprites/characters/' + a.sprite + '/' + m.sheets[k].file;
+      return { id: a.sprite, manifest: m };
+    });
+    var rules = (sc.interactions || []).filter(function (r) { return r.who.every(function (w) { return ids.indexOf(w) >= 0; }); });
+    STRIP.scene = SpriteScene.create(el, { size: Math.max(22, Math.min(30, el.clientWidth / 14)), ground: 4, laneGap: 4, cast: cast, interactions: rules });
+    STRIP.scene.start();
+  });
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/sprites/sprite-actor.js" defer></script>
+<script src="/sprites/scene.js" defer></script>
 <script>
 // ===================================================================
 // AUTH: ผู้ปกครองเข้าด้วย LINE · เด็กเข้าด้วยรหัสครอบครัว + รูป + PIN หรือ QR
@@ -3038,6 +3336,7 @@ function enterAs(m) {
   document.getElementById('auto-login-status').style.display = 'none';
   if (m.role === 'child') loadChildDashboard(); else loadParentDashboard();
   if (m.role === 'parent' && location.hash === '#approvals') { parentNav('approvals'); cleanUrl(); }
+  if (location.hash === '#shop') { if (m.role === 'child') childNav('shop'); else parentNav('shop'); cleanUrl(); }
   if (location.hash === '#urgent' || location.hash === '#gift') cleanUrl();
   musicAfterLogin();
   if (!isStandalone()) checkHandoff();
@@ -3061,6 +3360,7 @@ function showLogin(msg) {
   document.getElementById('nav-parent').style.display = 'none';
   document.getElementById('auto-login-status').style.display = 'none';
   closeModal();
+  if (typeof stripUpdate === 'function') stripUpdate([]);
   showScreen('welcome');
   if (msg) toast(msg, 4500);
 }

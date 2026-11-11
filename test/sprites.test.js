@@ -65,6 +65,16 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
     ok(!errors.length && logs >= sc.interactions.length, name + ': สั่งทุกบท + แตะตัวละคร ไม่มี error', { errors, logs });
     await p.close();
   }
+  // public/sprites ต้องตรงกับ sprites/ (ลืมรัน publish.py = แอปใช้ตัวละครเก่า)
+  const pub = path.resolve(ROOT, '../public/sprites');
+  for (const f of ['sprite-actor.js', 'scene.js']) ok(fs.readFileSync(path.join(ROOT, f), 'utf8') === fs.readFileSync(path.join(pub, f), 'utf8'), 'public/sprites/' + f + ' ตรงกับต้นฉบับ (รัน sprites/publish.py)');
+  for (const c of fs.readdirSync(path.join(ROOT, 'characters'))) {
+    const m = JSON.parse(fs.readFileSync(path.join(ROOT, 'characters', c, 'character.json'), 'utf8'));
+    for (const s of Object.values(m.sheets)) {
+      const a = fs.readFileSync(path.join(ROOT, 'characters', c, s.file)), b = fs.existsSync(path.join(pub, 'characters', c, s.file)) && fs.readFileSync(path.join(pub, 'characters', c, s.file));
+      ok(b && a.equals(b), 'public/sprites/characters/' + c + '/' + s.file + ' ตรงกับต้นฉบับ');
+    }
+  }
   await browser.close();
   console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด');
   process.exit(fails ? 1 : 0);

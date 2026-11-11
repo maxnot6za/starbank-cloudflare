@@ -176,6 +176,8 @@ export async function notifyApp(env, origin, events) {
       payload = { title: `🎁 ${ev.childName} เปิดของขวัญแล้ว!`, body: `ได้ ⭐ ${ev.stars} ดาว`, tag: 'gift-' + ev.giftId, url: '/', kind: 'gift', badge };
     } else if (ev.type === 'urgent_declined') {
       payload = { title: `😴 ${ev.childName}: ไว้คราวหน้านะ ยุ่งอยู่`, body: `ภารกิจด่วน ${ev.icon} ${ev.title}`, tag: 'urgent-' + ev.urgentId, url: '/#urgent', kind: 'urgent', badge };
+    } else if (ev.type === 'shop_wish') {
+      payload = { title: `💜 ${ev.childName} อยากได้ ${ev.itemName}`, body: 'แตะเพื่อดูในร้านค้า', tag: 'wish-' + ev.itemName, url: '/#shop', kind: 'shop', badge };
     } else if (ev.type === 'urgent_expired') {
       payload = { title: ev.unseen ? `📭 ${ev.childName} ยังไม่ได้เปิดดูภารกิจด่วน` : `⏰ ${ev.childName} ทำภารกิจด่วนไม่ทันเวลา`,
         body: `${ev.icon} ${ev.title} · ปิดภารกิจแล้ว`, tag: 'urgent-' + ev.urgentId, url: '/#urgent', kind: 'urgent', badge };

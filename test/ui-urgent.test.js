@@ -9,6 +9,8 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
 (async () => {
   const { mf, db } = await start({ port: 0 });
   await seedFamily(db);
+  // ปิด popup ภารกิจประจำวัน (มีเทสต์ของตัวเองใน ui-shop.test.js) จะได้ไม่บังปุ่มในเทสต์นี้
+  await db.prepare('UPDATE Members SET quest_seen = ?').bind(new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10)).run();
   const base = String(await mf.ready).replace(/\/$/, '');
   const browser = await chromium.launch();
   const errors = [];

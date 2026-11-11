@@ -4,8 +4,8 @@
 // - ทุกการแก้แถวมีเงื่อนไข "ค่าเดิมต้องยังเหมือนตอนอ่าน" กันสองเครื่องแก้ทับกัน (แทน LockService)
 
 export const TABLES = {
-  Families:    { pk: 'family_id', cols: ['family_id','family_name','join_code','created_at','wheel_enabled','wheel_started_at','wheel_prizes'], bools: ['wheel_enabled'] },
-  Members:     { pk: 'member_id', cols: ['member_id','family_id','name','role','avatar','line_user_id','web_token','created_at','notify_submission'], bools: ['notify_submission'] },
+  Families:    { pk: 'family_id', cols: ['family_id','family_name','join_code','created_at','wheel_enabled','wheel_started_at','wheel_prizes','purple','gold'], bools: ['wheel_enabled'] },
+  Members:     { pk: 'member_id', cols: ['member_id','family_id','name','role','avatar','line_user_id','web_token','created_at','notify_submission','quest_seen'], bools: ['notify_submission'] },
   Missions:    { pk: 'mission_id', cols: ['mission_id','family_id','title','description','base_stars','multiplier','icon','is_active','created_by','created_at'], bools: ['is_active'] },
   Submissions: { pk: 'submission_id', cols: ['submission_id','mission_id','child_id','family_id','mission_title','status','stars_earned','submitted_at','reviewed_by','reviewed_at'], bools: [] },
   Rewards:     { pk: 'reward_id', cols: ['reward_id','family_id','title','description','stars_cost','type','secret_data','quantity','icon','is_active','created_by','created_at'], bools: ['is_active'] },
@@ -14,11 +14,16 @@ export const TABLES = {
   DailyLog:    { pk: 'log_id', cols: ['log_id','family_id','date','child_id','child_name','stars_earned_today','stars_spent_today','balance','missions_completed_today','logged_at'], bools: [], upsert: true },
   Urgent:      { pk: 'urgent_id', cols: ['urgent_id','batch_id','family_id','child_id','title','icon','stars','duration_sec','open_until','created_by','created_at','status','seen_at','deadline_at','reminded_at','submission_id','ended_at','accepted_at'], bools: [] },
   Gifts:       { pk: 'gift_id', cols: ['gift_id','family_id','child_id','stars','reason','message','created_by','created_at','status','opened_at','ended_at'], bools: [] },
+  DailyQuests: { pk: 'quest_id', cols: ['quest_id','family_id','date','owner','type','target','progress','reward','status','claimed_by','claimed_at','created_at'], bools: [] },
+  Inventory:   { pk: 'inv_id', cols: ['inv_id','family_id','item_id','price','currency','bought_by','bought_at','assigned_to'], bools: [] },
+  Wishes:      { pk: 'wish_id', cols: ['wish_id','family_id','child_id','item_id','created_at'], bools: [] },
+  WalletLog:   { pk: 'log_id', cols: ['log_id','family_id','currency','amount','kind','ref','member_id','created_at'], bools: [], writeOnly: true },
   Spins:       { pk: 'spin_id', cols: ['spin_id','child_id','family_id','round_key','earned_at','used_at','prize_stars','prize_index','request_id'], bools: [], ignoreDup: true },
 };
 
 const NUM_COLS = new Set(['base_stars','multiplier','stars_earned','stars_cost','quantity','stars_spent','prize_stars','prize_index',
-  'stars_earned_today','stars_spent_today','balance','missions_completed_today','stars','duration_sec']);
+  'stars_earned_today','stars_spent_today','balance','missions_completed_today','stars','duration_sec',
+  'purple','gold','target','progress','reward','price','amount']);
 
 export class ConflictError extends Error {}
 
@@ -85,7 +90,7 @@ export class Store {
     // โหมดครอบครัว: Submissions (ตารางเดียวที่โตเร็ว) โหลดเฉพาะส่วนที่ต้องใช้ — ดู _loadSubmissions
     this.subWindowed = !scope.all;
     for (const [name, t] of Object.entries(TABLES)) {
-      if (name === 'DailyLog') { this.rows[name] = []; continue; }      // ใช้แค่เขียน
+      if (name === 'DailyLog' || t.writeOnly) { this.rows[name] = []; continue; }      // ใช้แค่เขียน
       if (t.global) {
         if (scope.all || opts.withLineState) { stmts.push(this.db.prepare(`SELECT * FROM ${name}`)); names.push(name); }
         else this.rows[name] = [];
@@ -101,6 +106,13 @@ export class Store {
         names.push(name);
         stmts.push(this.db.prepare(`SELECT child_id, SUM(stars) AS s FROM Gifts WHERE family_id IN (${q}) AND status = 'opened' GROUP BY child_id`).bind(...ids));
         names.push('__GiftSum');
+        continue;
+      }
+      if (name === 'DailyQuests') {
+        // ภารกิจประจำวัน: ตั้งแต่เมื่อวาน (เวลาไทย) + ที่ทำครบแต่ยังไม่กดรับ (เก็บให้อัตโนมัติตอนข้ามวัน)
+        const y = thaiKey(Date.now() - 86400000);
+        stmts.push(this.db.prepare(`SELECT * FROM DailyQuests WHERE family_id IN (${q}) AND (date >= ? OR status = 'done') ORDER BY rowid`).bind(...ids, y));
+        names.push(name);
         continue;
       }
       if (name === 'Urgent') {
@@ -236,6 +248,18 @@ export class Store {
     if (raw.family_id) this.touched.add(String(raw.family_id));
   }
 
+  remove(name, idField, idValue) {
+    const t = TABLES[name];
+    const rows = this.all(name);
+    const i = rows.findIndex(r => String(r[idField]) === String(idValue));
+    if (i < 0) return false;
+    const raw = this.raw.get(rows[i]);
+    rows.splice(i, 1);
+    this.ops.push({ kind: 'delete', name, pkVal: raw[t.pk] });
+    if (raw.family_id) this.touched.add(String(raw.family_id));
+    return true;
+  }
+
   update(name, idField, idValue, updates) {
     const t = TABLES[name];
     const row = this.all(name).find(r => String(r[idField]) === String(idValue));
@@ -262,7 +286,9 @@ export class Store {
     let guarded = false;
     for (const op of this.ops) {
       const t = TABLES[op.name];
-      if (op.kind === 'insert') {
+      if (op.kind === 'delete') {
+        stmts.push(this.db.prepare(`DELETE FROM ${op.name} WHERE ${t.pk} = ?`).bind(op.pkVal));
+      } else if (op.kind === 'insert') {
         const verb = t.upsert ? 'INSERT OR REPLACE' : t.ignoreDup ? 'INSERT OR IGNORE' : 'INSERT';
         stmts.push(this.db.prepare(`${verb} INTO ${op.name} (${t.cols.join(',')}) VALUES (${t.cols.map(() => '?').join(',')})`)
           .bind(...t.cols.map(c => op.raw[c])));
@@ -282,6 +308,8 @@ export class Store {
       const msg = String(e && e.message || e);
       if (msg.includes('ดาวไม่พอ')) throw new Error('ดาวไม่พอ');
       if (/CHECK constraint failed/i.test(msg)) throw new ConflictError('ข้อมูลเพิ่งถูกแก้จากอีกเครื่อง กรุณาลองใหม่อีกครั้ง');
+      // สองเครื่องสร้างแถวเดียวกันพร้อมกัน (เช่น สุ่มภารกิจประจำวัน) → โหลดใหม่แล้วใช้แถวที่บันทึกก่อน
+      if (/UNIQUE constraint failed: (DailyQuests|Inventory)/i.test(msg)) throw new ConflictError('ข้อมูลเพิ่งถูกแก้จากอีกเครื่อง กรุณาลองใหม่อีกครั้ง');
       throw e;
     }
   }

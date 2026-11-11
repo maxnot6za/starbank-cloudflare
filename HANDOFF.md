@@ -83,7 +83,7 @@ D1: ตารางทั้งหมดใน migrations/
 | `public/index.html` | 3940 | SPA ทั้งหมด (HTML+CSS+JS) หน้าเด็ก หน้าผู้ปกครอง หน้า login |
 | `public/sw.js` | — | service worker: Web Push, badge, ใบตอบรับ |
 | `public/img/mascot/dao-*.webp` | — | น้องดาว 4 ท่า (go/sleep/timeout/yay) ใช้ในภารกิจด่วน |
-| `migrations/0001…0009` | — | schema D1 |
+| `migrations/0001…0010` | — | schema D1 |
 | `sprites/` | — | ระบบตัวละครเคลื่อนไหว (ไม่ถูก deploy) ดูหัวข้อ 13a |
 | `test/` | — | ชุดทดสอบ miniflare + Playwright ดูหัวข้อ 9 |
 
@@ -103,6 +103,7 @@ D1: ตารางทั้งหมดใน migrations/
 | RateLimits + คอลัมน์ username/pw_*/recovery_* ใน Members | 0007 | |
 | Urgent | 0008 | ภารกิจด่วน |
 | Gifts + `Urgent.accepted_at` + trigger `trg_no_overspend` ใหม่ | 0009 | trigger นับดาวของขวัญที่เปิดแล้วด้วย |
+| DailyQuests, Inventory, Wishes, WalletLog + `Families.purple/gold` + `Members.quest_seen` + trigger `trg_wallet_nonneg` | 0010 | ภารกิจประจำวัน/ร้านค้า |
 
 **ยอดดาวของเด็ก** = ดาวจาก Submissions ที่อนุมัติ + Spins + Gifts ที่ `status='opened'` − Redemptions
 (ดู `getStarBalance_`, `getChildStats_`, `getGiftStars_` ใน core.js) trigger `trg_no_overspend` กันยอดติดลบ
@@ -167,6 +168,22 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 
 ### 8.3 เข้าระบบด้วย username + password
 ทางเลือกแทน LINE สำหรับผู้ปกครองที่ไม่มี LINE มี recovery code และ reset link
+
+### 8.4 ภารกิจประจำวัน + ดาวม่วง + ร้านค้า (migration 0010)
+- **ดาวม่วง** = เงินของครอบครัว (`Families.purple`) แยกจากดาวสะสมเด็กเด็ดขาด · **เหรียญทอง** (`Families.gold`) ยังไม่มีที่มา · trigger `trg_wallet_nonneg` กันติดลบ · ทุกการรับ/จ่ายลง `WalletLog`
+- **ภารกิจประจำวัน** (`DailyQuests`, quest_id = family|date|owner): สุ่มตอนมีคนในครอบครัวเปิดแอปครั้งแรกของวัน (เวลาไทย)
+  - ผู้ปกครอง 1 อันร่วมกัน (owner='parents'): ส่งภารกิจด่วน 1–3 / อนุมัติ 1–5 (นับด่วนด้วย) / ส่งของขวัญ 1 (รางวัล 3)
+  - เด็กแต่ละคน: ทำภารกิจทั่วไป 1–5 / ภารกิจด่วนสำเร็จ 1 (3) / ภารกิจคูณดาว 1 (2, สุ่มเฉพาะครอบครัวที่มีภารกิจคูณดาว)
+  - นับใน `questBump_` จาก createUrgent / reviewSubmission_ (approved) / sendGift · ภารกิจเด็กนับตอนผู้ปกครองอนุมัติ · ส่งด่วนให้ลูกหลายคนในครั้งเดียว = 1
+  - ทำครบ → `done` → กด "รับ" (`claimQuest`) · ลืมกด → ระบบเก็บให้ (`claimed_by='auto'`) ตอนมีคนเปิดแอปวันถัดไป
+  - popup วันละครั้งต่อคน (`Members.quest_seen`) · ข้อมูลมากับ dashboard (`daily`) ไม่เพิ่ม request
+- **ร้านค้า** (`SHOP_ITEMS` ใน core.js): พ่อ/แม่/ลูกไดโน ราคา 50 ดาวม่วง · ตัวแรกของครอบครัวลด 50% (`FIRST_DISCOUNT`)
+  - ราคาคิดจาก: ภารกิจผู้ปกครองเฉลี่ย ~2.7/วัน + เด็ก 1 คน ~2.7–3/วัน ≈ 5.5/วัน → ~10 วันต่อ 1 ตัว (ลูก 2 คน ~6–7 วัน)
+  - **ผู้ปกครองเท่านั้นที่ซื้อ/เปลี่ยนอวาตาร์ได้** (ตรวจที่เซิร์ฟเวอร์) · เด็กดูได้ + กด "อยากได้" (`Wishes`, push `shop_wish` ถึงผู้ปกครอง)
+  - ซื้อแล้วเลือกว่าให้ใครใช้ (`Inventory.assigned_to`, 1 คน 1 ตัว, ชุดพ่อ/แม่ให้ผู้ปกครอง ชุดลูกให้เด็ก)
+  - ตัวละครที่มีคนใช้ → เดินด้านล่างจอของทุกคนในครอบครัว (`#avatar-strip`, SpriteScene + บทจาก `scenes/family.json` เฉพาะตัวที่มี)
+- ไฟล์ตัวละครบนเว็บอยู่ที่ `public/sprites/` สร้างด้วย `python3 sprites/publish.py` (เทสต์ฟ้องถ้าลืม)
+- เมนูผู้ปกครอง: "สรุป" ถูกแทนด้วย "ร้านค้า" · หน้าสรุปเข้าจากปุ่ม "📊 สรุปรายวัน" บนหน้าหลัก
 
 ---
 

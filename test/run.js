@@ -1,7 +1,7 @@
 // รันทดสอบทั้งหมด: node run.js  ·  ข้ามเทสต์ที่ช้า (นาฬิกาปลุก ~65 วิ, UI สองเครื่อง): node run.js --quick
 const { spawnSync } = require('child_process');
 const quick = process.argv.includes('--quick');
-const files = ['api.test.js', 'page.test.js', 'password.test.js', 'sprites.test.js', ...(quick ? [] : ['urgent.test.js', 'ui-urgent.test.js'])];
+const files = ['api.test.js', 'page.test.js', 'password.test.js', 'sprites.test.js', 'shop.test.js', ...(quick ? [] : ['urgent.test.js', 'ui-urgent.test.js', 'ui-shop.test.js'])];
 const failed = [];
 for (const f of files) {
   console.log('\n=== ' + f + ' ===');

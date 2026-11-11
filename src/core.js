@@ -12,7 +12,8 @@ export const PUBLIC_API = [
   'webSaveMission', 'webSaveReward', 'webDeleteMission', 'webDeleteReward',
   'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
-  'sendGift', 'cancelGift', 'openGift'
+  'sendGift', 'cancelGift', 'openGift',
+  'questSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
 ];
 
 export function createCore(S) {
@@ -580,6 +581,12 @@ export function createCore(S) {
         var urg = getAllRows_('Urgent').find(function(u) { return String(u.urgent_id) === String(sub.mission_id); });
         if (urg) starsEarned = Number(urg.stars) || 0;
       }
+      // ภารกิจประจำวัน: ผู้ปกครองอนุมัติ (นับภารกิจด่วนด้วย) · เด็กทำภารกิจทั่วไป/ด่วน/คูณดาว (นับตอนอนุมัติ)
+      questBump_(sub.family_id, 'parents', 'approve');
+      if (mission) {
+        questBump_(sub.family_id, String(sub.child_id), 'kid_submit');
+        if (Number(mission.multiplier) > 1) questBump_(sub.family_id, String(sub.child_id), 'kid_multi');
+      } else if (urg) questBump_(sub.family_id, String(sub.child_id), 'kid_urgent');
     }
 
     // หาชื่อผู้ปกครองจาก reviewerId (member_id)
@@ -810,7 +817,7 @@ export function createCore(S) {
     const wheel = syncChildWheel_(member, family);   // ก่อน stats: อาจเพิ่มสิทธิ์หมุนใหม่
     urgentSweep(familyId);
     return {
-      urgent: childUrgent_(member), gifts: childGifts_(member),
+      urgent: childUrgent_(member), gifts: childGifts_(member), daily: dailyFor_(member), avatars: familyAvatars_(familyId),
       member, family: family, wheel: wheel, stats: getChildStats_(memberId),
       missions: getMissions_(familyId), rewards: getRewardsForChild_(familyId),
       recentSubmissions: getChildSubmissions_(memberId).slice(-20).reverse(),
@@ -888,7 +895,8 @@ export function createCore(S) {
       recentRedemptions: getUnacknowledgedRedemptions_(familyId),
       reviewHistory: getReviewHistory_(familyId),
       redemptionHistory: getRedemptionHistory_(familyId),
-      wheel: wheel, urgent: urgent, gifts: parentGifts_(familyId), serverNow: new Date(nowMs_()).toISOString()
+      wheel: wheel, urgent: urgent, gifts: parentGifts_(familyId), serverNow: new Date(nowMs_()).toISOString(),
+      daily: dailyFor_(member), avatars: familyAvatars_(familyId)
     };
   }
 
@@ -1527,6 +1535,7 @@ export function createCore(S) {
       urgentEvent_('urgent_new', row);
     });
     urgentWake_(new Date(openUntil).getTime());
+    questBump_(familyId, 'parents', 'urgent_send');   // กดส่ง 1 ครั้ง = 1 (แม้ส่งให้ลูกหลายคน)
     return { batchId: batchId, count: targets.length };
   }
 
@@ -1686,6 +1695,7 @@ export function createCore(S) {
       if (S.events) S.events.push({ type: 'gift_new', familyId: String(parent.family_id), childId: String(k.member_id), giftId: g.gift_id,
         parentName: parent.name, reasonLabel: GIFT_REASONS[reason], stars: stars });
     });
+    questBump_(parent.family_id, 'parents', 'gift');
     return { count: kids.length };
   }
 
@@ -1725,7 +1735,220 @@ export function createCore(S) {
       .sort(function(a, b) { return String(b.created_at).localeCompare(String(a.created_at)); }).slice(0, 15).map(giftView_);
   }
 
-  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift };
+  // ==========================================
+  // ภารกิจประจำวัน + ดาวม่วง (เงินของครอบครัว) + ร้านค้าตัวละคร
+  // ==========================================
+  // ภารกิจผู้ปกครอง: 1 อันต่อวัน ใช้ร่วมกันทุกคน (ใครทำก็นับ) · ภารกิจเด็ก: สุ่มแยกให้เด็กแต่ละคน
+  // นับเฉพาะเหตุการณ์ของวันนี้ (เวลาไทย) · ทำครบ → กดรับ · ลืมกด → ระบบเก็บให้ตอนข้ามวัน
+  var QUEST_TYPES = {
+    urgent_send: { who: 'parents', icon: '⚡', min: 1, max: 3, reward: 'target', title: function(n) { return 'ส่งภารกิจด่วนให้ลูก ' + n + ' ครั้ง'; } },
+    approve:     { who: 'parents', icon: '✅', min: 1, max: 5, reward: 'target', title: function(n) { return 'กดอนุมัติภารกิจ ' + n + ' ครั้ง'; }, hint: 'นับภารกิจด่วนด้วย' },
+    gift:        { who: 'parents', icon: '🎁', min: 1, max: 1, reward: 3,        title: function() { return 'ส่งของขวัญให้ลูก 1 ครั้ง'; } },
+    kid_submit:  { who: 'kid', icon: '📝', min: 1, max: 5, reward: 'target', title: function(n) { return 'ทำภารกิจทั่วไป ' + n + ' ครั้ง'; }, hint: 'นับเมื่อผู้ปกครองอนุมัติ' },
+    kid_urgent:  { who: 'kid', icon: '⚡', min: 1, max: 1, reward: 3,        title: function() { return 'ทำภารกิจด่วนสำเร็จ 1 ครั้ง'; }, hint: 'นับเมื่อผู้ปกครองอนุมัติ' },
+    kid_multi:   { who: 'kid', icon: '✖️', min: 1, max: 1, reward: 2,        title: function() { return 'ทำภารกิจที่มีตัวคูณดาว 1 ครั้ง'; }, hint: 'นับเมื่อผู้ปกครองอนุมัติ' }
+  };
+  var PARENT_POOL = ['urgent_send', 'approve', 'gift'];
+  var KID_POOL = ['kid_submit', 'kid_urgent', 'kid_multi'];
+
+  function todayKey_() { return thaiDateKey_(new Date(nowMs_())); }
+  function familyQuests_(familyId) { return getAllRows_('DailyQuests').filter(function(q) { return String(q.family_id) === String(familyId); }); }
+  function randInt_(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function familyRow_(familyId) { return getAllRows_('Families').find(function(f) { return String(f.family_id) === String(familyId); }); }
+
+  // เพิ่ม/ลดเงินของครอบครัว + บันทึกสมุดบัญชี (ฐานข้อมูลกันติดลบอีกชั้น)
+  function walletAdd_(familyId, currency, amount, kind, ref, memberId) {
+    var fam = familyRow_(familyId);
+    if (!fam) throw new Error('ไม่พบครอบครัว');
+    var cur = Number(fam[currency] || 0);
+    if (cur + amount < 0) throw new Error(currency === 'purple' ? 'ดาวม่วงไม่พอ' : 'เหรียญทองไม่พอ');
+    var up = {}; up[currency] = cur + amount;
+    updateRow_('Families', 'family_id', familyId, up);
+    appendRow_('WalletLog', { log_id: genId_(), family_id: familyId, currency: currency, amount: amount, kind: kind, ref: ref || '',
+      member_id: memberId || '', created_at: msIso_(nowMs_()) });
+    return cur + amount;
+  }
+
+  function claimQuestRow_(q, by) {
+    walletAdd_(q.family_id, 'purple', Number(q.reward) || 0, by === 'auto' ? 'quest_auto' : 'quest', q.quest_id, by === 'auto' ? '' : by);
+    updateRow_('DailyQuests', 'quest_id', q.quest_id, { status: 'claimed', claimed_by: by, claimed_at: msIso_(nowMs_()) });
+  }
+
+  function newQuest_(familyId, today, owner, pool) {
+    var type = pool[Math.floor(Math.random() * pool.length)], t = QUEST_TYPES[type];
+    var target = randInt_(t.min, t.max);
+    appendRow_('DailyQuests', { quest_id: familyId + '|' + today + '|' + owner, family_id: familyId, date: today, owner: owner,
+      type: type, target: target, progress: 0, reward: t.reward === 'target' ? target : t.reward, status: 'active',
+      claimed_by: '', claimed_at: '', created_at: msIso_(nowMs_()) });
+  }
+
+  // สุ่มภารกิจของวันนี้ (ครั้งแรกที่มีคนในครอบครัวใช้แอปวันนี้) + เก็บรางวัลที่ลืมกดของวันก่อน
+  function ensureQuests_(familyId) {
+    var today = todayKey_(), rows = familyQuests_(familyId);
+    rows.forEach(function(q) { if (q.status === 'done' && q.date < today) claimQuestRow_(q, 'auto'); });
+    var has = {};
+    rows.forEach(function(q) { if (q.date === today) has[q.owner] = true; });
+    if (!has.parents) newQuest_(familyId, today, 'parents', PARENT_POOL);
+    var kids = getFamilyMembers_(familyId).filter(function(m) { return m.role === 'child'; });
+    if (kids.length) {
+      // ไม่มีภารกิจแบบคูณดาวในครอบครัว → ไม่สุ่ม "ทำภารกิจที่มีตัวคูณ" (ทำไม่ได้แน่นอน)
+      var hasMulti = getMissions_(familyId).some(function(m) { return Number(m.multiplier) > 1; });
+      var pool = hasMulti ? KID_POOL : KID_POOL.filter(function(x) { return x !== 'kid_multi'; });
+      kids.forEach(function(k) { if (!has[String(k.member_id)]) newQuest_(familyId, today, String(k.member_id), pool); });
+    }
+  }
+
+  // นับความคืบหน้า (เรียกจากเหตุการณ์จริง) — เฉพาะภารกิจของวันนี้ที่ยังไม่ครบ
+  function questBump_(familyId, owner, type) {
+    ensureQuests_(familyId);
+    var today = todayKey_();
+    var q = familyQuests_(familyId).find(function(x) { return x.date === today && String(x.owner) === String(owner) && x.type === type && x.status === 'active'; });
+    if (!q) return;
+    var p = Math.min(Number(q.target), Number(q.progress || 0) + 1);
+    updateRow_('DailyQuests', 'quest_id', q.quest_id, p >= Number(q.target) ? { progress: p, status: 'done' } : { progress: p });
+  }
+
+  function questView_(q) {
+    var t = QUEST_TYPES[q.type] || { icon: '⭐', title: function() { return q.type; } };
+    var who = null;
+    if (q.owner !== 'parents') { var k = getMember_(q.owner); who = k ? { member_id: k.member_id, name: k.name, avatar: k.avatar } : null; }
+    return { quest_id: q.quest_id, owner: q.owner, type: q.type, icon: t.icon, title: t.title(Number(q.target)), hint: t.hint || '',
+      target: Number(q.target), progress: Number(q.progress || 0), reward: Number(q.reward), status: q.status, date: q.date, child: who };
+  }
+
+  // ข้อมูลภารกิจ + กระเป๋า สำหรับหน้าหลัก (ใส่มากับ dashboard ไม่ต้องเรียกเพิ่ม)
+  function dailyFor_(member) {
+    var familyId = member.family_id, today = todayKey_();
+    ensureQuests_(familyId);
+    var qs = familyQuests_(familyId).filter(function(q) { return q.date === today; });
+    var fam = familyRow_(familyId) || {};
+    var parents = qs.filter(function(q) { return q.owner === 'parents'; }).map(questView_)[0] || null;
+    var kids = qs.filter(function(q) { return q.owner !== 'parents'; }).map(questView_);
+    var mine = member.role === 'child' ? kids.filter(function(q) { return String(q.owner) === String(member.member_id); }) : (parents ? [parents] : []);
+    return { date: today, seen: String(member.quest_seen || '') === today, mine: mine, parents: parents, kids: kids,
+      wallet: { purple: Number(fam.purple || 0), gold: Number(fam.gold || 0) } };
+  }
+
+  function questSeen(memberId) {
+    var m = getMember_(memberId);
+    if (!m) throw new Error('ไม่พบสมาชิก');
+    var today = todayKey_();
+    if (String(m.quest_seen || '') !== today) updateRow_('Members', 'member_id', m.member_id, { quest_seen: today });
+    return { seen: today };
+  }
+
+  function claimQuest(memberId, questId) {
+    var m = getMember_(memberId);
+    if (!m) throw new Error('ไม่พบสมาชิก');
+    var q = familyQuests_(m.family_id).find(function(x) { return x.quest_id === String(questId); });
+    if (!q) throw new Error('ไม่พบภารกิจนี้');
+    if (q.owner === 'parents' && m.role !== 'parent') throw new Error('ภารกิจนี้เป็นของผู้ปกครอง');
+    if (q.owner !== 'parents' && m.role !== 'parent' && String(q.owner) !== String(m.member_id)) throw new Error('ภารกิจนี้เป็นของคนอื่น');
+    if (q.status === 'claimed') return { already: true, wallet: dailyFor_(m).wallet };
+    if (q.status !== 'done') throw new Error('ยังทำภารกิจไม่ครบ');
+    claimQuestRow_(q, String(m.member_id));
+    return { reward: Number(q.reward), wallet: dailyFor_(m).wallet };
+  }
+
+  // ---------- ร้านค้า ----------
+  // type: dad/mom = ให้ผู้ปกครองใช้ · kid = ให้เด็กใช้ · sprite = โฟลเดอร์ตัวละครใน /sprites/
+  var SHOP_ITEMS = [
+    { id: 'dino_dad', name: 'พ่อไดโน', type: 'dad', sprite: 'dad',  price: 50, currency: 'purple' },
+    { id: 'dino_mom', name: 'แม่ไดโน', type: 'mom', sprite: 'mom',  price: 50, currency: 'purple' },
+    { id: 'dino_kid', name: 'ลูกไดโน', type: 'kid', sprite: 'dino', price: 50, currency: 'purple' }
+  ];
+  var FIRST_DISCOUNT = 0.5;   // ตัวละครตัวแรกของครอบครัวลด 50%
+  function shopItem_(id) { return SHOP_ITEMS.find(function(i) { return i.id === String(id); }); }
+  function familyInv_(familyId) { return getAllRows_('Inventory').filter(function(r) { return String(r.family_id) === String(familyId); }); }
+  function priceFor_(familyId, item) { return familyInv_(familyId).length ? item.price : Math.ceil(item.price * (1 - FIRST_DISCOUNT)); }
+  function fitsMember_(item, m) { return m && (item.type === 'kid' ? m.role === 'child' : m.role === 'parent'); }
+
+  // ตัวละครที่ให้สมาชิกใช้แล้ว → เดินด้านล่างของจอทุกคนในครอบครัว
+  function familyAvatars_(familyId) {
+    return familyInv_(familyId).filter(function(r) { return r.assigned_to; }).map(function(r) {
+      var it = shopItem_(r.item_id), m = getMember_(r.assigned_to);
+      return it && m && String(m.family_id) === String(familyId) ? { item_id: it.id, sprite: it.sprite, member_id: m.member_id, name: m.name, role: m.role } : null;
+    }).filter(Boolean);
+  }
+
+  function getShop(memberId) {
+    var m = getMember_(memberId);
+    if (!m) throw new Error('ไม่พบสมาชิก');
+    var familyId = m.family_id, inv = familyInv_(familyId), fam = familyRow_(familyId) || {};
+    var members = getFamilyMembers_(familyId);
+    var wishes = getAllRows_('Wishes').filter(function(w) { return String(w.family_id) === String(familyId); });
+    var first = !inv.length;
+    return {
+      canBuy: m.role === 'parent', firstDiscount: first, discountPct: Math.round(FIRST_DISCOUNT * 100),
+      wallet: { purple: Number(fam.purple || 0), gold: Number(fam.gold || 0) },
+      members: members.map(function(x) { return { member_id: x.member_id, name: x.name, avatar: x.avatar, role: x.role }; }),
+      items: SHOP_ITEMS.map(function(it) {
+        var own = inv.find(function(r) { return r.item_id === it.id; });
+        var who = own && own.assigned_to ? getMember_(own.assigned_to) : null;
+        var ws = wishes.filter(function(w) { return w.item_id === it.id; });
+        return { id: it.id, name: it.name, type: it.type, sprite: it.sprite, currency: it.currency, price: it.price,
+          pay: first ? Math.ceil(it.price * (1 - FIRST_DISCOUNT)) : it.price, owned: !!own,
+          assigned_to: who ? { member_id: who.member_id, name: who.name, avatar: who.avatar } : null,
+          wishedBy: ws.map(function(w) { var k = getMember_(w.child_id); return k ? k.name : ''; }).filter(Boolean),
+          iWish: ws.some(function(w) { return String(w.child_id) === String(m.member_id); }) };
+      })
+    };
+  }
+
+  function assignTo_(familyId, inv, item, assignTo) {
+    if (!assignTo) { updateRow_('Inventory', 'inv_id', inv.inv_id, { assigned_to: '' }); return; }
+    var target = getMember_(assignTo);
+    if (!target || String(target.family_id) !== String(familyId)) throw new Error('ไม่พบสมาชิกคนนี้');
+    if (!fitsMember_(item, target)) throw new Error(item.type === 'kid' ? 'ตัวละครนี้ใช้ได้กับเด็กเท่านั้น' : 'ตัวละครนี้ใช้ได้กับผู้ปกครองเท่านั้น');
+    // 1 คนใช้ได้ 1 ตัว → ถอดตัวเดิมของคนนั้นออกก่อน
+    familyInv_(familyId).forEach(function(r) {
+      if (String(r.assigned_to) === String(target.member_id) && r.inv_id !== inv.inv_id) updateRow_('Inventory', 'inv_id', r.inv_id, { assigned_to: '' });
+    });
+    updateRow_('Inventory', 'inv_id', inv.inv_id, { assigned_to: String(target.member_id) });
+  }
+
+  function buyItem(memberId, itemId, assignTo) {
+    var parent = requireParent_(memberId);   // เด็กดูร้านได้อย่างเดียว ซื้อไม่ได้
+    var familyId = parent.family_id, item = shopItem_(itemId);
+    if (!item) throw new Error('ไม่พบสินค้านี้');
+    if (familyInv_(familyId).some(function(r) { return r.item_id === item.id; })) throw new Error('ครอบครัวนี้มีตัวละครนี้แล้ว');
+    var price = priceFor_(familyId, item);
+    walletAdd_(familyId, item.currency, -price, 'buy', item.id, memberId);
+    var inv = { inv_id: genId_(), family_id: familyId, item_id: item.id, price: price, currency: item.currency,
+      bought_by: memberId, bought_at: msIso_(nowMs_()), assigned_to: '' };
+    appendRow_('Inventory', inv);
+    if (assignTo) assignTo_(familyId, getAllRows_('Inventory').find(function(r) { return r.inv_id === inv.inv_id; }), item, assignTo);
+    // ซื้อแล้ว → ลบคำขอ "อยากได้" ของชิ้นนี้
+    getAllRows_('Wishes').filter(function(w) { return String(w.family_id) === String(familyId) && w.item_id === item.id; })
+      .forEach(function(w) { S.store.remove('Wishes', 'wish_id', w.wish_id); });
+    return { bought: item.id, paid: price, shop: getShop(memberId) };
+  }
+
+  function assignAvatar(memberId, itemId, assignTo) {
+    var parent = requireParent_(memberId);
+    var item = shopItem_(itemId);
+    var inv = item && familyInv_(parent.family_id).find(function(r) { return r.item_id === item.id; });
+    if (!inv) throw new Error('ยังไม่ได้ซื้อตัวละครนี้');
+    assignTo_(parent.family_id, inv, item, assignTo || '');
+    return { shop: getShop(memberId) };
+  }
+
+  // เด็กกด "อยากได้" (กดซ้ำ = ยกเลิก) → แจ้งผู้ปกครอง
+  function wishItem(memberId, itemId) {
+    var m = getMember_(memberId);
+    if (!m || m.role !== 'child') throw new Error('เฉพาะเด็กเท่านั้น');
+    var item = shopItem_(itemId);
+    if (!item) throw new Error('ไม่พบสินค้านี้');
+    if (familyInv_(m.family_id).some(function(r) { return r.item_id === item.id; })) throw new Error('ครอบครัวมีตัวละครนี้แล้ว');
+    var mine = getAllRows_('Wishes').find(function(w) { return String(w.child_id) === String(m.member_id) && w.item_id === item.id; });
+    if (mine) { S.store.remove('Wishes', 'wish_id', mine.wish_id); return { wished: false, shop: getShop(memberId) }; }
+    appendRow_('Wishes', { wish_id: genId_(), family_id: m.family_id, child_id: m.member_id, item_id: item.id, created_at: msIso_(nowMs_()) });
+    if (S.events) S.events.push({ type: 'shop_wish', familyId: String(m.family_id), childName: m.name, itemName: item.name });
+    return { wished: true, shop: getShop(memberId) };
+  }
+
+  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
+    questSeen, claimQuest, getShop, buyItem, assignAvatar, wishItem };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }
