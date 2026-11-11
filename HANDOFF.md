@@ -170,23 +170,18 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 
 ## 9. การทดสอบ
 
-**ชุดทดสอบไม่ได้อยู่ใน repo** (อยู่ใน scratchpad ของ session เก่า ซึ่งหายไปแล้ว) เพราะ harness เดิมใช้ข้อมูลที่จำลองจากครอบครัวจริง ซึ่งไม่ควรอยู่ใน repo public
+ชุดทดสอบอยู่ใน `test/` (ใช้ข้อมูลครอบครัวปลอมเท่านั้น) รายละเอียดใน `test/README.md`
 
-วิธีที่ใช้ และควรทำซ้ำใน session ใหม่:
-1. `npm i miniflare esbuild playwright http_ece` ในโฟลเดอร์ทดสอบนอก repo
-2. bundle `src/index.js` ด้วย esbuild (`format: 'esm'`, `platform: 'neutral'`)
-3. สร้าง Miniflare ด้วย `durableObjects: { FAMILY_HUB: { className: 'FamilyHub', useSQLite: true } }`, `d1Databases: { DB: ... }`, `compatibilityDate: '2025-09-01'` และ service binding `ASSETS` ที่อ่านไฟล์จาก `public/`
-4. รัน SQL ทุกไฟล์ใน `migrations/` ตามลำดับ (ระวัง: ใน `CREATE TRIGGER ... BEGIN ... END;` มี `;` ข้างใน ต้องแยกคำสั่งให้ถูก)
-5. seed ข้อมูลครอบครัวปลอม แล้วสร้าง session โดย insert ลง `Sessions` (hash ด้วย sha256 ของ token) แล้วส่ง cookie `sb_s`
-6. เรียก `/api/<fn>` ด้วย body `{ "args": [...] }`
-7. ทดสอบ UI ด้วย Playwright (Chromium ติดตั้งไว้แล้วใน container): เปิดสองหน้าต่าง (ผู้ปกครอง + เด็ก) เพื่อทดสอบ live update
+```bash
+cd test && npm install
+node run.js --quick   # ~30 วิ
+node run.js           # ทั้งหมด ~2 นาที
+```
 
-ตรวจทุกครั้งก่อน push:
-- `node --check` กับ inline `<script>` ทุกบล็อกใน `index.html` (เคยพังเพราะ quote ใน template string ไม่ได้ escape)
-- เปิดหน้าเว็บใน Playwright แล้วดูว่าไม่มี JS error
-- เปรียบเทียบยอดดาวก่อน/หลังกับข้อมูลชุดเดิม
+**ต้องรันให้ผ่านก่อน push ทุกครั้ง** โดยเฉพาะ `page.test.js` ที่จับ syntax error ใน `index.html` (เคยพังเพราะ quote ใน string ที่สร้าง HTML ไม่ได้ escape)
 
-ข้อเสนอ: ควรเพิ่ม `test/` ใน repo ที่ใช้เฉพาะข้อมูลปลอม (ยังไม่ได้ทำ)
+เวลาเพิ่มฟีเจอร์ใหม่ ให้เพิ่มไฟล์ `test/<ชื่อ>.test.js` ตามแบบ `urgent.test.js` แล้วใส่ชื่อใน `test/run.js`
+นอกจากผลทดสอบ ให้เปรียบเทียบยอดดาวของครอบครัวจริงบน production ก่อน/หลัง deploy ด้วย
 
 ---
 
@@ -244,6 +239,6 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 4. เพิ่มฟังก์ชันใน core.js + `PUBLIC_API` + `MEMBER_ARG`
 5. ถ้าต้องแจ้งเตือน ให้เพิ่มประเภทเหตุการณ์ใน `notifyApp` (push.js)
 6. ทำ UI ใน index.html (ระวังการ escape quote ใน string ที่สร้าง HTML)
-7. ทดสอบ backend + UI สองเครื่องด้วย miniflare/Playwright
+7. เขียนเทสต์ใน `test/` แล้วรัน `node run.js` ให้ผ่าน
 8. Apply migration บน production → push → ตรวจ `/version` → ตรวจยอดดาวครอบครัวจริงว่าไม่เปลี่ยน
 9. อัปเดตไฟล์นี้ (HANDOFF.md)

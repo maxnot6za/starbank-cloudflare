@@ -1,0 +1,11 @@
+{
+  "name": "starbank-tests",
+  "private": true,
+  "description": "ทดสอบธนาคารดาวในเครื่องด้วย miniflare (ไม่แตะ production)",
+  "scripts": { "test": "node run.js", "test:quick": "node run.js --quick" },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "miniflare": "^4.20260730.0",
+    "qrcode-generator": "^1.4.4"
+  }
+}
