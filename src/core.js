@@ -1900,7 +1900,16 @@ export function createCore(S) {
   var FIRST_DISCOUNT = 0.5;   // ของชิ้นแรกของครอบครัว (ชนิดไหนก็ได้) ลด 50%
   function shopItem_(id) { return SHOP_ITEMS.find(function(i) { return i.id === String(id); }); }
   function familyInv_(familyId) { return getAllRows_('Inventory').filter(function(r) { return String(r.family_id) === String(familyId); }); }
-  function priceFor_(familyId, item) { return familyInv_(familyId).length ? item.price : Math.ceil(item.price * (1 - FIRST_DISCOUNT)); }
+  // ราคาหลังลด: ปัดเศษลง (ลดได้อย่างน้อย 1 ดาวเสมอ) · ต่ำสุด 1
+  function discPrice_(price, pct) { return price > 0 ? Math.max(1, Math.floor(price * (100 - pct) / 100)) : 0; }
+  function priceFor_(familyId, item) { return familyInv_(familyId).length ? item.price : discPrice_(item.price, FIRST_DISCOUNT * 100); }
+  // คูปองจากไข่: ของแถมตอนฟัก · โอกาสรวม 15%
+  var COUPON_DROPS = [[50, 0.02], [25, 0.05], [10, 0.08]];
+  function rollCoupon_() { var r = Math.random(), acc = 0; for (var i = 0; i < COUPON_DROPS.length; i++) { acc += COUPON_DROPS[i][1]; if (r < acc) return COUPON_DROPS[i][0]; } return 0; }
+  function familyCoupons_(familyId) {
+    return getAllRows_('Coupons').filter(function(c) { return String(c.family_id) === String(familyId) && !c.used_at; })
+      .map(function(c) { return { id: c.coupon_id, pct: Number(c.pct) }; }).sort(function(a, b) { return b.pct - a.pct; });
+  }
   function fitsMember_(item, m) { return m && (item.type === 'kid' ? m.role === 'child' : m.role === 'parent'); }
   function owns_(familyId, item) { return !!item && (item.free || familyInv_(familyId).some(function(r) { return r.item_id === item.id; })); }
 
@@ -2007,6 +2016,8 @@ export function createCore(S) {
         bought_by: String(m.member_id), bought_at: msIso_(nowMs_()), assigned_to: '' });
       prize = it.id;
     } else { walletAdd_(m.family_id, 'purple', EGG_PURPLE, 'egg', egg.egg_id, String(m.member_id)); prize = 'purple:' + EGG_PURPLE; }
+    var pct = rollCoupon_();
+    if (pct) { appendRow_('Coupons', { coupon_id: genId_(), family_id: m.family_id, pct: pct, egg_id: egg.egg_id, created_at: msIso_(nowMs_()), used_at: '', used_on: '' }); prize += '+c' + pct; }
     updateRow_('Eggs', 'egg_id', egg.egg_id, { status: 'hatched', hatched_by: String(m.member_id), hatched_at: msIso_(nowMs_()), prize: prize });
     updateRow_('Members', 'member_id', m.member_id, { egg_seen: egg.egg_id + ':h' });
     return { prize: prizeView_(prize), egg: eggView_(m) };
@@ -2017,8 +2028,14 @@ export function createCore(S) {
     updateRow_('Members', 'member_id', m.member_id, { egg_seen: String(key || '').slice(0, 80) });
     return { seen: key };
   }
+  // prize = item_id | purple:15 · ต่อท้าย +c<pct> เมื่อได้คูปองด้วย
   function prizeView_(prize) {
     if (!prize) return null;
+    var parts = String(prize).split('+c'), v = prizeView1_(parts[0]);
+    if (v && parts[1]) v.coupon = Number(parts[1]);
+    return v;
+  }
+  function prizeView1_(prize) {
     if (String(prize).indexOf('purple:') === 0) return { kind: 'purple', amount: Number(String(prize).split(':')[1]) || 0 };
     var it = shopItem_(prize);
     return it ? { kind: it.kind, id: it.id, name: it.name, art: it.art, h: it.h, fx: it.fx, set: it.set } : null;
@@ -2062,6 +2079,7 @@ export function createCore(S) {
     var first = !inv.length, stage = stageRaw_(familyId);
     return {
       stage: familyStage_(familyId),
+      coupons: familyCoupons_(familyId),
       canBuy: m.role === 'parent', firstDiscount: first, discountPct: Math.round(FIRST_DISCOUNT * 100),
       wallet: { purple: Number(fam.purple || 0), gold: Number(fam.gold || 0) },
       members: members.map(function(x) { return { member_id: x.member_id, name: x.name, avatar: x.avatar, role: x.role }; }),
@@ -2070,7 +2088,7 @@ export function createCore(S) {
         var who = own && own.assigned_to ? getMember_(own.assigned_to) : null;   // ตัวละครเท่านั้น
         var ws = wishes.filter(function(w) { return w.item_id === it.id; });
         return { id: it.id, kind: it.kind, name: it.name, type: it.type, sprite: it.sprite, art: it.art, free: !!it.free, egg: !!it.egg, set: it.set, h: it.h, fx: it.fx, currency: it.currency, price: it.price,
-          pay: first ? Math.ceil(it.price * (1 - FIRST_DISCOUNT)) : it.price, owned: !!own,
+          pay: first ? discPrice_(it.price, FIRST_DISCOUNT * 100) : it.price, owned: !!own,
           inUse: it.kind === 'floor' ? stage.floor === it.id : it.kind === 'wall' ? stage.wall === it.id : it.kind === 'decor' ? stage.decor.some(function(d) { return d.id === it.id; }) : undefined,
           assigned_to: who ? { member_id: who.member_id, name: who.name, avatar: who.avatar } : null,
           wishedBy: ws.map(function(w) { var k = getMember_(w.child_id); return k ? k.name : ''; }).filter(Boolean),
@@ -2091,13 +2109,22 @@ export function createCore(S) {
     updateRow_('Inventory', 'inv_id', inv.inv_id, { assigned_to: String(target.member_id) });
   }
 
-  function buyItem(memberId, itemId, assignTo) {
+  function buyItem(memberId, itemId, assignTo, couponId) {
     var parent = requireParent_(memberId);   // เด็กดูร้านได้อย่างเดียว ซื้อไม่ได้
     var familyId = parent.family_id, item = shopItem_(itemId);
     if (!item) throw new Error('ไม่พบสินค้านี้');
     if (item.egg) throw new Error('ของชิ้นนี้ได้จากไข่เท่านั้น');
     if (owns_(familyId, item)) throw new Error('ครอบครัวนี้มีของชิ้นนี้แล้ว');
-    var price = priceFor_(familyId, item);
+    var price = priceFor_(familyId, item), coupon = null;
+    // คูปองไม่ซ้อนกับส่วนลดชิ้นแรก (ชิ้นแรกลด 50% อยู่แล้ว → ไม่ใช้คูปอง)
+    if (couponId && price === item.price) {
+      coupon = getAllRows_('Coupons').find(function(c) { return c.coupon_id === String(couponId) && String(c.family_id) === String(familyId) && !c.used_at; });
+      if (!coupon) throw new Error('คูปองนี้ใช้ไปแล้ว');
+      price = discPrice_(item.price, Number(coupon.pct));
+    }
+    var fam = familyRow_(familyId) || {};
+    if (Number(fam[item.currency] || 0) < price) throw new Error(item.currency === 'purple' ? 'ดาวม่วงไม่พอ' : 'เหรียญทองไม่พอ');
+    if (coupon) updateRow_('Coupons', 'coupon_id', coupon.coupon_id, { used_at: msIso_(nowMs_()), used_on: item.id });
     walletAdd_(familyId, item.currency, -price, 'buy', item.id, memberId);
     var inv = { inv_id: genId_(), family_id: familyId, item_id: item.id, price: price, currency: item.currency,
       bought_by: memberId, bought_at: msIso_(nowMs_()), assigned_to: '' };

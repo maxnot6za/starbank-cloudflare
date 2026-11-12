@@ -18,11 +18,12 @@ export const TABLES = {
   Inventory:   { pk: 'inv_id', cols: ['inv_id','family_id','item_id','price','currency','bought_by','bought_at','assigned_to'], bools: [] },
   Wishes:      { pk: 'wish_id', cols: ['wish_id','family_id','child_id','item_id','created_at'], bools: [] },
   WalletLog:   { pk: 'log_id', cols: ['log_id','family_id','currency','amount','kind','ref','member_id','created_at'], bools: [], writeOnly: true },
+  Coupons:     { pk: 'coupon_id', cols: ['coupon_id','family_id','pct','egg_id','created_at','used_at','used_on'], bools: [] },
   Eggs:        { pk: 'egg_id', cols: ['egg_id','family_id','status','warm','goal','day','day_warm','contrib','hugs','found_by','found_at','hatched_by','hatched_at','prize','created_at'], bools: [] },
   Spins:       { pk: 'spin_id', cols: ['spin_id','child_id','family_id','round_key','earned_at','used_at','prize_stars','prize_index','request_id'], bools: [], ignoreDup: true },
 };
 
-const NUM_COLS = new Set(['base_stars','multiplier','stars_earned','stars_cost','quantity','stars_spent','prize_stars','prize_index',
+const NUM_COLS = new Set(['pct','base_stars','multiplier','stars_earned','stars_cost','quantity','stars_spent','prize_stars','prize_index',
   'stars_earned_today','stars_spent_today','balance','missions_completed_today','stars','duration_sec',
   'purple','gold','target','progress','reward','price','amount','warm','goal','day_warm','egg_pity']);
 

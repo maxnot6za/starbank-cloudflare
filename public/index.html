@@ -647,6 +647,19 @@
     .room-pal img { max-height:40px; max-width:52px; margin-bottom:2px; } .room-pal button.used { opacity:.45; }
     .room-pal .tg { position:absolute; top:2px; right:3px; font-size:.55rem; background:var(--mint,#2A9479); color:#fff; border-radius:99px; padding:0 5px; }
     .shop-item.egg-only { opacity:.75; }
+    .cp-card { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,#FFE7A0,#FFC24B); border:2px dashed #C98A00; border-radius:14px; padding:8px 16px; font-weight:800; color:#5A3A00; font-size:1.05rem; box-shadow:0 4px 10px rgba(0,0,0,.15); transform:rotate(-4deg) scale(.3); opacity:0; transition:all .5s cubic-bezier(.3,1.6,.5,1); }
+    .cp-card.on { transform:rotate(-4deg) scale(1); opacity:1; }
+    .cp-card.r { background:linear-gradient(135deg,#E9D8FF,#B88CFF); border-color:#7B4FD6; color:#3B1E7A; }
+    .cp-card small { display:block; font-size:.65rem; font-weight:600; }
+    .cp-bar { background:#fff; border-radius:16px; padding:10px 14px; margin:0 0 10px; box-shadow:0 1px 4px rgba(0,0,0,.06); font-size:.9rem; }
+    .cp-pill { display:inline-block; background:#FFF3CF; color:#5A3A00; border-radius:99px; padding:3px 10px; font-size:.78rem; margin:4px 4px 0 0; }
+    .cp-pill.r { background:#EEE2FF; color:#3B1E7A; }
+    .cp-opts { text-align:left; margin-top:8px; }
+    .cp-opt { display:flex; align-items:center; gap:10px; width:100%; border:2px solid #e5ece9; background:#fff; border-radius:14px; padding:9px 12px; margin-top:6px; font:inherit; font-size:.9rem; color:inherit; cursor:pointer; }
+    .cp-opt.on { border-color:var(--mint,#2A9479); background:#F2FBF7; }
+    .cp-opt b { margin-left:auto; color:#7B4FD6; } .cp-opt s { color:#aaa; margin-left:4px; font-weight:400; }
+    .cp-opt i { width:16px; height:16px; border-radius:50%; border:2px solid var(--mint,#2A9479); flex:none; }
+    .cp-opt.on i { background:radial-gradient(var(--mint,#2A9479) 45%, #fff 50%); }
     .shop-note { font-size:.8rem; color:var(--text-muted); text-align:center; margin:12px 0; background:rgba(255,255,255,0.88); border-radius:14px; padding:8px 12px; box-shadow:var(--shadow); }
     .shop-sale { background:linear-gradient(135deg,#F3EDFF,#fff); border:2px dashed #C9B5FF; border-radius:16px; padding:8px 12px; font-size:.85rem; font-weight:600; color:var(--purple-d); text-align:center; margin-bottom:12px; }
     .shop-big { position:relative; height:190px; border-radius:18px; overflow:hidden; background:linear-gradient(#F6FCF9 0 74%,#CFEBDF 74%); margin:4px 0 12px; }
@@ -3445,7 +3458,7 @@ function eggPrizeHtml(p) {
   if (!p) return '';
   return p.kind === 'purple' ? '<div class="ep-prize" style="font-size:5rem;line-height:1">💜</div>' : '<img class="ep-prize" src="' + decorUrl(p.art) + '" alt="">';
 }
-function eggPrizeText(p) { return !p ? '' : p.kind === 'purple' ? 'ดาวม่วง ' + p.amount + ' ดวง!' : esc(p.name) + '!'; }
+function eggPrizeText(p) { return !p ? '' : (p.kind === 'purple' ? 'ดาวม่วง ' + p.amount + ' ดวง' : esc(p.name)) + (p.coupon ? ' + คูปองลด ' + p.coupon + '%' : '') + '!'; }
 function eggHatchStart() {
   EGG.taps = 0; EGG.res = null; EGG.busy = false;
   eggPop('<div style="font-weight:700;color:var(--mint-dark,#1F6F5C)" id="ep-tag">แตะไข่ 3 ครั้ง!</div><div class="ep-stage"><div class="ep-rays" id="ep-rays"></div><div class="ep-egg" id="ep-egg" onclick="eggTap()">' + eggSVG(3, true) + '</div><span id="ep-prize"></span></div><div id="ep-msg" style="min-height:120px"></div>');
@@ -3460,7 +3473,7 @@ function eggTap() {
   EGG.busy = true;
   google.script.run.withSuccessHandler(function (res) {
     dashboardData.egg = res.egg;
-    eggReveal(res.prize, 'ได้' + (res.prize && res.prize.kind === 'purple' ? '' : 'ของตกแต่ง') + ' ' + eggPrizeText(res.prize), '', null);
+    eggReveal(res.prize, 'ได้' + (res.prize && res.prize.kind !== 'purple' && !res.prize.coupon ? 'ของตกแต่ง ' : '') + eggPrizeText(res.prize), '', null);
     Live.request();
   }).withFailureHandler(function (e) { EGG.busy = false; EGG.taps = 0; toast(e.message || 'ฟักไม่สำเร็จ'); eggPopClose(); }).hatchEgg(currentMember.memberId);
 }
@@ -3475,9 +3488,13 @@ function eggReveal(prize, title, sub, seenKey) {
     if (typeof confetti === 'function') confetti();
     if (typeof treeChime === 'function') treeChime();
     var canPlace = currentMember.role === 'parent' && prize && prize.kind === 'decor';
-    document.getElementById('ep-msg').innerHTML = '<h2>' + title + '</h2>' + (sub ? '<div style="color:var(--text-muted);margin-top:4px">' + sub + '</div>' : '') +
+    var cp = prize && prize.coupon;
+    if (!sub && cp) sub = 'คูปองเก็บไว้ในร้านค้า · ผู้ปกครองใช้ลดของ 1 ชิ้นตอนซื้อ';
+    document.getElementById('ep-msg').innerHTML = (cp ? '<div class="cp-card' + (cp >= 50 ? ' r' : '') + '" id="ep-cp" style="margin:-10px 0 10px"><span style="font-size:1.5rem">🎟️</span><span>คูปองลด ' + cp + '%' + (cp >= 50 ? '<small>✨ แรร์มาก!</small>' : '') + '</span></div>' : '') +
+      '<h2>' + title + '</h2>' + (sub ? '<div style="color:var(--text-muted);margin-top:4px">' + sub + '</div>' : '') +
       '<div style="display:flex;gap:8px;justify-content:center;margin-top:14px"><button class="dq-btn ' + (canPlace ? 'g' : 'p') + '" onclick="eggPopClose(' + (seenKey ? '\'' + seenKey + '\'' : '') + ')">เย้!</button>' +
       (canPlace ? '<button class="dq-btn p" onclick="eggPopClose(' + (seenKey ? '\'' + seenKey + '\'' : '') + ');openInventory(\'decor\')">วางในห้องเลย</button>' : '') + '</div>';
+    if (cp) setTimeout(function () { var c = document.getElementById('ep-cp'); if (c) { c.classList.add('on'); if (typeof confetti === 'function') confetti(); } }, 900);   // คูปองหล่นตามมาทีหลัง
   }, 300);
 }
 // เหตุการณ์ไข่ที่ยังไม่เห็น (เจอ/ฟัก) → ป๊อปอัป · รอหน้าต่างอื่นปิดก่อน
@@ -3667,6 +3684,7 @@ function renderShop() {
   var b = document.getElementById('shop-badge');
   if (b) { b.style.display = wishCount ? 'inline-flex' : 'none'; b.textContent = wishCount; }
   root.innerHTML = '<div class="shop-top"><h2>🛍️ ร้านค้า</h2><span class="wallet-pill">' + COIN + ' ' + d.wallet.gold + '</span><span class="wallet-pill">' + PSTAR + ' ' + d.wallet.purple + '</span></div>' +
+    (d.coupons && d.coupons.length ? '<div class="cp-bar"><b>🎟️ คูปองของครอบครัว</b><br>' + couponPills(d.coupons) + (d.canBuy ? '' : '<div style="font-size:.75rem;color:var(--text-muted);margin-top:4px">ผู้ปกครองใช้ตอนซื้อของ</div>') + '</div>' : '') +
     (d.firstDiscount ? '<div class="shop-sale">🎉 ซื้อชิ้นแรกของครอบครัว ลด ' + d.discountPct + '% · เลือกได้ทุกอย่างในร้าน</div>' : '') +
     '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · ผนัง ' + cnt('wall') + ' · พื้น ' + cnt('floor') + ' · ตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
     '<div class="shop-tabs">' + tabs.map(function (t) { return '<button class="' + (SHOP.tab === t[0] ? 'on' : '') + '" onclick="shopTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
@@ -3703,7 +3721,8 @@ function openShopItem(id) {
   var whoHtml = d.canBuy ? '<div style="font-weight:700;margin-top:4px">' + (it.owned ? 'ให้ใครใช้?' : 'ซื้อแล้วให้ใครใช้?') + '</div><div class="shop-who" id="shop-who">' +
     fits.map(function (m) { return '<button type="button" class="u-chip' + (window.__shopPick === m.member_id ? ' on' : '') + '" onclick="shopPick(this,\'' + m.member_id + '\')">' + m.avatar + ' ' + esc(m.name) + '</button>'; }).join('') +
     (it.owned ? '<button type="button" class="u-chip' + (!window.__shopPick ? ' on' : '') + '" onclick="shopPick(this,\'\')">ยังไม่ให้ใคร</button>' : '') + '</div>' : '';
-  var lack = !it.owned && d.wallet.purple < it.pay ? it.pay - d.wallet.purple : 0;
+  var cpHtml = couponOptsHtml(it), pay0 = cpHtml ? couponPrice(it.price, d.coupons[0].pct) : it.pay;
+  var lack = !it.owned && d.wallet.purple < pay0 ? pay0 - d.wallet.purple : 0;
   var actions;
   if (!d.canBuy) {
     actions = it.owned ? '<button class="dq-btn g" onclick="closeModal()">ปิด</button>'
@@ -3712,11 +3731,11 @@ function openShopItem(id) {
     actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button><button class="dq-btn p" style="flex:1.6" onclick="shopAssign(this,\'' + it.id + '\')">บันทึก</button>';
   } else {
     actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') +
-      ' onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + it.pay + ' ดาวม่วง</button>';
+      ' id="shop-buy" onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + pay0 + ' ดาวม่วง</button>';
   }
   openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2><div class="shop-big" id="shop-big"></div>' +
     '<div style="font-size:.85rem;color:var(--text-muted)">' + (it.type === 'kid' ? 'ตัวละครสำหรับเด็ก' : 'ตัวละครสำหรับผู้ปกครอง') + ' · ซื้อครั้งเดียวใช้ได้ตลอด</div>' +
-    (it.owned ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') + whoHtml +
+    (it.owned || cpHtml ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') + cpHtml + whoHtml +
     '<div style="display:flex;gap:8px;margin-top:6px">' + actions + '</div>' +
     (d.canBuy && lack ? '<div style="font-size:.8rem;color:var(--text-muted);margin-top:8px">มี ' + d.wallet.purple + ' ดาวม่วง · ขาดอีก ' + lack + ' (ทำภารกิจประจำวันเพื่อเก็บเพิ่ม)</div>' : '') + '</div>');
   feReplace(document.getElementById('modal-content'));
@@ -3733,13 +3752,14 @@ function openStageItem(it) {
       '<div style="display:flex;gap:8px;margin-top:14px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div></div>');
     return;
   }
-  var d = SHOP.data, lack = !it.owned && d.wallet.purple < it.pay ? it.pay - d.wallet.purple : 0, actions;
+  var d = SHOP.data, cpHtml = couponOptsHtml(it), pay0 = cpHtml ? couponPrice(it.price, d.coupons[0].pct) : it.pay;
+  var lack = !it.owned && d.wallet.purple < pay0 ? pay0 - d.wallet.purple : 0, actions;
   if (!d.canBuy) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.owned ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '💔 ยกเลิกอยากได้' : '💜 อยากได้!') + '</button>');
   else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' || it.kind === 'wall' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\',\'' + it.kind + '\')">ใช้' + (it.kind === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปจัดห้อง</button>');
-  else actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') + ' onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + it.pay + ' ดาวม่วง</button>';
+  else actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') + ' id="shop-buy" onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + pay0 + ' ดาวม่วง</button>';
   openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2>' + shopArt(it, true) +
     '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : it.kind === 'wall' ? 'ผนังหลังตัวละคร' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
-    (it.owned ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') +
+    (it.owned || cpHtml ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') + cpHtml +
     '<div style="display:flex;gap:8px;margin-top:10px">' + actions + '</div>' +
     (d.canBuy && lack ? '<div style="font-size:.8rem;color:var(--text-muted);margin-top:8px">มี ' + d.wallet.purple + ' ดาวม่วง · ขาดอีก ' + lack + '</div>' : '') + '</div>');
   feReplace(document.getElementById('modal-content'));
@@ -3888,11 +3908,34 @@ function shopPick(btn, id) {
   btn.classList.add('on');
 }
 function shopDone(res, msg) { closeModal(); SHOP.data = res.shop; renderShop(); toast(msg); Live.request(); if (window.__invBack) { window.__invBack = false; openInventory(); } }   // อัปเดตหน้าหลัก/ตัวละครด้านล่างแบบเงียบ ๆ
+// คูปองจากไข่: ราคาหลังลดปัดลง (ต่ำสุด 1) · ไม่ซ้อนกับส่วนลดชิ้นแรก
+function couponPrice(price, pct) { return Math.max(1, Math.floor(price * (100 - pct) / 100)); }
+function couponPills(list) {
+  var g = {}; list.forEach(function (c) { g[c.pct] = (g[c.pct] || 0) + 1; });
+  return Object.keys(g).sort(function (a, b) { return b - a; }).map(function (p) { return '<span class="cp-pill' + (p >= 50 ? ' r' : '') + '">ลด ' + p + '% ×' + g[p] + '</span>'; }).join('');
+}
+function couponOptsHtml(it) {
+  var d = SHOP.data; window.__shopCoupon = '';
+  if (!d.canBuy || it.owned || it.egg || d.firstDiscount || !d.coupons || !d.coupons.length) return '';
+  var seen = {}, list = d.coupons.filter(function (c) { if (seen[c.pct]) return false; seen[c.pct] = 1; return true; });
+  window.__shopCoupon = list[0].id;
+  return '<div class="cp-opts" id="cp-opts">' + [{ id: '', pct: 0 }].concat(list).map(function (c) {
+    return '<button type="button" class="cp-opt' + (c.id === window.__shopCoupon ? ' on' : '') + '" data-pay="' + (c.pct ? couponPrice(it.price, c.pct) : it.price) + '" onclick="couponPick(this,\'' + c.id + '\')"><i></i>' +
+      (c.pct ? '🎟️ ลด ' + c.pct + '%' + (c.pct >= 50 ? ' ✨' : '') + '<b>' + couponPrice(it.price, c.pct) + '<s>' + it.price + '</s></b>' : 'ไม่ใช้คูปอง<b>' + it.price + '</b>') + '</button>';
+  }).join('') + '</div>';
+}
+function couponPayNow(it) { var b = document.querySelector('#cp-opts .cp-opt.on'); return b ? Number(b.getAttribute('data-pay')) : it.pay; }
+function couponPick(btn, id) {
+  window.__shopCoupon = id;
+  document.querySelectorAll('#cp-opts .cp-opt').forEach(function (b) { b.classList.toggle('on', b === btn); });
+  var pay = Number(btn.getAttribute('data-pay')), bb = document.getElementById('shop-buy'), lack = SHOP.data.wallet.purple < pay;
+  if (bb) { bb.textContent = 'ซื้อ ' + pay + ' ดาวม่วง'; bb.disabled = lack; bb.style.opacity = lack ? .5 : 1; }
+}
 function shopBuy(btn, id) {
   btn.disabled = true;
   google.script.run.withSuccessHandler(function (res) { confetti(); shopDone(res, res.bought && res.bought.indexOf('dino') === 0 ? '🎉 ได้ตัวละครใหม่แล้ว!' : '🎉 ได้ของใหม่แล้ว!'); })
     .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'ซื้อไม่สำเร็จ'); })
-    .buyItem(currentMember.memberId, id, window.__shopPick || '');
+    .buyItem(currentMember.memberId, id, window.__shopPick || '', window.__shopCoupon || '');
 }
 function shopAssign(btn, id) {
   btn.disabled = true;

@@ -79,6 +79,28 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await mom.click('#egg-pop button:has-text("เย้")'); await mom.waitForTimeout(800);
   ok(/:h$/.test((await db.prepare('SELECT egg_seen FROM Members WHERE member_id = ?').bind(P1).first()).egg_seen), 'เห็นแล้ว → ไม่เด้งซ้ำ');
 
+  // พ่อ (ยังไม่เห็น) → ป๊อปอัปการฟักพร้อมคูปองลด 50%
+  await db.prepare("UPDATE Eggs SET prize = prize || '+c50'").run();
+  const dad = await open(P2);
+  await dad.waitForSelector('#egg-pop .cp-card.on', { timeout: 15000 });
+  ok(/คูปองลด 50%/.test(await dad.textContent('#egg-pop')), 'ป๊อปอัปฟักไข่โชว์คูปอง');
+  await dad.waitForTimeout(500); await dad.screenshot({ path: OUT + 'e5-hatch-coupon.png' });
+  await dad.click('#egg-pop button:has-text("เย้")');
+
+  // ร้าน: ใช้คูปองตอนซื้อ
+  await db.prepare("UPDATE Families SET purple = 20").run();
+  await db.prepare("INSERT INTO Coupons (coupon_id,family_id,pct,egg_id,created_at,used_at,used_on) VALUES ('k50',?,50,'x','','',''),('k10',?,10,'x','','','')").bind(FAM, FAM).run();
+  await dad.click('#pnav-shop'); await dad.waitForSelector('.cp-bar');
+  ok(/ลด 50% ×1/.test(await dad.textContent('.cp-bar')), 'ร้านโชว์คูปองของครอบครัว');
+  await dad.click('.shop-tabs button:nth-child(4)'); await dad.locator('#screen-parent-shop .shop-item').nth(2).click();
+  await dad.waitForSelector('#cp-opts');
+  ok(/ซื้อ 5 ดาวม่วง/.test(await dad.textContent('#shop-buy')), 'เลือกคูปองมากสุดให้ก่อน → 5');
+  await dad.screenshot({ path: OUT + 'e6-buy-coupon.png' });
+  await dad.click('#cp-opts .cp-opt:nth-child(3)');
+  ok(/ซื้อ 9 ดาวม่วง/.test(await dad.textContent('#shop-buy')), 'เปลี่ยนเป็นลด 10% → 9');
+  await dad.click('#cp-opts .cp-opt:nth-child(2)'); await dad.click('#shop-buy'); await dad.waitForTimeout(1200);
+  ok((await db.prepare("SELECT used_at FROM Coupons WHERE coupon_id='k50'").first()).used_at && (await db.prepare("SELECT purple FROM Families").first()).purple === 15, 'ซื้อด้วยคูปอง 50% จ่าย 5');
+
   ok(!errors.length, 'ไม่มี JS error', errors);
   await browser.close(); await mf.dispose();
   console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด'); process.exit(fails ? 1 : 0);

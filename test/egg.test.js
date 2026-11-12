@@ -78,6 +78,30 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   cd = (await call(mf, 'getChildDashboard', C)).value;
   ok(cd.stage.decor.length === 2 && cd.stage.decor[0].id === 'decor_tree', 'เด็กเห็นห้องเดียวกัน');
 
+  // --- คูปองจากไข่ ---
+  await db.prepare("UPDATE Families SET purple = 100 WHERE family_id = ?").bind(FAM).run();
+  await db.prepare("INSERT INTO Coupons (coupon_id,family_id,pct,egg_id,created_at,used_at,used_on) VALUES ('c25',?,25,'x','', '', ''),('c10',?,10,'x','','','')").bind(FAM, FAM).run();
+  let sh = (await call(mf, 'getShop', P1)).value;
+  ok(sh.coupons.length >= 2 && sh.coupons.some(c => c.id === 'c25') && sh.coupons.every((c, i, a) => !i || a[i - 1].pct >= c.pct), 'ร้านเห็นคูปอง (มากสุดก่อน)', sh.coupons);
+  const xid = sh.items.find(i => i.set === 'xmas' && !i.owned).id;
+  r = await call(mf, 'buyItem', P1, xid, '', 'c25');
+  ok(r.ok && r.value.paid === 7, 'คูปอง 25% ของ 10 ดาว → 7 (ปัดลง)', r.value && r.value.paid);
+  ok((await db.prepare("SELECT used_on FROM Coupons WHERE coupon_id='c25'").first()).used_on === xid, 'คูปองถูกใช้แล้ว');
+  const xid2 = r.value.shop.items.find(i => i.set === 'xmas' && !i.owned).id;
+  r = await call(mf, 'buyItem', P1, xid2, '', 'c25'); ok(!r.ok, 'ใช้คูปองซ้ำไม่ได้');
+  await db.prepare("UPDATE Families SET purple = 5 WHERE family_id = ?").bind(FAM).run();
+  r = await call(mf, 'buyItem', P1, xid2, '', 'c10'); ok(!r.ok, 'ดาวไม่พอ → ไม่เสียคูปอง');
+  ok(!(await db.prepare("SELECT used_at FROM Coupons WHERE coupon_id='c10'").first()).used_at, 'คูปองยังอยู่');
+  r = await call(mf, 'buyItem', C, xid2, '', 'c10'); ok(!r.ok, 'เด็กใช้คูปองซื้อไม่ได้');
+  // ฟักแล้วได้คูปอง (บังคับสุ่ม)
+  await db.prepare("INSERT INTO Eggs (egg_id,family_id,status,warm,goal,contrib,hugs,found_by,created_at) VALUES (?,?,'ready',15,15,'{}','{}',?, '')").bind(FAM + '|99', FAM, C).run();
+  const R = Math.random; 
+  r = await call(mf, 'hatchEgg', C);
+  ok(r.ok, 'ฟักใบใหม่ได้');
+  const pz = (await db.prepare("SELECT prize FROM Eggs WHERE egg_id = ?").bind(FAM + '|99').first()).prize;
+  const cnt = (await db.prepare("SELECT COUNT(*) n FROM Coupons WHERE egg_id = ?").bind(FAM + '|99').first()).n;
+  ok(/\+c\d+$/.test(pz) === (cnt === 1) && (!r.value.prize.coupon || [10, 25, 50].includes(r.value.prize.coupon)), 'รางวัล+คูปองตรงกับตาราง', { pz, cnt, p: r.value.prize });
+
   await mf.dispose();
   console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด'); process.exit(fails ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
