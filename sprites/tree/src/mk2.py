@@ -59,6 +59,6 @@ def b64(im):
 L={'bare':bare,'t2':trees[2],'t4':trees[4],'t5':trees[5],'hold':hold,'reach':reach,'clasp':ch[2],'jump':ch[3]}
 json.dump({k:[b64(v),v.width,v.height] for k,v in L.items()},open('layers.json','w'))
 import os
-OUT='/home/claude/starbank-cloudflare/public/sprites/tree'
+OUT='../../../public/themes/xmas/celebrate'   # รันจากโฟลเดอร์ sprites/tree/src
 for k,v in L.items(): v.save(f'{OUT}/{k}.webp','WEBP',quality=88,method=6)
 print({k:(v.width,v.height) for k,v in L.items()})

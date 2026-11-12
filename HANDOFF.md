@@ -197,7 +197,13 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 - เด้งที่เครื่องเด็กเมื่อมีแถว `Spins` ใหม่ที่ `earned_at` > `Members.tree_seen` (`wheel.lastEarned` vs `wheel.treeSeen`) · เช็กทุกครั้งที่ `renderWheelCard` → มาทาง Live ได้ทันที
 - migration ตั้ง `tree_seen` = เวลาที่ migrate → สิทธิ์เก่าไม่เด้งย้อนหลัง · กด "ปิด" → `treeSeen(earnedAt)` (ไม่ย้อนกลับ)
 - อวาตาร์ `dino_kid` ของเด็กคนนั้น = แบบน้องไดโนแขวนบอล · ไม่มี = บอลลอยลงมาเอง · ไม่มีรางวัลเพิ่ม (สิทธิ์หมุนเหมือนเดิม) · ผู้ปกครองไม่เห็น
-- ภาพ `public/sprites/tree/*.webp` (ตัดจาก `sprites/tree/src/` ด้วย `mk.py`/`mk2.py` ไม่ใช่ cut.py เพราะเป็นฉาก+ต้นไม้ ต้องคงตำแหน่ง) · อนิเมชันวาดด้วย canvas ใน `treePopOpen` · เสียงกริ๊ง WebAudio (ดังได้หลังเด็กแตะจอแล้ว)
+- ภาพ `public/themes/xmas/celebrate/*.webp` (ตัดจาก `sprites/tree/src/` ด้วย `mk.py`/`mk2.py` ไม่ใช่ cut.py เพราะเป็นฉาก+ต้นไม้ ต้องคงตำแหน่ง) · อนิเมชันวาดด้วย canvas ใน `treePopOpen` · เสียงกริ๊ง WebAudio (ดังได้หลังเด็กแตะจอแล้ว)
+
+### 8.7 ธีม (migration 0012) — ดู `public/themes/README.md`
+- `Families.theme` (ค่าเริ่มต้น `xmas`) · `setTheme` เฉพาะผู้ปกครอง · id ต้องอยู่ใน `THEMES` (core.js) = `public/themes/index.json`
+- หน้าเว็บ: `THEME`/`themeSet`/`themeApply`/`TW(คำ)`/`progressArt` · render หน้าหลักเรียก `themeSet(d.family.theme)` → เปลี่ยนตามทาง Live · เครื่องจำธีมล่าสุด (`localStorage.starbank_theme`)
+- ของคริสต์มาสทั้งหมดย้ายไป `public/themes/xmas/` (พื้นหลังเดิมอยู่ repo starbank-assets, เพลงเดิม `public/music/`, มาสคอตเดิม `public/img/mascot/`, ภาพฉลองเดิม `public/sprites/tree/`)
+- ตั้งค่าผู้ปกครองมีการ์ด "🎨 ธีมของครอบครัว" · ยังเหลือ logo + ไอคอน Fluent ที่ starbank-assets (ไม่ผูกธีม)
 
 ## 9. การทดสอบ
 

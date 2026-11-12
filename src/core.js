@@ -13,7 +13,7 @@ export const PUBLIC_API = [
   'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
   'sendGift', 'cancelGift', 'openGift',
-  'questSeen', 'treeSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
+  'questSeen', 'treeSeen', 'setTheme', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
 ];
 
 export function createCore(S) {
@@ -1832,6 +1832,16 @@ export function createCore(S) {
       wallet: { purple: Number(fam.purple || 0), gold: Number(fam.gold || 0) } };
   }
 
+  // ธีมของครอบครัว · ต้องตรงกับ public/themes/index.json (test/theme.test.js ตรวจให้)
+  var THEMES = ['xmas'];
+  function setTheme(memberId, themeId) {
+    var parent = requireParent_(memberId);
+    var id = String(themeId || '');
+    if (THEMES.indexOf(id) < 0) throw new Error('ไม่พบธีมนี้');
+    updateRow_('Families', 'family_id', parent.family_id, { theme: id });
+    return { theme: id };
+  }
+
   // เด็กปิดป๊อปอัปครบ 5 วัน → จำ earned_at ล่าสุดที่เห็น (ไม่ย้อนกลับ)
   function treeSeen(memberId, earnedAt) {
     var m = getMember_(memberId);
@@ -1960,7 +1970,7 @@ export function createCore(S) {
   }
 
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
-    questSeen, treeSeen, claimQuest, getShop, buyItem, assignAvatar, wishItem };
+    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }

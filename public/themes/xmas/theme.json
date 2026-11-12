@@ -1,0 +1,23 @@
+{
+  "id": "xmas",
+  "name": "คริสต์มาส",
+  "icon": "🎄",
+  "preview": "preview.jpg",
+  "bg": "bg.jpg",
+  "music": "music.mp3",
+  "effect": { "type": "fall", "chars": ["❄", "❅", "❆", "✦"], "color": "#9CCFE0", "count": 25 },
+  "mascot": { "go": "mascot/dao-go.webp", "sleep": "mascot/dao-sleep.webp", "timeout": "mascot/dao-timeout.webp", "yay": "mascot/dao-yay.webp" },
+  "words": {
+    "icon": "🎄",
+    "board": "ต้นคริสต์มาส",
+    "item": "ลูกบอล",
+    "unit": "ลูก",
+    "add": "แขวน",
+    "full": "ต้นไม้ครบ 5 ลูก ดาวสว่างแล้ว!",
+    "celebrateTag": "🎄 ภารกิจต้นคริสต์มาส",
+    "celebrateTitle": "ครบ 5 วันแล้ว! 🎉",
+    "celebrateText": "ต้นไม้ของหนูสว่างไสวเลย เก่งมาก!"
+  },
+  "progress": { "type": "builtin-xmas-tree" },
+  "celebrate": { "type": "builtin-xmas-tree", "dir": "celebrate/" }
+}

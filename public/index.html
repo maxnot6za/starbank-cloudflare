@@ -601,6 +601,15 @@
       background:linear-gradient(135deg,#FF5A36,#FF8A45); box-shadow:0 4px 0 #d9481f; opacity:0; transition:opacity .4s .5s; }
     #tree-pop .tp-msg.on .tp-close { opacity:1; }
     #tree-pop canvas.tp-cf { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+    /* เลือกธีม (ตั้งค่าผู้ปกครอง) */
+    .th-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+    .th-card { border:2px solid var(--border); border-radius:16px; overflow:hidden; background:#fff; padding:0; font-family:inherit; text-align:left; cursor:pointer; }
+    .th-card.on { border:3px solid var(--mint-dark,#2A9479); box-shadow:0 0 0 4px rgba(42,148,121,.15); }
+    .th-card img { display:block; width:100%; height:86px; object-fit:cover; }
+    .th-card .th-n { padding:6px 10px; font-weight:700; display:flex; justify-content:space-between; align-items:center; gap:6px; color:var(--text); }
+    .th-card .th-ck { background:#2A9479; color:#fff; border-radius:99px; font-size:.7rem; padding:1px 8px; white-space:nowrap; }
+    .th-card.soon { cursor:default; opacity:.6; }
+    .th-card.soon .th-pv { height:86px; display:grid; place-items:center; font-size:1.6rem; color:#bbb; background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 10px,#eee 10px,#eee 20px); }
     #avatar-strip { position:fixed; left:0; right:0; bottom:var(--nav-h); height:var(--strip-h); z-index:90; pointer-events:none; display:none; overflow:hidden; }
     #avatar-strip.on { display:block; }
     #avatar-strip .sa-actor { bottom:4px; }
@@ -610,7 +619,7 @@
 <body>
 
 <!-- ==================== CHRISTMAS SCENE ==================== -->
-<div class="xmas-scene"><img src="https://cdn.jsdelivr.net/gh/maxnot6za/starbank-assets@7e64891/xmas-bg-hd.jpg" alt=""></div>
+<div class="xmas-scene"><img id="theme-bg" src="/themes/xmas/bg.jpg" alt=""></div>
 
 <!-- ==================== SNOWFALL ==================== -->
 <div class="snowfall" id="snowfall"></div>
@@ -1134,6 +1143,7 @@ function loadChildDashboard() {
 }
 
 function renderChildHome(d) {
+  themeSet(d.family && d.family.theme);
   document.getElementById('child-avatar').textContent = d.member.avatar;
   document.getElementById('child-name').textContent = d.member.name;
   document.getElementById('child-family-name').textContent = d.family.family_name;
@@ -1326,6 +1336,7 @@ function loadParentDashboard() {
 }
 
 function renderParentHome(d) {
+  themeSet(d.family && d.family.theme);
   document.getElementById('parent-avatar').textContent = d.member.avatar;
   document.getElementById('parent-name').textContent = d.member.name;
   document.getElementById('parent-family-name').textContent = d.family.family_name;
@@ -1347,7 +1358,7 @@ function renderParentHome(d) {
           <div style="font-weight:600">${esc(c.name)}</div>
           <div style="color:var(--gold-dark);font-weight:700">⭐ ${c.stats.balance} ดาว</div>
           ${(function(){ var wc = d.wheel && d.wheel.enabled ? wheelChildInfo(c.member_id) : null;
-            return wc ? '<div style="font-size:0.8rem;color:var(--mint-dark);font-weight:600">🎄 ' + wc.run + '/5' + (wc.spins ? ' · 🎡 หมุนได้ ' + wc.spins : '') + '</div>' : ''; })()}
+            return wc ? '<div style="font-size:0.8rem;color:var(--mint-dark);font-weight:600">' + TW('icon') + ' ' + wc.run + '/5' + (wc.spins ? ' · 🎡 หมุนได้ ' + wc.spins : '') + '</div>' : ''; })()}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <div style="font-size:0.8rem;color:var(--text-muted)">
@@ -1446,9 +1457,9 @@ function doReview(subId, status) {
   google.script.run
     .withSuccessHandler(function(imp) {
       if (!imp || !imp.warn) return reallyReview(subId, status);
-      openModal('<h2>ต้นคริสต์มาสจะเริ่มใหม่</h2>' +
-        '<p style="text-align:center;color:var(--text-muted);line-height:1.6;margin-bottom:18px">ถ้าไม่อนุมัติภารกิจนี้ ต้นคริสต์มาสของ <strong style="color:var(--text)">' + esc(imp.childName) + '</strong> ' +
-        '(แขวนแล้ว ' + imp.run + '/5 ลูก' + (imp.pending ? ' · รออนุมัติอีก ' + imp.pending + ' วัน' : '') + ') จะกลับไปเริ่มนับใหม่<br>ลองให้ลูกทำใหม่แทนไหม?</p>' +
+      openModal('<h2>' + TW('board') + 'จะเริ่มใหม่</h2>' +
+        '<p style="text-align:center;color:var(--text-muted);line-height:1.6;margin-bottom:18px">ถ้าไม่อนุมัติภารกิจนี้ ' + TW('board') + 'ของ <strong style="color:var(--text)">' + esc(imp.childName) + '</strong> ' +
+        '(' + TW('add') + 'แล้ว ' + imp.run + '/5 ' + TW('unit') + (imp.pending ? ' · รออนุมัติอีก ' + imp.pending + ' วัน' : '') + ') จะกลับไปเริ่มนับใหม่<br>ลองให้ลูกทำใหม่แทนไหม?</p>' +
         '<div style="display:flex;gap:10px"><button type="button" class="btn btn-outline" style="flex:1" onclick="closeModal()">กลับไปก่อน</button>' +
         '<button type="button" class="btn btn-danger" style="flex:1" onclick="closeModal();reallyReview(\'' + subId + '\',\'rejected\')">ไม่อนุมัติ</button></div>');
     })
@@ -1760,6 +1771,33 @@ function toggleNotifySub(enabled) {
     .toggleSubmissionNotify(currentMember.memberId, enabled);
 }
 
+// การ์ดเลือกธีมในตั้งค่า · กดการ์ด = เปลี่ยนทั้งครอบครัวทันที
+var THEME_LIST = null;
+function themeCard() {
+  if (!THEME_LIST) {
+    fetch('/themes/index.json').then(function (r) { return r.json(); }).then(function (l) { THEME_LIST = l; var el = document.getElementById('theme-slot'); if (el) el.innerHTML = themeCard(); }).catch(function () {});
+    return '<div class="card" style="box-shadow:none;background:var(--bg)"><h3>🎨 ธีมของครอบครัว</h3><div class="loading">⏳ กำลังโหลด...</div></div>';
+  }
+  var cur = (dashboardData && dashboardData.family && dashboardData.family.theme) || 'xmas';
+  return '<div class="card" style="box-shadow:none;background:var(--bg)"><h3>🎨 ธีมของครอบครัว</h3>' +
+    '<div style="font-size:.8rem;color:var(--text-muted)">เปลี่ยนแล้วทุกเครื่องในครอบครัวเปลี่ยนตามทันที · ' + TW('board') + 'นับต่อ ไม่หาย</div><div class="th-grid">' +
+    THEME_LIST.map(function (t) {
+      var on = t.id === cur;
+      return '<button type="button" class="th-card' + (on ? ' on' : '') + '" onclick="chooseTheme(\'' + esc(t.id) + '\')"><img src="/themes/' + esc(t.id) + '/preview.jpg" alt="">' +
+        '<div class="th-n"><span>' + esc(t.name) + '</span>' + (on ? '<span class="th-ck">ใช้อยู่</span>' : '') + '</div></button>';
+    }).join('') +
+    '<div class="th-card soon"><div class="th-pv">＋</div><div class="th-n"><span>เร็วๆ นี้</span></div></div></div></div>';
+}
+function chooseTheme(id) {
+  var cur = (dashboardData && dashboardData.family && dashboardData.family.theme) || 'xmas';
+  if (id === cur) return;
+  google.script.run.withSuccessHandler(function () {
+    dashboardData.family.theme = id; themeSet(id);
+    var el = document.getElementById('theme-slot'); if (el) el.innerHTML = themeCard();
+    toast('เปลี่ยนธีมแล้ว');
+  }).withFailureHandler(function (e) { toast(e.message || 'เปลี่ยนธีมไม่สำเร็จ'); }).setTheme(currentMember.memberId, id);
+}
+
 function showSettings() {
   const d = dashboardData;
   // ดึงสถานะกงล้อล่าสุด เผื่อผู้ปกครองอีกคนเพิ่งเปิด/ปิด
@@ -1781,6 +1819,8 @@ function showSettings() {
       <div class="info-row"><span>รหัสครอบครัว (เด็กใช้เข้าระบบ)</span><strong style="letter-spacing:3px">${joinCode}</strong></div>
       <div class="info-row"><span>สมาชิกทั้งหมด</span><span>${d.members.length} คน</span></div>
     </div>
+    <div class="divider"></div>
+    <div id="theme-slot">${themeCard()}</div>
     <div class="divider"></div>
     <div id="access-slot"><div class="loading">⏳ กำลังโหลด...</div></div>
     <div class="divider"></div>
@@ -2069,8 +2109,8 @@ function renderWheelCard(d) {
   if (!w || !w.enabled) { el.innerHTML = ''; return; }
   var html = '';
   if (w.spins > 0) {
-    html += '<div class="wheel-ready"><div class="wr-top">' + treeSVG(['done','done','done','done','done'], true, 64, 74) +
-      '<div><div class="wr-title">ต้นไม้ครบ 5 ลูก ดาวสว่างแล้ว!</div><div style="font-weight:600">หมุนกงล้อได้ <strong style="font-size:1.2rem">' + w.spins + '</strong> ครั้ง</div></div></div>' +
+    html += '<div class="wheel-ready"><div class="wr-top">' + progressArt(['done','done','done','done','done'], true, 64, 74) +
+      '<div><div class="wr-title">' + TW('full') + '</div><div style="font-weight:600">หมุนกงล้อได้ <strong style="font-size:1.2rem">' + w.spins + '</strong> ครั้ง</div></div></div>' +
       '<button type="button" class="wheel-go" onclick="openWheel()">ไปหมุนกงล้อ →</button></div>';
   }
   var run = Math.min(w.run, 5), pend = Math.min(w.pendingCount, 5 - run);
@@ -2078,18 +2118,18 @@ function renderWheelCard(d) {
   for (var i = 0; i < 5; i++) states.push(i < run ? 'done' : (i < run + pend ? 'pending' : 'empty'));
   if (w.todayStatus === 'none' && run + pend < 5) states[run + pend] = 'today';
   var left = 5 - run, msg;
-  if (w.broke && run === 0 && pend === 0) msg = 'เมื่อวานพักไปวันนึง ไม่เป็นไรนะ 💪 ต้นใหม่รอแล้ว ส่งภารกิจวันนี้ แขวนลูกแรกได้เลย!';
-  else if (w.todayStatus === 'pending') msg = 'ส่งภารกิจวันนี้แล้ว <strong style="color:#A86E00">รอพ่อแม่อนุมัติ</strong> · แขวนอีก ' + left + ' ลูก ได้หมุนกงล้อ!';
-  else if (w.todayStatus === 'approved') msg = 'วันนี้แขวนแล้ว เก่งมาก! พรุ่งนี้มาแขวนต่อนะ · อีก ' + left + ' ลูก';
-  else msg = 'ส่งภารกิจวันนี้ เพื่อแขวนลูกบอลลูกต่อไป! · อีก ' + left + ' ลูก ได้หมุนกงล้อ';
+  if (w.broke && run === 0 && pend === 0) msg = 'เมื่อวานพักไปวันนึง ไม่เป็นไรนะ 💪 เริ่มใหม่ได้เลย ส่งภารกิจวันนี้ ' + TW('add') + TW('unit') + 'แรกได้เลย!';
+  else if (w.todayStatus === 'pending') msg = 'ส่งภารกิจวันนี้แล้ว <strong style="color:#A86E00">รอพ่อแม่อนุมัติ</strong> · ' + TW('add') + 'อีก ' + left + ' ' + TW('unit') + ' ได้หมุนกงล้อ!';
+  else if (w.todayStatus === 'approved') msg = 'วันนี้' + TW('add') + 'แล้ว เก่งมาก! พรุ่งนี้มา' + TW('add') + 'ต่อนะ · อีก ' + left + ' ' + TW('unit');
+  else msg = 'ส่งภารกิจวันนี้ เพื่อ' + TW('add') + TW('item') + TW('unit') + 'ต่อไป! · อีก ' + left + ' ' + TW('unit') + ' ได้หมุนกงล้อ';
   // ลูกบอลลูกใหม่ (เพิ่งได้ตั้งแต่เปิดครั้งก่อน) ตกลงมาแขวน
   var runKey = 'starbank_last_run_' + d.member.member_id, prevRun = Number(memoGet(runKey));
   var dropIdx = (memoGet(runKey) !== null && !isNaN(prevRun) && run > prevRun) ? run - 1 : -1;
   memoSet(runKey, run);
-  html += '<div class="card"><div class="tree-card">' + treeSVG(states, false, 110, 128, dropIdx) +
-    '<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div style="font-weight:800">🎄 ต้นคริสต์มาสของหนู</div>' +
-    '<div class="tree-count">' + run + '<small> / 5 ลูก</small></div>' +
-    '<div class="tree-legend"><span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#E05A5A;vertical-align:middle"></span> แขวนแล้ว</span><span>⏳ รออนุมัติ</span><span><span style="color:#A86E00;font-weight:800">+</span> ส่งวันนี้</span></div></div></div>' +
+  html += '<div class="card"><div class="tree-card">' + progressArt(states, false, 110, 128, dropIdx) +
+    '<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div style="font-weight:800">' + TW('icon') + ' ' + TW('board') + 'ของหนู</div>' +
+    '<div class="tree-count">' + run + '<small> / 5 ' + TW('unit') + '</small></div>' +
+    '<div class="tree-legend"><span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#E05A5A;vertical-align:middle"></span> ' + TW('add') + 'แล้ว</span><span>⏳ รออนุมัติ</span><span><span style="color:#A86E00;font-weight:800">+</span> ส่งวันนี้</span></div></div></div>' +
     '<div class="tree-msg">' + msg + '</div></div>';
   el.innerHTML = html;
   maybeTreePop(d);
@@ -2293,7 +2333,7 @@ function wheelSettingsCard() {
     return '<div style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:8px 10px;margin-top:8px">' +
       '<div style="font-size:1.5rem">' + c.avatar + '</div><div style="flex:1"><div style="font-weight:700">' + esc(c.name) + '</div>' +
       '<div style="font-size:0.75rem;color:var(--text-muted)">' + last + '</div></div>' +
-      '<div style="text-align:right"><div style="font-weight:800;color:var(--primary-dark)">🎄 ' + c.run + '/5</div><div style="font-size:0.75rem;color:var(--text-muted)">สิทธิ์ค้าง ' + c.spins + '</div></div></div>';
+      '<div style="text-align:right"><div style="font-weight:800;color:var(--primary-dark)">' + TW('icon') + ' ' + c.run + '/5</div><div style="font-size:0.75rem;color:var(--text-muted)">สิทธิ์ค้าง ' + c.spins + '</div></div></div>';
   }).join('');
   var chips = w.prizes.map(function(v) { return '<span class="pill" style="font-weight:700;padding:2px 9px">' + v + '</span>'; }).join(' ');
   return '<div class="card" style="box-shadow:none;background:var(--bg);border:2px solid var(--gold)">' + head + kids +
@@ -2364,7 +2404,7 @@ function confirmWheelOff() {
   var runTxt = kids.filter(function(c) { return c.run > 0; }).map(function(c) { return esc(c.name) + ' ' + c.run + '/5'; }).join(', ');
   openModal('<h2>ปิดกิจกรรมกงล้อ?</h2>' +
     '<div style="display:flex;flex-direction:column;gap:8px;font-size:0.9rem;color:var(--text-muted);line-height:1.55;margin-bottom:18px">' +
-    '<div>• ลูกจะไม่เห็นต้นคริสต์มาส 🎄 และปุ่มกงล้อ</div>' +
+    '<div>• ลูกจะไม่เห็น' + TW('board') + ' ' + TW('icon') + ' และปุ่มกงล้อ</div>' +
     '<div>• สิทธิ์หมุนที่เหลือ<strong style="color:var(--text)"> เก็บไว้ </strong>' + (spinsTxt ? '(' + spinsTxt + ') ' : '') + 'ใช้ได้เมื่อเปิดใหม่</div>' +
     '<div>• วันที่สะสมอยู่' + (runTxt ? ' (' + runTxt + ')' : '') + ' จะ<strong style="color:var(--text)">เริ่มนับ 0</strong> เมื่อเปิดใหม่</div></div>' +
     '<div style="display:flex;gap:10px"><button type="button" class="btn btn-outline" style="flex:1" onclick="showSettings()">ไม่ปิด</button>' +
@@ -2497,13 +2537,63 @@ function confetti(x, y) {
   setTimeout(function() { layer.remove(); }, 1500);
 }
 
-// === SNOWFALL ===
-(function(){
+// ================= ธีม =================
+// ไฟล์ธีม: public/themes/<id>/theme.json (+ภาพ/เพลง) · รายชื่อ public/themes/index.json · วิธีเพิ่มธีม public/themes/README.md
+// ผู้ปกครองเลือก → Families.theme → ทุกเครื่องในครอบครัวเปลี่ยนตามทาง Live · ค่าเริ่มต้น = คริสต์มาส (ฝังไว้ข้างล่าง จะได้ขึ้นจอทันที)
+var THEME_DEFAULT = {
+  id: 'xmas', name: 'คริสต์มาส', icon: '🎄', preview: 'preview.jpg', bg: 'bg.jpg', music: 'music.mp3',
+  effect: { type: 'fall', chars: ['❄', '❅', '❆', '✦'], color: '#9CCFE0', count: 25 },
+  mascot: { go: 'mascot/dao-go.webp', sleep: 'mascot/dao-sleep.webp', timeout: 'mascot/dao-timeout.webp', yay: 'mascot/dao-yay.webp' },
+  words: { icon: '🎄', board: 'ต้นคริสต์มาส', item: 'ลูกบอล', unit: 'ลูก', add: 'แขวน', full: 'ต้นไม้ครบ 5 ลูก ดาวสว่างแล้ว!',
+    celebrateTag: '🎄 ภารกิจต้นคริสต์มาส', celebrateTitle: 'ครบ 5 วันแล้ว! 🎉', celebrateText: 'ต้นไม้ของหนูสว่างไสวเลย เก่งมาก!' },
+  progress: { type: 'builtin-xmas-tree' }, celebrate: { type: 'builtin-xmas-tree', dir: 'celebrate/' }
+};
+var THEME = THEME_DEFAULT, THEME_KEY = 'starbank_theme', THEME_LOADING = '';
+function themeUrl(f) { return '/themes/' + THEME.id + '/' + f; }
+function TW(k) { return (THEME.words && THEME.words[k] != null) ? THEME.words[k] : THEME_DEFAULT.words[k]; }
+function themeMascot() { var m = THEME.mascot || THEME_DEFAULT.mascot; ['go', 'sleep', 'timeout', 'yay'].forEach(function (k) { URG_IMG[k] = themeUrl(m[k] || THEME_DEFAULT.mascot[k]); }); }
+// ความคืบหน้า 5 วัน: คริสต์มาสวาด SVG เอง · ธีมอื่นใช้ภาพ 6 รูป (0–5) ตาม theme.json progress.frames
+function progressArt(states, lit, w, h, dropIdx) {
+  if (!THEME.progress || THEME.progress.type === 'builtin-xmas-tree') return treeSVG(states, lit, w, h, dropIdx);
+  var n = lit ? 5 : states.filter(function (x) { return x === 'done'; }).length, fr = THEME.progress.frames || [];
+  return '<img src="' + themeUrl(fr[Math.min(n, fr.length - 1)]) + '" alt="' + TW('board') + ' ' + n + '/5" style="width:' + w + 'px;height:' + h + 'px;object-fit:contain;flex:none">';
+}
+// เปลี่ยนธีม: โหลด theme.json แล้วเปลี่ยนพื้นหลัง/เอฟเฟกต์/เพลง/มาสคอต แล้ววาดหน้าจอใหม่
+function themeSet(id, rerender) {
+  id = id || 'xmas';
+  if (id === THEME.id || id === THEME_LOADING) return;
+  THEME_LOADING = id;
+  fetch('/themes/' + encodeURIComponent(id) + '/theme.json').then(function (r) { if (!r.ok) throw new Error('theme'); return r.json(); })
+    .then(function (t) { THEME_LOADING = ''; if (!t || !t.id) return; t.words = Object.assign({}, THEME_DEFAULT.words, t.words || {}); themeApply(t); if (rerender !== false && dashboardData) rerenderDashboard(); })
+    .catch(function () { THEME_LOADING = ''; });
+}
+function themeApply(t) {
+  var musicOn = bgAudio && !bgAudio.paused;
+  THEME = t;
+  try { localStorage.setItem(THEME_KEY, t.id); } catch (e) {}
+  var bg = document.getElementById('theme-bg'); if (bg) bg.src = themeUrl(t.bg);
+  themeEffect(t.effect);
+  themeMascot();
+  TREE.img = null;
+  if (bgAudio) { bgAudio.pause(); bgAudio.src = themeUrl(t.music); if (musicOn) { var p = bgAudio.play(); if (p && p.catch) p.catch(function () {}); } }
+}
+function rerenderDashboard() {
+  if (!dashboardData || !currentMember) return;
+  if (currentMember.role === 'child') renderChildHome(dashboardData); else renderParentHome(dashboardData);
+}
+// เปิดแอปครั้งถัดไปใช้ธีมล่าสุดของเครื่องทันที (ก่อนโหลดข้อมูลครอบครัว)
+(function () { var id = ''; try { id = localStorage.getItem(THEME_KEY) || ''; } catch (e) {} if (id && id !== 'xmas') themeSet(id, false); })();
+
+// === เอฟเฟกต์ของธีม (ตอนนี้มีแบบ fall = ของร่วงจากฟ้า เช่น หิมะ) ===
+function themeEffect(fx){
   var sf = document.getElementById('snowfall');
-  var flakes = ['❄','❅','❆','✦'];
-  for(var i=0; i<25; i++){
+  sf.innerHTML = '';
+  if (!fx || fx.type !== 'fall') return;
+  var flakes = fx.chars && fx.chars.length ? fx.chars : ['❄'];
+  for(var i=0; i<(fx.count || 25); i++){
     var s = document.createElement('div');
     s.className = 'snowflake';
+    if (fx.color) s.style.color = fx.color;
     s.textContent = flakes[Math.floor(Math.random()*flakes.length)];
     s.style.left = Math.random()*100 + '%';
     s.style.fontSize = (0.5 + Math.random()*1) + 'rem';
@@ -2512,7 +2602,8 @@ function confetti(x, y) {
     s.style.animationDelay = Math.random()*10 + 's';
     sf.appendChild(s);
   }
-})();
+}
+themeEffect(THEME.effect);
 
 // === เพลงพื้นหลัง (MP3 · tunetank Christmas) ===
 // เบราว์เซอร์ห้ามเล่นเสียงจนกว่าผู้ใช้จะแตะจอ → เล่นทันทีหลังกด PIN ถูก, กรณีอื่นเล่นตอนแตะจอครั้งแรกหลังเข้าระบบ
@@ -2524,7 +2615,7 @@ function setMusicMuted(v) { try { localStorage.setItem(MUSIC_KEY, v ? '1' : '0')
 
 function musicAudio() {
   if (!bgAudio) {
-    bgAudio = new Audio('/music/xmas.mp3');
+    bgAudio = new Audio(themeUrl(THEME.music));
     bgAudio.loop = true;
     bgAudio.preload = 'none';      // ยังไม่โหลดจนกว่าจะเล่นจริง
     bgAudio.volume = 0.6;          // ไฟล์ถูกลดเสียงไว้แล้ว (iPhone ปรับ volume ผ่านโค้ดไม่ได้)
@@ -2621,7 +2712,8 @@ function armFirstTap() {
 // เวลาอ้างอิงนาฬิกาเซิร์ฟเวอร์ (serverNow) → เปลี่ยนเวลาในเครื่องไม่มีผล
 // ===================================================================
 var URG = { offset: 0, shown: {}, seenCalled: {}, ticking: null, deferBanner: false };
-var URG_IMG = { go: '/img/mascot/dao-go.webp', sleep: '/img/mascot/dao-sleep.webp', timeout: '/img/mascot/dao-timeout.webp', yay: '/img/mascot/dao-yay.webp' };
+var URG_IMG = {};   // มาสคอตของธีม (themeMascot เติมให้)
+themeMascot();
 
 function urgNow() { return Date.now() + URG.offset; }
 function urgSync(serverNow) { if (serverNow) { var t = new Date(serverNow).getTime(); if (!isNaN(t)) URG.offset = t - Date.now(); } }
@@ -3220,7 +3312,7 @@ function renderDaily(d) {
 var __dqPopped = {};
 // ---------- ป๊อปอัปครบ 5 วัน (ต้นคริสต์มาส) ----------
 // ขึ้นเมื่อมีสิทธิ์หมุนที่ได้หลัง Members.tree_seen · มาทาง WebSocket ได้ทันทีโดยไม่ต้องเปิดแอปใหม่
-// ภาพ: public/sprites/tree/*.webp (ต้นฉบับ+สคริปต์ตัด sprites/tree/src) · เด็กที่ใช้อวาตาร์ลูกไดโน = มีน้องไดโนแขวนบอล
+// ภาพ: public/themes/<ธีม>/celebrate/ (คริสต์มาส: ต้นฉบับ+สคริปต์ตัด sprites/tree/src) · เด็กที่ใช้อวาตาร์ลูกไดโน = มีน้องไดโนแขวนบอล
 var TREE = { open: false, popped: {}, img: null, raf: 0, ac: null };
 function maybeTreePop(d) {
   var w = d && d.wheel, m = currentMember;
@@ -3232,15 +3324,18 @@ function maybeTreePop(d) {
     return;
   }
   TREE.popped[w.lastEarned] = true;
+  var pop = document.getElementById('tree-pop');
+  pop.querySelector('.tp-tag').textContent = TW('celebrateTag'); pop.querySelector('h1').textContent = TW('celebrateTitle'); pop.querySelector('.tp-msg p').textContent = TW('celebrateText');
+  if (THEME.celebrate.type !== 'builtin-xmas-tree') return framesLoad(function () { treePopOpen(false, w.lastEarned, true); });
   var dino = (d.avatars || []).some(function (a) { return a.member_id === d.member.member_id && a.item_id === 'dino_kid'; });
   treeLoad(function () { treePopOpen(dino, w.lastEarned); });
 }
 function treeLoad(cb) {
   if (TREE.img && TREE.img.n === 8) return cb();
   var keys = ['bare', 't2', 't4', 't5', 'hold', 'reach', 'clasp', 'jump'], I = { n: 0 };
-  keys.forEach(function (k) { var im = new Image(); im.onload = im.onerror = function () { if (++I.n === keys.length) { TREE.img = I; cb(); } }; im.src = '/sprites/tree/' + k + '.webp'; I[k] = im; });
+  keys.forEach(function (k) { var im = new Image(); im.onload = im.onerror = function () { if (++I.n === keys.length) { TREE.img = I; cb(); } }; im.src = themeUrl(THEME.celebrate.dir + k + '.webp'); I[k] = im; });
 }
-function treePopOpen(dino, earned) {
+function treePopOpen(dino, earned, frames) {
   TREE.open = true; TREE.earned = earned;
   var pop = document.getElementById('tree-pop'), msg = pop.querySelector('.tp-msg');
   msg.classList.remove('on'); pop.classList.add('on');
@@ -3278,9 +3373,20 @@ function treePopOpen(dino, earned) {
       for (var i = 1; i < 4; i++) twinkle(bx - 6 * i + Math.sin(t * 9 + i) * 3, by - 8 * i, 2.5, (1 - m) * (.8 - i * .2)); }
     burst((t - 1.6) / .6, BALL.x, BALL.y); confetti((t - 3.05) / 1.2 * 1.6, STAR.x, STAR.y + 40);
   }
+  // ธีมอื่น: เล่นภาพทีละเฟรม (เฟดต่อกัน) แล้วค้างเฟรมสุดท้าย
+  function F(t) {
+    var fr = TREE.frames, ms = (THEME.celebrate.ms || 500) / 1000, x = t / ms, i = Math.min(Math.floor(x), fr.length - 1), a = i < fr.length - 1 ? cl((x - i - .7) / .3) : 0;
+    function put(im, al) { if (!im || !im.width || al <= 0) return; var sc = Math.min(330 / im.width, 300 / im.height); c.save(); c.globalAlpha = al; c.drawImage(im, (330 - im.width * sc) / 2, 300 - im.height * sc, im.width * sc, im.height * sc); c.restore(); }
+    put(fr[i], 1 - a); put(fr[i + 1], a);
+  }
   cancelAnimationFrame(TREE.raf);
-  (function f(now) { if (!TREE.open) return; var t = (now - t0) / 1000; c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, 330, 300); (dino ? A : B)(t); TREE.raf = requestAnimationFrame(f); })(t0);
-  setTimeout(function () { if (!TREE.open) return; msg.classList.add('on'); treeConfetti(); treeChime(); }, (dino ? 3.4 : 3.0) * 1000);
+  (function f(now) { if (!TREE.open) return; var t = (now - t0) / 1000; c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, 330, 300); (frames ? F : dino ? A : B)(t); TREE.raf = requestAnimationFrame(f); })(t0);
+  setTimeout(function () { if (!TREE.open) return; msg.classList.add('on'); treeConfetti(); treeChime(); }, frames ? (THEME.celebrate.ms || 500) * Math.max(1, TREE.frames.length - 1) : (dino ? 3.4 : 3.0) * 1000);
+}
+function framesLoad(cb) {
+  var list = THEME.celebrate.frames || [], n = 0; TREE.frames = [];
+  if (!list.length) return cb();
+  list.forEach(function (f, i) { var im = new Image(); im.onload = im.onerror = function () { if (++n === list.length) cb(); }; im.src = themeUrl(f); TREE.frames[i] = im; });
 }
 function treePopClose() {
   TREE.open = false; cancelAnimationFrame(TREE.raf);
