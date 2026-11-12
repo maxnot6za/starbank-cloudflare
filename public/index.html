@@ -570,6 +570,24 @@
     .shop-price s { color:var(--text-muted); font-weight:500; font-size:.75rem; }
     .shop-tag { position:absolute; top:8px; left:8px; z-index:3; border-radius:999px; font-size:.7rem; padding:2px 8px; font-weight:700; background:var(--mint); color:#fff; }
     .shop-tag.w { left:auto; right:8px; background:#FFE4EC; color:#E5484D; }
+    .shop-floor { height:96px; border-radius:14px; background:var(--fl) repeat-x left bottom / auto 48px, linear-gradient(#EAF6F1,#F6FCF9); }
+    .shop-soon { grid-column:1/-1; background:rgba(255,255,255,.9); border-radius:18px; padding:22px 12px; text-align:center; color:var(--text-muted); box-shadow:var(--shadow); }
+    .inv-card { display:flex; align-items:center; gap:10px; background:#fff; border-radius:18px; padding:10px 14px; margin-bottom:12px; box-shadow:var(--shadow); cursor:pointer; border:0; width:100%; font:inherit; color:inherit; text-align:left; }
+    .inv-card b { display:block; color:var(--text); } .inv-card small { color:var(--text-muted); }
+    .inv-go { background:var(--mint); color:#fff; border-radius:99px; padding:5px 12px; font-size:.8rem; font-weight:700; white-space:nowrap; }
+    .inv-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f1f1f1; }
+    .inv-row:last-child { border-bottom:0; }
+    .inv-row .inv-ic { width:46px; height:46px; border-radius:12px; background:#F2F8F5; flex:none; position:relative; overflow:hidden; }
+    .inv-row .inv-t { flex:1; min-width:0; font-weight:700; text-align:left; } .inv-row .inv-t small { display:block; font-weight:400; color:var(--text-muted); font-size:.75rem; }
+    .inv-btn { border:0; border-radius:99px; padding:6px 12px; font:inherit; font-size:.78rem; font-weight:700; background:var(--mint); color:#fff; cursor:pointer; white-space:nowrap; }
+    .inv-btn.g { background:#EEF2F0; color:var(--text-muted); }
+    .inv-prev { position:relative; height:96px; border-radius:14px; overflow:hidden; margin-top:10px; background:linear-gradient(#E9F5F0,#F6FBF8); }
+    .inv-prev .stage-floor { position:absolute; left:0; right:0; bottom:0; }
+    .inv-slot { position:absolute; bottom:22px; width:40px; height:40px; margin-left:-20px; border:2px dashed var(--mint); border-radius:10px; display:grid; place-items:center; background:rgba(255,255,255,.7); color:var(--mint-dark); font-weight:700; cursor:pointer; padding:0; font:inherit; }
+    .inv-slot img { width:100%; height:100%; object-fit:contain; }
+    .stage-floor { height:var(--floor-h,30px); background:var(--fl) repeat-x left bottom / auto 100%; }
+    #avatar-strip .stage-floor { position:absolute; left:0; right:0; bottom:0; z-index:0; }
+    #avatar-strip .stage-decor { position:absolute; bottom:calc(var(--floor-h,30px) - 8px); width:44px; height:44px; margin-left:-22px; object-fit:contain; z-index:0; }
     .shop-note { font-size:.8rem; color:var(--text-muted); text-align:center; margin:12px 0; background:rgba(255,255,255,0.88); border-radius:14px; padding:8px 12px; box-shadow:var(--shadow); }
     .shop-sale { background:linear-gradient(135deg,#F3EDFF,#fff); border:2px dashed #C9B5FF; border-radius:16px; padding:8px 12px; font-size:.85rem; font-weight:600; color:var(--purple-d); text-align:center; margin-bottom:12px; }
     .shop-big { position:relative; height:190px; border-radius:18px; overflow:hidden; background:linear-gradient(#F6FCF9 0 74%,#CFEBDF 74%); margin:4px 0 12px; }
@@ -3311,7 +3329,7 @@ function renderDaily(d) {
   feReplace(el);
   // รอให้ป้ายภารกิจด่วน/กล่องของขวัญ (สำคัญกว่า) เปิดก่อน แล้วค่อยเด้งภารกิจประจำวัน
   setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 700);
-  stripUpdate(d.avatars || []);
+  stripUpdate(d.avatars || [], d.stage);
 }
 
 // popup วันละครั้ง (เซิร์ฟเวอร์จำว่าเห็นแล้ว → เครื่องอื่นไม่เด้งซ้ำ)
@@ -3455,7 +3473,10 @@ function spriteManifest(id) {
 function spriteReady() { return typeof SpriteActor !== 'undefined'; }
 
 // ---------- ร้านค้า ----------
-var SHOP = { data: null, tab: 'all', actors: [] };
+var SHOP = { data: null, tab: 'avatar', actors: [], inv: 'avatar' };
+var SHOP_KINDS = [['avatar', '🦖 ตัวละคร'], ['floor', '🏞️ พื้น'], ['decor', '🎀 ของตกแต่ง']];
+function floorUrl(art) { return '/stage/floors/' + art + '.webp'; }
+function decorUrl(art) { return '/stage/decor/' + art + '.webp'; }
 function shopRoot() { var s = document.querySelector('.screen.active .shop-root'); return s; }
 function shopClearActors() { SHOP.actors.forEach(function (a) { try { a.destroy(); } catch (e) {} }); SHOP.actors = []; }
 function loadShop() {
@@ -3473,21 +3494,23 @@ function shopPrice(it) {
 function renderShop() {
   var root = shopRoot(), d = SHOP.data; if (!root || !d) return;
   shopClearActors();
-  var tabs = [['all', 'ทั้งหมด'], ['dad', '👨 พ่อ'], ['mom', '👩 แม่'], ['kid', '👧 ลูก']];
-  var items = d.items.filter(function (i) { return SHOP.tab === 'all' || i.type === SHOP.tab; });
+  var tabs = SHOP_KINDS;
+  var items = d.items.filter(function (i) { return i.kind === SHOP.tab; });
+  var mine = d.items.filter(function (i) { return i.owned; }), cnt = function (k) { return mine.filter(function (i) { return i.kind === k; }).length; };
   var wishCount = d.items.reduce(function (n, i) { return n + (i.owned ? 0 : i.wishedBy.length); }, 0);
   var b = document.getElementById('shop-badge');
   if (b) { b.style.display = wishCount ? 'inline-flex' : 'none'; b.textContent = wishCount; }
   root.innerHTML = '<div class="shop-top"><h2>🛍️ ร้านค้า</h2><span class="wallet-pill">' + COIN + ' ' + d.wallet.gold + '</span><span class="wallet-pill">' + PSTAR + ' ' + d.wallet.purple + '</span></div>' +
     (d.firstDiscount ? '<div class="shop-sale">🎉 ตัวละครตัวแรกของครอบครัว ลด ' + d.discountPct + '%</div>' : '') +
+    '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · พื้น ' + cnt('floor') + ' · ของตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
     '<div class="shop-tabs">' + tabs.map(function (t) { return '<button class="' + (SHOP.tab === t[0] ? 'on' : '') + '" onclick="shopTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
     '<div class="shop-grid">' + items.map(function (it) {
-      var tag = it.assigned_to ? '<span class="shop-tag">' + esc(it.assigned_to.name) + ' ใช้อยู่</span>' : it.owned ? '<span class="shop-tag">มีแล้ว</span>' : '';
+      var tag = it.assigned_to ? '<span class="shop-tag">' + esc(it.assigned_to.name) + ' ใช้อยู่</span>' : it.inUse === true ? '<span class="shop-tag">ใช้อยู่</span>' : it.owned ? '<span class="shop-tag">' + (it.free ? 'ฟรี' : 'มีแล้ว') + '</span>' : '';
       var wish = !it.owned && (it.iWish || (d.canBuy && it.wishedBy.length)) ? '<span class="shop-tag w">💜 ' + (d.canBuy ? esc(it.wishedBy.join(', ')) + ' อยากได้' : 'อยากได้') + '</span>' : '';
       return '<button type="button" class="shop-item" onclick="openShopItem(\'' + it.id + '\')">' + tag + wish +
-        '<div class="shop-stage" data-sprite="' + it.sprite + '"></div><b>' + esc(it.name) + '</b>' + shopPrice(it) + '</button>';
-    }).join('') + '</div>' +
-    '<div class="shop-note">' + (d.canBuy ? 'ซื้อแล้วเลือกได้ว่าให้ใครในบ้านใช้ ตัวละครจะเดินอยู่ด้านล่างจอของทุกคนในครอบครัว'
+        shopArt(it) + '<b>' + esc(it.name) + '</b>' + shopPrice(it) + '</button>';
+    }).join('') + (items.length < 2 ? '<div class="shop-soon">✨ ' + (SHOP.tab === 'decor' ? 'ของตกแต่ง' : SHOP.tab === 'floor' ? 'พื้นแบบใหม่' : 'ตัวละครใหม่') + ' เร็ว ๆ นี้</div>' : '') + '</div>' +
+    '<div class="shop-note">' + (d.canBuy ? (SHOP.tab === 'avatar' ? 'ซื้อแล้วเลือกได้ว่าให้ใครในบ้านใช้ ตัวละครจะเดินอยู่ด้านล่างจอของทุกคนในครอบครัว' : 'พื้นและของตกแต่งจะอยู่ด้านล่างจอของทุกคนในครอบครัว')
       : 'ผู้ปกครองเป็นคนซื้อ · กด "อยากได้" ให้พ่อแม่รู้ได้นะ 💜') + '<br>เหรียญทอง: เร็ว ๆ นี้</div>';
   feReplace(root);
   if (!spriteReady()) return;
@@ -3500,8 +3523,14 @@ function renderShop() {
     });
   });
 }
+function shopArt(it, big) {
+  if (it.kind === 'floor') return '<div class="shop-floor" style="--fl:url(' + floorUrl(it.art) + ')' + (big ? ';height:110px' : '') + '"></div>';
+  if (it.kind === 'decor') return '<div class="shop-stage" style="display:grid;place-items:center"><img src="' + decorUrl(it.art) + '" alt="" style="max-height:90px"></div>';
+  return '<div class="shop-stage" data-sprite="' + it.sprite + '"></div>';
+}
 function openShopItem(id) {
   var d = SHOP.data, it = d.items.find(function (x) { return x.id === id; }); if (!it) return;
+  if (it.kind !== 'avatar') return openStageItem(it);
   var fits = d.members.filter(function (m) { return it.type === 'kid' ? m.role === 'child' : m.role === 'parent'; });
   window.__shopPick = it.assigned_to ? it.assigned_to.member_id : (fits.length === 1 ? fits[0].member_id : '');
   var whoHtml = d.canBuy ? '<div style="font-weight:700;margin-top:4px">' + (it.owned ? 'ให้ใครใช้?' : 'ซื้อแล้วให้ใครใช้?') + '</div><div class="shop-who" id="shop-who">' +
@@ -3530,15 +3559,94 @@ function openShopItem(id) {
     a.loop(m.walk || 'walk'); SHOP.actors.push(a);
   });
 }
+function openStageItem(it) {
+  var d = SHOP.data, lack = !it.owned && d.wallet.purple < it.pay ? it.pay - d.wallet.purple : 0, actions;
+  if (!d.canBuy) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.owned ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '💔 ยกเลิกอยากได้' : '💜 อยากได้!') + '</button>');
+  else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\')">ใช้พื้นนี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปวางของ</button>');
+  else actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') + ' onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + it.pay + ' ดาวม่วง</button>';
+  openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2>' + shopArt(it, true) +
+    '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
+    (it.owned ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') +
+    '<div style="display:flex;gap:8px;margin-top:10px">' + actions + '</div>' +
+    (d.canBuy && lack ? '<div style="font-size:.8rem;color:var(--text-muted);margin-top:8px">มี ' + d.wallet.purple + ' ดาวม่วง · ขาดอีก ' + lack + '</div>' : '') + '</div>');
+  feReplace(document.getElementById('modal-content'));
+}
+function useFloor(btn, id) {
+  if (btn) btn.disabled = true;
+  google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; renderShop(); if (INV.open) renderInventory(); else closeModal(); toast('✅ เปลี่ยนพื้นแล้ว'); Live.request(); })
+    .withFailureHandler(function (e) { if (btn) btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); }).setFloor(currentMember.memberId, id);
+}
+
+// ---------- ของของครอบครัว: จัดการตัวละคร / พื้น / ของตกแต่ง (ผู้ปกครองแก้ได้ · เด็กดูอย่างเดียว) ----------
+var INV = { open: false };
+function openInventory(tab) {
+  if (tab) SHOP.inv = tab;
+  if (!SHOP.data) { google.script.run.withSuccessHandler(function (d) { SHOP.data = d; openInventory(); }).getShop(currentMember.memberId); return; }
+  INV.open = true; renderInventory();
+}
+function invTab(t) { SHOP.inv = t; renderInventory(); }
+function renderInventory() {
+  var d = SHOP.data, k = SHOP.inv, edit = d.canBuy;
+  var mine = d.items.filter(function (i) { return i.owned && i.kind === k; }), body;
+  if (k === 'avatar') {
+    body = mine.length ? mine.map(function (it) {
+      return '<div class="inv-row"><div class="inv-ic" data-sprite="' + it.sprite + '"></div><div class="inv-t">' + esc(it.name) +
+        '<small' + (it.assigned_to ? '>อวาตาร์ของ ' + esc(it.assigned_to.name) : ' style="color:var(--danger)">ยังไม่ได้ให้ใคร') + '</small></div>' +
+        (edit ? '<button class="inv-btn' + (it.assigned_to ? ' g' : '') + '" onclick="INV.open=false;window.__invBack=true;openShopItem(\'' + it.id + '\')">' + (it.assigned_to ? 'เปลี่ยนคน' : 'ให้ใครดี?') + '</button>' : '') + '</div>';
+    }).join('') : '<div class="shop-soon" style="box-shadow:none">ยังไม่มีตัวละคร · ซื้อได้ที่ร้านค้า</div>';
+  } else if (k === 'floor') {
+    body = mine.map(function (it) {
+      return '<div class="inv-row"><div class="inv-ic stage-floor" style="--fl:url(' + floorUrl(it.art) + ');height:46px"></div><div class="inv-t">' + esc(it.name) + '<small>' + (it.inUse === true ? 'ใช้อยู่' : it.free ? 'ฟรี' : 'มีแล้ว') + '</small></div>' +
+        (it.inUse === true ? '<span class="shop-tag" style="position:static">ใช้อยู่</span>' : edit ? '<button class="inv-btn" onclick="useFloor(this,\'' + it.id + '\')">ใช้พื้นนี้</button>' : '') + '</div>';
+    }).join('');
+  } else {
+    body = (mine.length ? '' : '<div class="shop-soon" style="box-shadow:none">✨ ของตกแต่ง เร็ว ๆ นี้</div>') +
+      '<div style="font-size:.8rem;color:var(--text-muted);margin-top:8px">' + (edit ? 'แตะจุดบนพื้นเพื่อวางของ' : 'ของที่วางบนพื้นของครอบครัว') + '</div>' + stagePreview(d.stage, edit);
+  }
+  openModal('<h2>🎒 ของของครอบครัว</h2><div class="shop-tabs">' + SHOP_KINDS.map(function (t) { return '<button class="' + (k === t[0] ? 'on' : '') + '" onclick="invTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
+    '<div>' + body + '</div>' + (k !== 'decor' ? stagePreview(d.stage, false) : '') +
+    (edit ? '' : '<div style="font-size:.8rem;color:var(--text-muted);text-align:center;margin-top:10px">ผู้ปกครองเป็นคนจัดการ · ดูได้อย่างเดียว</div>') +
+    '<div style="display:flex;gap:8px;margin-top:12px"><button class="dq-btn g" onclick="INV.open=false;closeModal()">ปิด</button></div>');
+  feReplace(document.getElementById('modal-content'));
+  if (spriteReady()) document.querySelectorAll('#modal-content .inv-ic[data-sprite]').forEach(function (st) {
+    var id = st.getAttribute('data-sprite');
+    spriteManifest(id).then(function (m) { if (!st.isConnected) return; var a = SpriteActor.create(st, m, { size: 18, basePath: '/sprites/characters/' + id + '/', x: 23 }); a.loop(m.idle || m.walk || 'walk'); SHOP.actors.push(a); });
+  });
+}
+// พรีวิวพื้นจริง + จุดวางของ 5 จุด
+function stagePreview(st, edit) {
+  if (!st) return '';
+  var n = st.slots.length;
+  return '<div class="inv-prev"><div class="stage-floor" style="--fl:url(' + floorUrl(st.floor.art) + ')"></div>' + st.slots.map(function (x, i) {
+    var left = ((i + .5) / n * 100) + '%';
+    if (!edit && !x) return '';
+    return '<button type="button" class="inv-slot" style="left:' + left + '" ' + (edit ? 'onclick="pickDecor(' + i + ')"' : 'disabled') + '>' + (x ? '<img src="' + decorUrl(x.art) + '" alt="">' : (i + 1)) + '</button>';
+  }).join('') + '</div>';
+}
+function pickDecor(i) {
+  var d = SHOP.data, mine = d.items.filter(function (it) { return it.kind === 'decor' && it.owned; }), cur = d.stage.slots[i];
+  openModal('<h2>วางอะไรที่จุด ' + (i + 1) + '?</h2><div style="font-size:.8rem;color:var(--text-muted);text-align:center;margin-bottom:8px">ของ 1 ชิ้นวางได้ 1 จุด</div><div class="shop-grid">' +
+    mine.map(function (it) { var at = it.inUse >= 0 ? '<span class="shop-tag">จุด ' + (it.inUse + 1) + '</span>' : '';
+      return '<button type="button" class="shop-item" onclick="placeDecorAt(' + i + ',\'' + it.id + '\')">' + at + '<img src="' + decorUrl(it.art) + '" alt="" style="height:64px;object-fit:contain"><b>' + esc(it.name) + '</b></button>'; }).join('') +
+    (cur ? '<button type="button" class="shop-item" style="border:2px dashed #ddd;box-shadow:none" onclick="placeDecorAt(' + i + ',\'\')"><div style="font-size:2rem">🚫</div><b>เอาออก</b></button>' : '') +
+    (mine.length ? '' : '<div class="shop-soon" style="box-shadow:none">ยังไม่มีของตกแต่ง · ซื้อได้ที่ร้านค้า</div>') + '</div>' +
+    '<div style="display:flex;gap:8px;margin-top:12px"><button class="dq-btn g" onclick="renderInventory()">กลับ</button></div>');
+  feReplace(document.getElementById('modal-content'));
+}
+function placeDecorAt(i, id) {
+  google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; renderInventory(); renderShop(); Live.request(); })
+    .withFailureHandler(function (e) { toast(e.message || 'ไม่สำเร็จ'); }).placeDecor(currentMember.memberId, i, id);
+}
+
 function shopPick(btn, id) {
   window.__shopPick = id;
   document.querySelectorAll('#shop-who .u-chip').forEach(function (b) { b.classList.remove('on'); });
   btn.classList.add('on');
 }
-function shopDone(res, msg) { closeModal(); SHOP.data = res.shop; renderShop(); toast(msg); Live.request(); }   // อัปเดตหน้าหลัก/ตัวละครด้านล่างแบบเงียบ ๆ
+function shopDone(res, msg) { closeModal(); SHOP.data = res.shop; renderShop(); toast(msg); Live.request(); if (window.__invBack) { window.__invBack = false; openInventory(); } }   // อัปเดตหน้าหลัก/ตัวละครด้านล่างแบบเงียบ ๆ
 function shopBuy(btn, id) {
   btn.disabled = true;
-  google.script.run.withSuccessHandler(function (res) { confetti(); shopDone(res, '🎉 ได้ตัวละครใหม่แล้ว!'); })
+  google.script.run.withSuccessHandler(function (res) { confetti(); shopDone(res, res.bought && res.bought.indexOf('dino') === 0 ? '🎉 ได้ตัวละครใหม่แล้ว!' : '🎉 ได้ของใหม่แล้ว!'); })
     .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'ซื้อไม่สำเร็จ'); })
     .buyItem(currentMember.memberId, id, window.__shopPick || '');
 }
@@ -3557,11 +3665,11 @@ function shopWish(btn, id) {
 
 // ---------- ตัวละครของครอบครัวเดินด้านล่างจอ ----------
 var STRIP = { key: '', scene: null, rules: null };
-function stripUpdate(avatars) {
+function stripUpdate(avatars, stage) {
   var el = document.getElementById('avatar-strip');
   if (!el) return;
   var list = (avatars || []).slice().sort(function (a, b) { return a.sprite < b.sprite ? -1 : 1; });
-  var key = list.map(function (a) { return a.sprite + ':' + a.member_id; }).join(',');
+  var key = list.map(function (a) { return a.sprite + ':' + a.member_id; }).join(',') + '|' + JSON.stringify(stage || '');
   if (key === STRIP.key) return;
   STRIP.key = key;
   if (STRIP.scene) { STRIP.scene.stop(); el.innerHTML = ''; STRIP.scene = null; }
@@ -3569,10 +3677,14 @@ function stripUpdate(avatars) {
   if (nav && nav.offsetHeight) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
   if (!list.length || !spriteReady() || typeof SpriteScene === 'undefined') {
     el.classList.remove('on'); document.body.classList.remove('has-strip');
-    if (list.length) setTimeout(function () { STRIP.key = ''; stripUpdate(avatars); }, 800);   // สคริปต์ตัวละครยังโหลดไม่เสร็จ
+    if (list.length) setTimeout(function () { STRIP.key = ''; stripUpdate(avatars, stage); }, 800);   // สคริปต์ตัวละครยังโหลดไม่เสร็จ
     return;
   }
   el.classList.add('on'); document.body.classList.add('has-strip');
+  // พื้น + ของตกแต่ง (อยู่หลังตัวละคร) · ตัวละครยืนบนผิวพื้น
+  el.innerHTML = stage ? '<div class="stage-floor" style="--fl:url(' + floorUrl(stage.floor.art) + ')"></div>' + stage.slots.map(function (x, i) {
+    return x ? '<img class="stage-decor" src="' + decorUrl(x.art) + '" alt="" style="left:' + ((i + .5) / stage.slots.length * 100) + '%">' : '';
+  }).join('') : '';
   var rulesP = STRIP.rules || (STRIP.rules = fetch('/sprites/scenes/family.json').then(function (r) { return r.json(); }).catch(function () { return { interactions: [] }; }));
   Promise.all([rulesP].concat(list.map(function (a) { return spriteManifest(a.sprite); }))).then(function (res) {
     if (STRIP.key !== key) return;
@@ -3584,7 +3696,7 @@ function stripUpdate(avatars) {
       return { id: a.sprite, manifest: m };
     });
     var rules = (sc.interactions || []).filter(function (r) { return r.who.every(function (w) { return ids.indexOf(w) >= 0; }); });
-    STRIP.scene = SpriteScene.create(el, { size: Math.max(22, Math.min(30, el.clientWidth / 14)), ground: 4, laneGap: 4, cast: cast, interactions: rules });
+    STRIP.scene = SpriteScene.create(el, { size: Math.max(22, Math.min(30, el.clientWidth / 14)), ground: stage ? 16 : 4, laneGap: 4, cast: cast, interactions: rules });
     STRIP.scene.start();
   });
 }

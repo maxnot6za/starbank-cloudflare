@@ -85,7 +85,7 @@ const thaiToday = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0
   // --- ร้านค้า ---
   await db.prepare('UPDATE Families SET purple = 30 WHERE family_id = ?').bind(FAM).run();
   let shop = (await call(mf, 'getShop', C)).value;
-  ok(shop.canBuy === false && shop.items.length === 3, 'เด็กเปิดร้านได้ แต่ซื้อไม่ได้');
+  ok(shop.canBuy === false && shop.items.filter(i => i.kind === 'avatar').length === 3, 'เด็กเปิดร้านได้ แต่ซื้อไม่ได้');
   ok(shop.firstDiscount && shop.items.every(i => i.pay === Math.ceil(i.price / 2)), 'ตัวแรกของครอบครัวลด 50%', shop.items.map(i => i.pay));
   ok(!(await call(mf, 'buyItem', C, 'dino_kid', C)).ok, 'เด็กยิงคำสั่งซื้อตรง ๆ → ถูกปฏิเสธ');
   r = await call(mf, 'wishItem', C, 'dino_kid');
@@ -116,6 +116,23 @@ const thaiToday = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0
   ok(av2.length === 0, 'บ้านอื่นไม่เห็นตัวละครบ้านนี้');
   const log = (await db.prepare('SELECT COUNT(*) AS n, SUM(amount) AS s FROM WalletLog WHERE family_id = ?').bind(FAM).first());
   ok(log.n >= 6, 'ทุกการรับ/จ่ายบันทึกในสมุดบัญชี', log);
+
+  // --- พื้น / ของตกแต่ง ---
+  let st = (await call(mf, 'getChildDashboard', C)).value.stage;
+  ok(st && st.floor.id === 'floor_wood' && st.slots.length === 5 && st.slots.every(x => x === null), 'ค่าเริ่มต้น: พื้นไม้ + 5 จุดว่าง', st);
+  shop = (await call(mf, 'getShop', P1)).value;
+  const wood = shop.items.find(i => i.id === 'floor_wood');
+  ok(wood && wood.free && wood.owned && wood.inUse === true, 'พื้นไม้ฟรี มีแล้ว ใช้อยู่', wood);
+  r = await call(mf, 'buyItem', P1, 'floor_wood', ''); ok(!r.ok, 'ซื้อพื้นฟรีซ้ำไม่ได้');
+  r = await call(mf, 'setFloor', C, 'floor_wood'); ok(!r.ok, 'เด็กเปลี่ยนพื้นไม่ได้');
+  r = await call(mf, 'setFloor', P1, 'dino_kid'); ok(!r.ok, 'ตัวละครใช้เป็นพื้นไม่ได้');
+  r = await call(mf, 'setFloor', P1, 'floor_wood'); ok(r.ok && r.value.stage.floor.id === 'floor_wood', 'ผู้ปกครองตั้งพื้นได้');
+  r = await call(mf, 'placeDecor', P1, 7, ''); ok(!r.ok, 'จุดที่ไม่มี → ปฏิเสธ');
+  r = await call(mf, 'placeDecor', P1, 1, 'floor_wood'); ok(!r.ok, 'พื้นวางเป็นของตกแต่งไม่ได้');
+  r = await call(mf, 'placeDecor', P1, 1, ''); ok(r.ok && r.value.stage.slots[1] === null, 'เอาของออกจากจุดได้');
+  await db.prepare("UPDATE Families SET stage = ? WHERE family_id = ?").bind('{"floor":"nope","slots":["x","","","",""]}', FAM).run();
+  st = (await call(mf, 'getParentDashboard', P1)).value.stage;
+  ok(st.floor.id === 'floor_wood' && st.slots[0] === null, 'ข้อมูลเสีย/ของไม่รู้จัก → กลับเป็นค่าเริ่มต้น', st);
 
   await mf.dispose();
   console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด');

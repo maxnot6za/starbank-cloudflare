@@ -205,6 +205,12 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 - ของคริสต์มาสทั้งหมดย้ายไป `public/themes/xmas/` (พื้นหลังเดิมอยู่ repo starbank-assets, เพลงเดิม `public/music/`, มาสคอตเดิม `public/img/mascot/`, ภาพฉลองเดิม `public/sprites/tree/`)
 - ตั้งค่าผู้ปกครองมีการ์ด "🎨 ธีมของครอบครัว" · ยังเหลือ logo + ไอคอน Fluent ที่ starbank-assets (ไม่ผูกธีม)
 
+### 8.8 พื้น + ของตกแต่ง + หน้า "ของของครอบครัว" (migration 0013) — ดู `public/stage/README.md`
+- `SHOP_ITEMS` มี `kind` (avatar/floor/decor) · `floor_wood` ฟรีเป็นค่าเริ่มต้น · `Families.stage` JSON · `setFloor`/`placeDecor` เฉพาะผู้ปกครอง · ของที่ไม่รู้จัก → ค่าเริ่มต้น
+- ร้านแยกแท็บตามประเภท + การ์ด "🎒 ของของครอบครัว" → `openInventory()` (modal) จัดการตัวละคร/พื้น/วางของ 5 จุด · เด็กดูอย่างเดียว
+- แถบล่าง `stripUpdate(avatars, stage)` วาดพื้น + ของตกแต่ง ตัวละครยืน `ground:16`
+- ค้าง: ยังไม่มีพื้นขาย/ของตกแต่ง (รอภาพจาก KC) · ตัวละครยังไม่หลบจุดของตกแต่ง
+
 ## 9. การทดสอบ
 
 ชุดทดสอบอยู่ใน `test/` (ใช้ข้อมูลครอบครัวปลอมเท่านั้น) รายละเอียดใน `test/README.md`
