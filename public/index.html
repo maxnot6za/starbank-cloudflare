@@ -573,7 +573,8 @@
     .shop-floor { height:96px; border-radius:14px; background:var(--fl) repeat-x left bottom / auto 48px, linear-gradient(#EAF6F1,#F6FCF9); }
     .shop-soon { grid-column:1/-1; background:rgba(255,255,255,.9); border-radius:18px; padding:22px 12px; text-align:center; color:var(--text-muted); box-shadow:var(--shadow); }
     .inv-card { display:flex; align-items:center; gap:10px; background:#fff; border-radius:18px; padding:10px 14px; margin-bottom:12px; box-shadow:var(--shadow); cursor:pointer; border:0; width:100%; font:inherit; color:inherit; text-align:left; }
-    .inv-card b { display:block; color:var(--text); } .inv-card small { color:var(--text-muted); }
+    .inv-card b { display:block; color:var(--text); } .inv-card small { color:var(--text-muted); display:block; font-size:.72rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .inv-card > span:nth-child(2) { min-width:0; }
     .inv-go { background:var(--mint); color:#fff; border-radius:99px; padding:5px 12px; font-size:.8rem; font-weight:700; white-space:nowrap; }
     .inv-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f1f1f1; }
     .inv-row:last-child { border-bottom:0; }
