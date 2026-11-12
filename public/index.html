@@ -190,6 +190,9 @@
     .mission-item .stars-badge .star-icon {
       width:22px; height:22px; margin-bottom:1px; filter:drop-shadow(0 1px 2px rgba(225,112,85,0.4));
     }
+    .mission-item .mi-boost { font-size:0.78rem; color:var(--text-muted); margin-top:2px; }
+    .mission-item .mi-boost s { color:#B8B8B8; }
+    .mission-item .mi-boost b { color:var(--danger); }
     .mission-item .stars-badge small { font-size:0.6rem; font-weight:600; color:var(--gold-dark); }
     .mission-item .mi-info { flex:1; min-width:0; }
     .mission-item .mi-title { font-weight:600; font-size:0.95rem; }
@@ -1163,7 +1166,10 @@ function renderChildHome(d) {
   }
   list.innerHTML = d.missions.map(m => {
     const stars = Number(m.base_stars) * Number(m.multiplier || 1);
-    const mult = Number(m.multiplier) > 1 ? `<div class="multiplier-badge">x${m.multiplier}</div>` : '';
+    // คูณให้แล้ว: เลขใหญ่ = ที่ได้จริง · ขีดฆ่าเลขเดิม · ป้ายบอกว่า "x2 แล้ว" (กันลูกคิดว่าจะคูณอีกรอบ)
+    const boosted = Number(m.multiplier) > 1;
+    const mult = boosted ? `<div class="multiplier-badge">🔥 ดาว x${m.multiplier} แล้ว!</div>` : '';
+    const was = boosted ? `<div class="mi-boost">ปกติ <s>${m.base_stars}</s> → วันนี้ <b>${stars} ดาว</b></div>` : '';
     const icon = m.icon || '⭐';
     return `
       <div class="mission-item">
@@ -1171,7 +1177,7 @@ function renderChildHome(d) {
         <div class="stars-badge"><span style="font-size:1.4rem">${icon}</span>${stars}<small>ดาว</small></div>
         <div class="mi-info">
           <div class="mi-title">${esc(m.title)}</div>
-          <div class="mi-desc">${esc(m.description || '')}</div>
+          <div class="mi-desc">${esc(m.description || '')}</div>${was}
         </div>
         <button class="btn btn-sm btn-gold" onclick="submitMission('${m.mission_id}')">ส่ง!</button>
       </div>`;
