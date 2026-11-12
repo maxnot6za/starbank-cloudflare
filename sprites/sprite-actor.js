@@ -163,6 +163,14 @@
     });
   };
   P.walkTo = function (x) { this.token++; return this._walk(x, this.token).catch(function () {}); };
+  // เดินแค่นิดเดียว (สัตว์เลี้ยง): ห่างจากจุดเดิม 1–2 ความกว้างหัว ไปทางที่มีที่ว่าง
+  P.nearX = function () {
+    var w = this.stage.clientWidth, lo = this.margin, hi = Math.max(lo, w - this.margin);
+    if (this.range) { var r = this.range(); lo = Math.max(lo, r[0]); hi = Math.min(hi, r[1]); }
+    var d = this.size * (1 + Math.random()), x = this.x + (Math.random() < .5 ? -d : d);
+    if (x < lo || x > hi) x = this.x - (x - this.x);
+    return Math.max(lo, Math.min(hi, x));
+  };
   P.randomX = function () {
     var w = this.stage.clientWidth, lo = this.margin, hi = Math.max(lo, w - this.margin), x;
     // อยู่ในฉากกับตัวอื่น → เดินได้แค่ในช่องว่างระหว่างเพื่อนซ้ายขวา (ไม่เดินผ่านกัน จึงไม่ทับกัน)
@@ -191,7 +199,7 @@
     function dur(v) { return Array.isArray(v) ? rand(v[0], v[1]) : (v || 0); }
     function one(s) {
       if (self.token !== t) return Promise.reject('stop');
-      if (s.walk) return self._walk(s.walk === 'random' ? self.randomX() : s.walk, t);
+      if (s.walk) return self._walk(s.walk === 'random' ? self.randomX() : s.walk === 'near' ? self.nearX() : s.walk, t);
       if (s.play) return self._run(s.play, t);
       if (s.pick) return self._run(pick(s.pick), t, dur(s.for) || 0);
       if (s.wait) { self.current = 'wait'; self._state('อยู่นิ่ง ๆ'); return self._wait(dur(s.wait), t); }
