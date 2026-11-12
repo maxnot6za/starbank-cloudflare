@@ -167,9 +167,15 @@
   P.nearX = function () {
     var w = this.stage.clientWidth, lo = this.margin, hi = Math.max(lo, w - this.margin);
     if (this.range) { var r = this.range(); lo = Math.max(lo, r[0]); hi = Math.min(hi, r[1]); }
-    var d = this.size * (1 + Math.random()), x = this.x + (Math.random() < .5 ? -d : d);
-    if (x < lo || x > hi) x = this.x - (x - this.x);
-    return Math.max(lo, Math.min(hi, x));
+    var free = this.isFree, self = this;
+    // ลองหลายระยะ/ทั้งสองทาง เลือกจุดที่ไม่มีใครยืนอยู่ (ไม่หยุดทับเพื่อน) · ไม่มีที่ว่าง → อยู่ที่เดิม
+    for (var n = 0; n < 8; n++) {
+      var d = this.size * (1 + Math.random() * (1 + n / 3)), x = this.x + (Math.random() < .5 ? -d : d);
+      if (x < lo || x > hi) x = this.x - (x - this.x);
+      x = Math.max(lo, Math.min(hi, x));
+      if (!free || free(x)) return x;
+    }
+    return self.x;
   };
   P.randomX = function () {
     var w = this.stage.clientWidth, lo = this.margin, hi = Math.max(lo, w - this.margin), x;
