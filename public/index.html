@@ -559,7 +559,8 @@
     .shop-top { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
     .shop-top h2 { flex:1; font-size:1.25rem; }
     .shop-tabs { display:flex; gap:6px; margin-bottom:12px; }
-    .shop-tabs button { flex:1; border:0; border-radius:14px; padding:8px 0; background:#fff; color:var(--text-muted); font:inherit; font-weight:700; font-size:.85rem; cursor:pointer; box-shadow:var(--shadow); }
+    .shop-tabs { flex-wrap:wrap; }
+    .shop-tabs button { flex:1 1 30%; border:0; border-radius:14px; padding:8px 0; background:#fff; color:var(--text-muted); font:inherit; font-weight:700; font-size:.85rem; cursor:pointer; box-shadow:var(--shadow); }
     .shop-tabs button.on { background:var(--mint); color:#fff; }
     .shop-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
     .shop-item { background:#fff; border-radius:20px; padding:10px; box-shadow:var(--shadow); text-align:center; position:relative; cursor:pointer; border:0; font:inherit; color:inherit; }
@@ -3655,7 +3656,7 @@ function spriteReady() { return typeof SpriteActor !== 'undefined'; }
 
 // ---------- ร้านค้า ----------
 var SHOP = { data: null, tab: 'avatar', actors: [], inv: 'avatar' };
-var SHOP_KINDS = [['avatar', '🦖 ตัวละคร'], ['wall', '🧱 ผนัง'], ['floor', '🏞️ พื้น'], ['decor', '🎀 ตกแต่ง']];
+var SHOP_KINDS = [['avatar', '🦖 ตัวละคร'], ['pet', '🐾 สัตว์เลี้ยง'], ['wall', '🧱 ผนัง'], ['floor', '🏞️ พื้น'], ['decor', '🎀 ตกแต่ง']];
 function floorUrl(art) { return '/stage/floors/' + art + '.webp'; }
 function decorUrl(art) { return '/stage/decor/' + art + '.webp'; }
 function wallUrl(art) { return '/stage/walls/' + art + '.webp'; }
@@ -3686,15 +3687,15 @@ function renderShop() {
   root.innerHTML = '<div class="shop-top"><h2>🛍️ ร้านค้า</h2><span class="wallet-pill">' + COIN + ' ' + d.wallet.gold + '</span><span class="wallet-pill">' + PSTAR + ' ' + d.wallet.purple + '</span></div>' +
     (d.coupons && d.coupons.length ? '<div class="cp-bar"><b>🎟️ คูปองของครอบครัว</b><br>' + couponPills(d.coupons) + (d.canBuy ? '' : '<div style="font-size:.75rem;color:var(--text-muted);margin-top:4px">ผู้ปกครองใช้ตอนซื้อของ</div>') + '</div>' : '') +
     (d.firstDiscount ? '<div class="shop-sale">🎉 ซื้อชิ้นแรกของครอบครัว ลด ' + d.discountPct + '% · เลือกได้ทุกอย่างในร้าน</div>' : '') +
-    '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · ผนัง ' + cnt('wall') + ' · พื้น ' + cnt('floor') + ' · ตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
+    '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · สัตว์เลี้ยง ' + cnt('pet') + ' · ผนัง ' + cnt('wall') + ' · พื้น ' + cnt('floor') + ' · ตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
     '<div class="shop-tabs">' + tabs.map(function (t) { return '<button class="' + (SHOP.tab === t[0] ? 'on' : '') + '" onclick="shopTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
     '<div class="shop-grid">' + items.map(function (it) {
-      var tag = it.assigned_to ? '<span class="shop-tag">' + esc(it.assigned_to.name) + ' ใช้อยู่</span>' : it.inUse === true ? '<span class="shop-tag">' + (it.kind === 'decor' ? 'อยู่ในห้อง' : 'ใช้อยู่') + '</span>' : it.owned ? '<span class="shop-tag">' + (it.free ? 'ฟรี' : 'มีแล้ว') + '</span>' : it.egg ? '<span class="shop-tag" style="background:#FFC24B;color:#1F3B35">🥚 จากไข่</span>' : '';
+      var tag = it.assigned_to ? '<span class="shop-tag">' + esc(it.assigned_to.name) + ' ใช้อยู่</span>' : it.inUse === true ? '<span class="shop-tag">' + (it.kind === 'decor' || it.kind === 'pet' ? 'อยู่ในห้อง' : 'ใช้อยู่') + '</span>' : it.owned ? '<span class="shop-tag">' + (it.free ? 'ฟรี' : 'มีแล้ว') + '</span>' : it.egg ? '<span class="shop-tag" style="background:#FFC24B;color:#1F3B35">🥚 จากไข่</span>' : '';
       var wish = !it.owned && (it.iWish || (d.canBuy && it.wishedBy.length)) ? '<span class="shop-tag w">💜 ' + (d.canBuy ? esc(it.wishedBy.join(', ')) + ' อยากได้' : 'อยากได้') + '</span>' : '';
       return '<button type="button" class="shop-item" onclick="openShopItem(\'' + it.id + '\')">' + tag + wish +
         shopArt(it) + '<b>' + esc(it.name) + '</b>' + shopPrice(it) + '</button>';
-    }).join('') + (items.length < 2 ? '<div class="shop-soon">✨ ' + (SHOP.tab === 'decor' ? 'ของตกแต่ง' : SHOP.tab === 'floor' ? 'พื้นแบบใหม่' : SHOP.tab === 'wall' ? 'ผนังแบบใหม่' : 'ตัวละครใหม่') + ' เร็ว ๆ นี้</div>' : '') + '</div>' +
-    '<div class="shop-note">' + (d.canBuy ? (SHOP.tab === 'avatar' ? 'ซื้อแล้วเลือกได้ว่าให้ใครในบ้านใช้ ตัวละครจะเดินอยู่ด้านล่างจอของทุกคนในครอบครัว' : 'ผนัง พื้น และของตกแต่งจะอยู่ด้านล่างจอของทุกคนในครอบครัว')
+    }).join('') + (items.length < 2 ? '<div class="shop-soon">✨ ' + (SHOP.tab === 'decor' ? 'ของตกแต่ง' : SHOP.tab === 'pet' ? 'สัตว์เลี้ยงตัวใหม่' : SHOP.tab === 'floor' ? 'พื้นแบบใหม่' : SHOP.tab === 'wall' ? 'ผนังแบบใหม่' : 'ตัวละครใหม่') + ' เร็ว ๆ นี้</div>' : '') + '</div>' +
+    '<div class="shop-note">' + (d.canBuy ? (SHOP.tab === 'avatar' ? 'ซื้อแล้วเลือกได้ว่าให้ใครในบ้านใช้ ตัวละครจะเดินอยู่ด้านล่างจอของทุกคนในครอบครัว' : SHOP.tab === 'pet' ? 'สัตว์เลี้ยงเป็นของทั้งบ้าน · อยู่ในห้องได้พร้อมกัน 2 ตัว · เดินเล่นนิดหน่อยแล้วนั่งเล่น/งีบหลับ' : 'ผนัง พื้น และของตกแต่งจะอยู่ด้านล่างจอของทุกคนในครอบครัว')
       : 'ผู้ปกครองเป็นคนซื้อ · กด "อยากได้" ให้พ่อแม่รู้ได้นะ 💜') + '<br>เหรียญทอง: เร็ว ๆ นี้</div>';
   feReplace(root);
   if (!spriteReady()) return;
@@ -3755,14 +3756,34 @@ function openStageItem(it) {
   var d = SHOP.data, cpHtml = couponOptsHtml(it), pay0 = cpHtml ? couponPrice(it.price, d.coupons[0].pct) : it.pay;
   var lack = !it.owned && d.wallet.purple < pay0 ? pay0 - d.wallet.purple : 0, actions;
   if (!d.canBuy) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.owned ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '💔 ยกเลิกอยากได้' : '💜 อยากได้!') + '</button>');
+  else if (it.owned && it.kind === 'pet') actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button><button class="dq-btn p" style="flex:1.6" onclick="petToggle(this,\'' + it.id + '\')">' + (it.inUse ? 'พาออกจากห้อง' : 'พาเข้าห้อง') + '</button>';
   else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' || it.kind === 'wall' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\',\'' + it.kind + '\')">ใช้' + (it.kind === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปจัดห้อง</button>');
   else actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') + ' id="shop-buy" onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + pay0 + ' ดาวม่วง</button>';
   openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2>' + shopArt(it, true) +
-    '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : it.kind === 'wall' ? 'ผนังหลังตัวละคร' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
+    '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : it.kind === 'wall' ? 'ผนังหลังตัวละคร' : it.kind === 'pet' ? 'สัตว์เลี้ยงของทั้งบ้าน เดินเล่นในห้อง' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
     (it.owned || cpHtml ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') + cpHtml +
     '<div style="display:flex;gap:8px;margin-top:10px">' + actions + '</div>' +
     (d.canBuy && lack ? '<div style="font-size:.8rem;color:var(--text-muted);margin-top:8px">มี ' + d.wallet.purple + ' ดาวม่วง · ขาดอีก ' + lack + '</div>' : '') + '</div>');
   feReplace(document.getElementById('modal-content'));
+  if (it.kind === 'pet') spriteStages(document.getElementById('modal-content'), 48);
+}
+// สัตว์เลี้ยงตัวอย่างในการ์ด/หน้าต่าง: เล่นท่าเดินวน
+function spriteStages(root, size) {
+  if (!spriteReady() || !root) return;
+  root.querySelectorAll('.shop-stage[data-sprite]').forEach(function (st) {
+    var id = st.getAttribute('data-sprite');
+    spriteManifest(id).then(function (m) { if (!st.isConnected) return; var a = SpriteActor.create(st, m, { size: size, basePath: '/sprites/characters/' + id + '/', x: st.clientWidth / 2 }); a.loop(m.walk || 'walk'); SHOP.actors.push(a); });
+  });
+}
+// พาสัตว์เลี้ยงเข้า/ออกห้อง (ผู้ปกครอง · สูงสุด stage.petMax ตัว)
+function petToggle(btn, id) {
+  var st = SHOP.data.stage, cur = (st.pets || []).map(function (p) { return p.id; }), max = st.petMax || 2;
+  var on = cur.indexOf(id) >= 0, next = on ? cur.filter(function (x) { return x !== id; }) : cur.concat([id]);
+  if (!on && next.length > max) { toast('สัตว์เลี้ยงอยู่ในห้องได้สูงสุด ' + max + ' ตัว · พาตัวอื่นออกก่อนนะ'); return; }
+  btn.disabled = true;
+  google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; renderShop(); if (INV.open) renderInventory(); else closeModal(); toast(on ? 'พาออกจากห้องแล้ว' : '🐾 พาเข้าห้องแล้ว'); Live.request(); })
+    .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); })
+    .setPets(currentMember.memberId, JSON.stringify(next));
 }
 function useFloor(btn, id, kind) {
   if (btn) btn.disabled = true;
@@ -3793,6 +3814,13 @@ function renderInventory() {
       return '<div class="inv-row"><div class="inv-ic stage-floor" style="--fl:url(' + (k === 'wall' ? wallUrl(it.art) : floorUrl(it.art)) + ');height:46px"></div><div class="inv-t">' + esc(it.name) + '<small>' + (it.inUse === true ? 'ใช้อยู่' : it.free ? 'ฟรี' : 'มีแล้ว') + '</small></div>' +
         (it.inUse === true ? '<span class="shop-tag" style="position:static">ใช้อยู่</span>' : edit ? '<button class="inv-btn" onclick="useFloor(this,\'' + it.id + '\',\'' + k + '\')">ใช้' + (k === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>' : '') + '</div>';
     }).join('');
+  } else if (k === 'pet') {
+    body = mine.length ? mine.map(function (it) {
+      return '<div class="inv-row"><div class="inv-ic" data-sprite="' + it.sprite + '"></div><div class="inv-t">' + esc(it.name) +
+        '<small' + (it.inUse ? '>อยู่ในห้อง' : ' style="color:var(--text-muted)">ไม่ได้อยู่ในห้อง') + '</small></div>' +
+        (edit ? '<button class="inv-btn' + (it.inUse ? ' g' : '') + '" onclick="petToggle(this,\'' + it.id + '\')">' + (it.inUse ? 'พาออก' : 'พาเข้าห้อง') + '</button>' : '') + '</div>';
+    }).join('') + '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">อยู่ในห้องได้พร้อมกัน ' + (d.stage.petMax || 2) + ' ตัว</div>'
+      : '<div class="shop-soon" style="box-shadow:none">ยังไม่มีสัตว์เลี้ยง · ซื้อได้ที่ร้านค้า</div>';
   } else {
     body = roomEditorHtml(d, mine, edit);
   }
@@ -3958,6 +3986,8 @@ function stripUpdate(avatars, stage, egg) {
   if (!el) return;
   var list = (avatars || []).slice().sort(function (a, b) { return a.sprite < b.sprite ? -1 : 1; });
   var cur = egg && egg.current, decor = (stage && stage.decor) || [];
+  // สัตว์เลี้ยง = ตัวละครประเภทที่ 4 เดินในห้องด้วย (ไม่มีเจ้าของรายคน)
+  ((stage && stage.pets) || []).forEach(function (p) { list.push({ sprite: p.sprite, name: p.name, member_id: 'pet:' + p.id, pet: true }); });
   var key = list.map(function (a) { return a.sprite + ':' + a.member_id; }).join(',') + '|' + JSON.stringify(stage || '') + '|' + (cur ? cur.status + cur.warm : '');
   if (key === STRIP.key) return;
   STRIP.key = key;
@@ -3986,6 +4016,7 @@ function stripUpdate(avatars, stage, egg) {
       var m = JSON.parse(JSON.stringify(res[i + 1]));
       m.name = a.name;
       for (var k in m.sheets) m.sheets[k].src = '/sprites/characters/' + a.sprite + '/' + m.sheets[k].file;
+      if (a.pet) m.scale = m.scale || 0.8;
       return { id: a.sprite, manifest: m };
     });
     var rules = (sc.interactions || []).filter(function (r) { return r.who.every(function (w) { return ids.indexOf(w) >= 0; }); });

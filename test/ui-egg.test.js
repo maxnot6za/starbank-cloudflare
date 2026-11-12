@@ -30,7 +30,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
 
   // จัดห้อง
   await mom.click('#pnav-shop'); await mom.waitForSelector('.inv-card'); await mom.click('.inv-card');
-  await mom.click('#modal-content .shop-tabs button:nth-child(4)'); await mom.waitForSelector('#room-pal button');
+  await mom.click('#modal-content .shop-tabs button:nth-child(5)'); await mom.waitForSelector('#room-pal button');
   await mom.click('#room-pal button:nth-child(1)'); await mom.click('#room-pal button:nth-child(2)');
   ok(await mom.locator('#room-ed .dc').count() === 2, 'แตะของ → วางในห้อง 2 ชิ้น');
   const dc = mom.locator('#room-ed .dc').nth(1), bb = await dc.boundingBox();
@@ -92,7 +92,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await db.prepare("INSERT INTO Coupons (coupon_id,family_id,pct,egg_id,created_at,used_at,used_on) VALUES ('k50',?,50,'x','','',''),('k10',?,10,'x','','','')").bind(FAM, FAM).run();
   await dad.click('#pnav-shop'); await dad.waitForSelector('.cp-bar');
   ok(/ลด 50% ×1/.test(await dad.textContent('.cp-bar')), 'ร้านโชว์คูปองของครอบครัว');
-  await dad.click('.shop-tabs button:nth-child(4)'); await dad.locator('#screen-parent-shop .shop-item').nth(2).click();
+  await dad.click('.shop-tabs button:nth-child(5)'); await dad.locator('#screen-parent-shop .shop-item').nth(2).click();
   await dad.waitForSelector('#cp-opts');
   ok(/ซื้อ 5 ดาวม่วง/.test(await dad.textContent('#shop-buy')), 'เลือกคูปองมากสุดให้ก่อน → 5');
   await dad.screenshot({ path: OUT + 'e6-buy-coupon.png' });

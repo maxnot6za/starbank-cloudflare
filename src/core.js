@@ -13,7 +13,7 @@ export const PUBLIC_API = [
   'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
   'sendGift', 'cancelGift', 'openGift',
-  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'saveRoom', 'hugEgg', 'hatchEgg', 'eggSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
+  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
 ];
 
 export function createCore(S) {
@@ -1881,6 +1881,8 @@ export function createCore(S) {
     { id: 'dino_dad', kind: 'avatar', name: 'พ่อไดโน', type: 'dad', sprite: 'dad',  price: 50, currency: 'purple' },
     { id: 'dino_mom', kind: 'avatar', name: 'แม่ไดโน', type: 'mom', sprite: 'mom',  price: 50, currency: 'purple' },
     { id: 'dino_kid', kind: 'avatar', name: 'ลูกไดโน', type: 'kid', sprite: 'dino', price: 50, currency: 'purple' },
+    // สัตว์เลี้ยง (ตัวละครประเภทที่ 4): ของทั้งครอบครัว · อยู่ในห้องได้สูงสุด PET_MAX ตัว · เดินนิดเดียวแล้วนั่งเล่น/หลับ
+    { id: 'pet_dino', kind: 'pet', name: 'ไดโนจิ๋ว', sprite: 'petdino', price: 20, currency: 'purple' },
     { id: 'floor_wood', kind: 'floor', name: 'พื้นไม้', art: 'wood', price: 0, currency: 'purple', free: true },
     { id: 'wall_cream', kind: 'wall', name: 'ผนังครีมหน้าต่างฟ้า', art: 'cream', price: 0, currency: 'purple', free: true }
   ];
@@ -1896,7 +1898,7 @@ export function createCore(S) {
    ['blocks', 'ตัวต่อ', .55, 'wiggle sparkle', 'toys'], ['drum', 'กลอง', .45, 'beat notes', 'toys'], ['tent', 'เต็นท์', 1, 'sway sparkle', 'toys']].forEach(function(d) {
     SHOP_ITEMS.push({ id: 'decor_' + d[0], kind: 'decor', set: d[4], name: d[1], art: d[0], h: d[2], fx: d[3], price: 0, currency: 'purple', egg: true });
   });
-  var DEFAULT_FLOOR = 'floor_wood', DEFAULT_WALL = 'wall_cream', ROOM_MAX = 8, SCALE_MIN = 0.6, SCALE_MAX = 1.6;
+  var DEFAULT_FLOOR = 'floor_wood', DEFAULT_WALL = 'wall_cream', ROOM_MAX = 8, PET_MAX = 2, SCALE_MIN = 0.6, SCALE_MAX = 1.6;
   var FIRST_DISCOUNT = 0.5;   // ของชิ้นแรกของครอบครัว (ชนิดไหนก็ได้) ลด 50%
   function shopItem_(id) { return SHOP_ITEMS.find(function(i) { return i.id === String(id); }); }
   function familyInv_(familyId) { return getAllRows_('Inventory').filter(function(r) { return String(r.family_id) === String(familyId); }); }
@@ -1919,7 +1921,12 @@ export function createCore(S) {
     var floor = shopItem_(st.floor), wall = shopItem_(st.wall);
     return { floor: floor && floor.kind === 'floor' && owns_(familyId, floor) ? floor.id : DEFAULT_FLOOR,
       wall: wall && wall.kind === 'wall' && owns_(familyId, wall) ? wall.id : DEFAULT_WALL,
-      decor: cleanRoom_(familyId, st.decor) };
+      decor: cleanRoom_(familyId, st.decor), pets: cleanPets_(familyId, st.pets) };
+  }
+  function cleanPets_(familyId, list) {
+    var out = [];
+    (Array.isArray(list) ? list : []).forEach(function(id) { var it = shopItem_(id); if (it && it.kind === 'pet' && out.indexOf(it.id) < 0 && out.length < PET_MAX && owns_(familyId, it)) out.push(it.id); });
+    return out;
   }
   // ของในห้อง: [{id, x 0–1 (ตำแหน่งตามความกว้าง), s ขนาด}] ลำดับใน array = หลัง→หน้า · ตัดของที่ไม่มี/ซ้ำ/เกินจำนวน
   function cleanRoom_(familyId, list) {
@@ -1937,7 +1944,8 @@ export function createCore(S) {
   function familyStage_(familyId) {
     var st = stageRaw_(familyId), f = shopItem_(st.floor), w = shopItem_(st.wall);
     return { floor: { id: f.id, art: f.art }, wall: { id: w.id, art: w.art }, max: ROOM_MAX, scaleMin: SCALE_MIN, scaleMax: SCALE_MAX,
-      decor: st.decor.map(function(d) { var it = shopItem_(d.id); return { id: it.id, art: it.art, name: it.name, h: it.h, fx: it.fx, x: d.x, s: d.s }; }) };
+      decor: st.decor.map(function(d) { var it = shopItem_(d.id); return { id: it.id, art: it.art, name: it.name, h: it.h, fx: it.fx, x: d.x, s: d.s }; }),
+      petMax: PET_MAX, pets: st.pets.map(function(id) { var it = shopItem_(id); return { id: it.id, sprite: it.sprite, name: it.name }; }) };
   }
   function saveStage_(familyId, st) { updateRow_('Families', 'family_id', familyId, { stage: JSON.stringify(st) }); }
 
@@ -1958,6 +1966,17 @@ export function createCore(S) {
     if (list.length > ROOM_MAX) throw new Error('วางได้สูงสุด ' + ROOM_MAX + ' ชิ้น');
     list.forEach(function(d) { var it = d && shopItem_(d.id); if (!it || it.kind !== 'decor') throw new Error('ไม่พบของตกแต่งนี้'); if (!owns_(parent.family_id, it)) throw new Error('ยังไม่มี' + it.name); });
     var st = stageRaw_(parent.family_id); st.decor = cleanRoom_(parent.family_id, list); saveStage_(parent.family_id, st);
+    return { stage: familyStage_(parent.family_id), shop: getShop(memberId) };
+  }
+
+  // สัตว์เลี้ยงในห้อง (ผู้ปกครอง) · list = [item_id] ไม่เกิน PET_MAX
+  function setPets(memberId, list) {
+    var parent = requireParent_(memberId);
+    if (typeof list === 'string') { try { list = JSON.parse(list); } catch (e) { list = null; } }
+    if (!Array.isArray(list)) throw new Error('ข้อมูลไม่ถูกต้อง');
+    if (list.length > PET_MAX) throw new Error('สัตว์เลี้ยงอยู่ในห้องได้สูงสุด ' + PET_MAX + ' ตัว');
+    list.forEach(function(id) { var it = shopItem_(id); if (!it || it.kind !== 'pet') throw new Error('ไม่พบสัตว์เลี้ยงนี้'); if (!owns_(parent.family_id, it)) throw new Error('ยังไม่มี' + it.name); });
+    var st = stageRaw_(parent.family_id); st.pets = cleanPets_(parent.family_id, list); saveStage_(parent.family_id, st);
     return { stage: familyStage_(parent.family_id), shop: getShop(memberId) };
   }
 
@@ -2089,7 +2108,7 @@ export function createCore(S) {
         var ws = wishes.filter(function(w) { return w.item_id === it.id; });
         return { id: it.id, kind: it.kind, name: it.name, type: it.type, sprite: it.sprite, art: it.art, free: !!it.free, egg: !!it.egg, set: it.set, h: it.h, fx: it.fx, currency: it.currency, price: it.price,
           pay: first ? discPrice_(it.price, FIRST_DISCOUNT * 100) : it.price, owned: !!own,
-          inUse: it.kind === 'floor' ? stage.floor === it.id : it.kind === 'wall' ? stage.wall === it.id : it.kind === 'decor' ? stage.decor.some(function(d) { return d.id === it.id; }) : undefined,
+          inUse: it.kind === 'floor' ? stage.floor === it.id : it.kind === 'wall' ? stage.wall === it.id : it.kind === 'decor' ? stage.decor.some(function(d) { return d.id === it.id; }) : it.kind === 'pet' ? stage.pets.indexOf(it.id) >= 0 : undefined,
           assigned_to: who ? { member_id: who.member_id, name: who.name, avatar: who.avatar } : null,
           wishedBy: ws.map(function(w) { var k = getMember_(w.child_id); return k ? k.name : ''; }).filter(Boolean),
           iWish: ws.some(function(w) { return String(w.child_id) === String(m.member_id); }) };
@@ -2129,6 +2148,8 @@ export function createCore(S) {
     var inv = { inv_id: genId_(), family_id: familyId, item_id: item.id, price: price, currency: item.currency,
       bought_by: memberId, bought_at: msIso_(nowMs_()), assigned_to: '' };
     appendRow_('Inventory', inv);
+    // สัตว์เลี้ยงใหม่ → พาเข้าห้องเลยถ้ายังมีที่
+    if (item.kind === 'pet') { var st0 = stageRaw_(familyId); if (st0.pets.length < PET_MAX) { st0.pets.push(item.id); saveStage_(familyId, st0); } }
     if (assignTo && item.kind === 'avatar') assignTo_(familyId, getAllRows_('Inventory').find(function(r) { return r.inv_id === inv.inv_id; }), item, assignTo);
     // ซื้อแล้ว → ลบคำขอ "อยากได้" ของชิ้นนี้
     getAllRows_('Wishes').filter(function(w) { return String(w.family_id) === String(familyId) && w.item_id === item.id; })
@@ -2161,7 +2182,7 @@ export function createCore(S) {
   }
 
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
-    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, saveRoom, hugEgg, hatchEgg, eggSeen };
+    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, saveRoom, setPets, hugEgg, hatchEgg, eggSeen };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }
