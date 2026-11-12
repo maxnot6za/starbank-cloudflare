@@ -252,6 +252,37 @@ node run.js           # ทั้งหมด ~2 นาที
 - Cloudflare MCP ที่เคยใช้: `d1_database_query`, `workers_get_worker_code` (MCP ตัวเก่า deprecated แล้ว แนะนำ https://mcp.cloudflare.com/mcp)
 - git push ใช้ GitHub ผ่าน proxy ของ session (`add_repo` แบบ push)
 
+### 10.1 เช็กว่ามีคนใช้แอปอยู่ไหม ก่อน deploy (ทำทุกครั้งก่อนถาม KC ว่า "ขึ้นเลยไหม")
+deploy ทำให้ทุกหน้าจอหลุดแล้วต่อใหม่เอง (~1–3 วิ) แต่ถ้ามีคนกำลังทำอะไรอยู่ เช่น ผู้ปกครองกำลังอนุมัติ หรือเด็กกำลังหมุนวงล้อ อาจสะดุดได้ → เลี่ยงช่วงที่มีคนออนไลน์
+
+ตาราง `Presence` (migration 0016) — FamilyHub เขียนแถวตอนหน้าจอต่อ WebSocket และใส่ `ended_at` ตอนตัด (ไม่มี polling) · เวลาเป็น ms UTC · เก็บ 30 วัน
+
+รันผ่าน Cloudflare MCP `d1_database_query` (database_id ดูหัวข้อ D1 ด้านบน):
+
+```sql
+-- 1) ตอนนี้ออนไลน์กี่คน (นับเฉพาะที่ต่อมาไม่เกิน 12 ชม. กันแถวค้าง)
+SELECT COUNT(DISTINCT member_id) AS people, COUNT(DISTINCT family_id) AS families, COUNT(*) AS screens,
+       SUM(role = 'parent') AS parent_screens, SUM(role = 'child') AS child_screens
+FROM Presence
+WHERE ended_at IS NULL AND started_at > (CAST(strftime('%s','now') AS INTEGER) - 43200) * 1000;
+
+-- 2) มีใครเพิ่งใช้ใน 10 นาทีที่ผ่านมาไหม (เปิดอยู่ หรือเพิ่งปิด)
+SELECT COUNT(DISTINCT member_id) AS people
+FROM Presence
+WHERE ended_at IS NULL OR ended_at > (CAST(strftime('%s','now') AS INTEGER) - 600) * 1000;
+
+-- 3) ช่วงเวลาที่ใช้กันเยอะ (เวลาไทย) 30 วันล่าสุด → เลือกช่วง deploy ที่เงียบ
+SELECT CAST(strftime('%H', started_at / 1000 + 7 * 3600, 'unixepoch') AS INTEGER) AS hour_th, COUNT(*) AS opens
+FROM Presence GROUP BY hour_th ORDER BY hour_th;
+```
+
+วิธีตัดสิน (รายงานผลให้ KC ทุกครั้ง เช่น "ตอนนี้ออนไลน์ 2 คน · 1 ครอบครัว"):
+- ข้อ 1 = 0 และข้อ 2 = 0 → deploy ได้เลย
+- ข้อ 1 = 0 แต่ข้อ 2 > 0 → มีคนเพิ่งใช้ อาจกลับมา · deploy ได้ แต่แจ้ง KC
+- ข้อ 1 > 0 → แจ้ง KC ว่ามีคนใช้อยู่ แนะนำให้รอ หรือดูข้อ 3 แล้วเสนอเวลาที่เงียบ · KC ตัดสินเอง
+- ข้อควรรู้: "ออนไลน์" = หน้าจอยังต่ออยู่ รวมถึงแอปที่เปิดค้างไว้เบื้องหลัง (มือถืออาจตัดเองภายหลัง) · ถ้าหลุดแบบไม่ได้ปิดปกติ (เน็ตหลุด/แบตหมด) แถวจะค้างจนกว่าคนในครอบครัวนั้นจะเปิดใหม่ หรือพ้น 12 ชม.
+- ห้ามคัดลอกผลที่มี member_id/family_id จริงลง repo (repo เป็น public)
+
 ---
 
 ## 11. โควตาและความจุ (แผนฟรี)

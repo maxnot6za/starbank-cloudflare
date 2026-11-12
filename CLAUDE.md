@@ -4,7 +4,7 @@
 
 กฎสำคัญ:
 - ตอบ KC เป็นภาษาไทย วิเคราะห์ผลกระทบและถามก่อนแก้ ทำ mock หน้าจอให้ดูก่อนเขียน UI
-- push เข้า `main` = deploy production ทันที และมีครอบครัวจริงใช้งานอยู่
+- push เข้า `main` = deploy production ทันที และมีครอบครัวจริงใช้งานอยู่ · ก่อนถาม KC ว่าจะ deploy ให้เช็กคนออนไลน์ตาม `HANDOFF.md` หัวข้อ 10.1 แล้วรายงานด้วย
 - migration ต้อง apply บน production ก่อน push โค้ดที่ใช้
 - ฟังก์ชัน `/api` ใหม่ต้องเพิ่มทั้ง `PUBLIC_API` (src/core.js) และ `MEMBER_ARG` (src/index.js)
 - ห้าม polling ด้วย timer ให้ใช้ WebSocket ที่มีอยู่

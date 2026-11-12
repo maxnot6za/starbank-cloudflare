@@ -117,7 +117,10 @@ async function handleLive(url, request, env) {
   const session = await getSession(request, env);
   if (!session) return new Response('login required', { status: 403 });
   const hub = env.FAMILY_HUB.get(env.FAMILY_HUB.idFromName(String(session.member.family_id)));
-  return hub.fetch(new Request('https://hub/connect', request));
+  // บอก Hub ว่าการเชื่อมต่อนี้เป็นของใคร (บันทึกในตาราง Presence)
+  const h = new Headers(request.headers);
+  h.set('x-sb-family', String(session.member.family_id)); h.set('x-sb-member', String(session.member.member_id)); h.set('x-sb-role', String(session.member.role || ''));
+  return hub.fetch(new Request('https://hub/connect', { headers: h }));
 }
 
 // บอกทุกเครื่องในครอบครัวว่า "มีข้อมูลใหม่" (ไม่ส่งข้อมูลจริงออกไป หน้าจอจะดึงเองตามสิทธิ์ของตัวเอง)
