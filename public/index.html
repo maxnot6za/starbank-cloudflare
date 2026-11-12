@@ -611,7 +611,7 @@
     @keyframes dcGlow { 0%,100%{opacity:.45} 50%{opacity:1} }
     @media (prefers-reduced-motion: reduce) { .dc img, .dc::before { animation:none !important; } }
     /* ไข่ในห้อง */
-    #avatar-strip .strip-egg { position:absolute; right:10px; bottom:12px; width:40px; z-index:6; pointer-events:auto; cursor:pointer; transform-origin:50% 90%; }
+    #avatar-strip .strip-egg { position:absolute; right:10px; bottom:12px; width:40px; z-index:20; pointer-events:auto; cursor:pointer; transform-origin:50% 90%; }
     #avatar-strip .strip-egg.ready { animation:eggWob .9s ease-in-out infinite; }
     @keyframes eggWob { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
     #avatar-strip .strip-egg .eb { position:absolute; top:-9px; left:3px; right:3px; height:5px; border-radius:9px; background:#fff; box-shadow:0 0 0 1.5px #1F3B35; overflow:hidden; }
@@ -636,6 +636,7 @@
     .room-ed { position:relative; height:170px; border-radius:14px; overflow:hidden; touch-action:none; user-select:none; -webkit-user-select:none; margin-top:8px; }
     .room-ed .stage-wall { bottom:34px; } .room-ed .stage-floor { position:absolute; left:0; right:0; bottom:0; height:40px; }
     .room-ed .dc { bottom:20px; cursor:grab; touch-action:none; }
+    .room-ed .egg-spot { position:absolute; right:8px; bottom:14px; width:44px; opacity:.35; z-index:1; pointer-events:none; text-align:center; font-size:.55rem; color:var(--mint-dark,#1F6F5C); font-weight:700; }
     .room-ed .dc.sel img { filter:drop-shadow(0 0 2px #2A9479) drop-shadow(0 0 2px #2A9479); }
     .room-ed .dc.drag img { transform:translateY(-8px) scale(1.06); animation:none; }
     .room-tool { position:absolute; display:none; gap:3px; transform:translateX(-50%); z-index:30; background:#fff; border-radius:99px; padding:3px; box-shadow:0 2px 8px rgba(0,0,0,.2); align-items:center; }
@@ -3814,7 +3815,7 @@ function roomEditorHtml(d, mine, edit) {
   ROOM.sel = -1; ROOM.max = d.stage.max || 8; ROOM.smin = d.stage.scaleMin || .6; ROOM.smax = d.stage.scaleMax || 1.6; ROOM.mine = mine; ROOM.st = d.stage;
   if (!mine.length) return '<div class="shop-soon" style="box-shadow:none">ยังไม่มีของตกแต่ง<br><small>🎄 ชุดคริสต์มาสซื้อได้ที่ร้านค้า · 🥚 ชุดอื่นลุ้นจากไข่ปริศนา</small></div>' + stagePreview(d.stage);
   return '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">' + (edit ? 'แตะของด้านล่างเพื่อวาง · ลากซ้าย-ขวา · แตะของในห้องเพื่อปรับขนาด/ลบ' : 'ห้องของครอบครัว · ผู้ปกครองเป็นคนจัด') + '</div>' +
-    '<div class="room-ed" id="room-ed">' + stageBase(d.stage) + '<div class="room-tool" id="room-tool"><button onclick="roomSize(-1)">➖</button><span id="room-pct"></span><button onclick="roomSize(1)">➕</button><button onclick="roomZ(1)">⬆️</button><button onclick="roomZ(-1)">⬇️</button><button onclick="roomDel()">🗑️</button></div></div>' +
+    '<div class="room-ed" id="room-ed">' + stageBase(d.stage) + (roomEggOn() ? '<div class="egg-spot">' + eggSVG(0) + 'ที่ของไข่</div>' : '') + '<div class="room-tool" id="room-tool"><button onclick="roomSize(-1)">➖</button><span id="room-pct"></span><button onclick="roomSize(1)">➕</button><button onclick="roomZ(1)">⬆️</button><button onclick="roomZ(-1)">⬇️</button><button onclick="roomDel()">🗑️</button></div></div>' +
     (edit ? '<div style="font-size:.75rem;color:var(--text-muted);margin-top:6px;text-align:right" id="room-cnt"></div><div class="room-pal" id="room-pal"></div>' : '');
 }
 function roomEditorInit(edit) { ROOM.edit = edit; roomRender(); }
@@ -3845,7 +3846,17 @@ function roomDrag(e, i) {
     e.classList.add('drag'); ed.querySelectorAll('.dc').forEach(function (d) { d.classList.toggle('sel', d === e); }); document.getElementById('room-tool').classList.remove('on'); });
   e.addEventListener('pointermove', function (ev) { if (!e.classList.contains('drag')) return;
     var x = Math.max(.04, Math.min(.96, ox + (ev.clientX - sx) / ed.clientWidth)); ROOM.list[i].x = Math.round(x * 1000) / 1000; e.style.left = (x * 100) + '%'; ROOM.dirty = true; });
-  e.addEventListener('pointerup', function () { e.classList.remove('drag'); roomTool(); });
+  e.addEventListener('pointerup', function () {
+    e.classList.remove('drag');
+    var mx = roomMaxX(e); if (ROOM.list[i].x > mx) { ROOM.list[i].x = mx; e.style.transition = 'left .25s'; e.style.left = (mx * 100) + '%'; setTimeout(function () { e.style.transition = ''; }, 300); toast('มุมขวาเป็นที่ของไข่นะ'); }
+    roomTool();
+  });
+}
+// มีไข่ → กันมุมขวาไว้ให้ไข่ (เกยได้เล็กน้อย ไม่บังทั้งใบ)
+function roomEggOn() { return !!(dashboardData && dashboardData.egg && dashboardData.egg.current); }
+function roomMaxX(e) {
+  if (!roomEggOn()) return .96;
+  var W = document.getElementById('room-ed').clientWidth; return Math.max(.04, Math.round((W - 44 - e.offsetWidth / 2) / W * 1000) / 1000);
 }
 function roomAdd(id) {
   var i = ROOM.list.findIndex(function (x) { return x.id === id; });
