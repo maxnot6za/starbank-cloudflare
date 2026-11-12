@@ -78,6 +78,24 @@
         "facing": "right",
         "keep_y": true
       }
+    },
+    "bell": {
+      "file": "bell.webp",
+      "frames": 6,
+      "cell": [
+        230,
+        252
+      ],
+      "facing": "right",
+      "extent": [
+        87,
+        111
+      ],
+      "cut": {
+        "src": "src/bell.jpg",
+        "frames": 6,
+        "facing": "right"
+      }
     }
   },
   "anims": {},
