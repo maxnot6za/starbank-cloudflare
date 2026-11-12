@@ -94,6 +94,10 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
 
   // หมดเวลา → ผู้ปกครองมีปุ่มส่งดาวปลอบใจ
   await mom.evaluate(() => Live.request());
+  // จบแล้ว → ย้ายไปกล่อง "จบแล้ว" ที่พับไว้ · กด + เพื่อกาง
+  await mom.waitForSelector('.urg-done', { timeout: 8000 });
+  ok(!(await mom.isVisible('text=ส่งดาวปลอบใจ')), 'ภารกิจด่วนที่จบแล้วพับอยู่ในกล่อง "จบแล้ว"');
+  await mom.click('.urg-done .fold-tg');
   await mom.waitForSelector('text=ส่งดาวปลอบใจ', { timeout: 8000 });
   ok(true, 'ลูกทำไม่ทัน/ปฏิเสธ → มีปุ่ม "🎁 ส่งดาวปลอบใจ"');
 

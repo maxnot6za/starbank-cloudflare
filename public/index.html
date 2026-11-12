@@ -572,6 +572,19 @@
     .shop-big { position:relative; height:190px; border-radius:18px; overflow:hidden; background:linear-gradient(#F6FCF9 0 74%,#CFEBDF 74%); margin:4px 0 12px; }
     .shop-big .sa-actor { bottom:18px; }
     .shop-who { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:8px 0 14px; }
+    /* พับ/กางหัวข้อหน้าหลักผู้ปกครอง (จำในเครื่อง) */
+    .fold-h { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
+    .fold-h > .fh-t { flex:1 0 auto; white-space:nowrap; }
+    .fold-sum { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; font-size:.8rem; font-weight:600; color:var(--text-muted); white-space:nowrap; text-align:right; }
+    .fold-tg { width:30px; height:30px; flex:none; border-radius:50%; border:1.5px solid var(--border); background:#fff; color:var(--primary); font-size:1.15rem; font-weight:700; line-height:1; display:grid; place-items:center; padding:0; cursor:pointer; }
+    .fold-h > .btn { flex:none; white-space:nowrap; }
+    .fold-h.open .fold-sum { display:none; }
+    .fold-body.folded { display:none; }
+    .urg-done { padding:12px 14px; }
+    .urg-done .fold-h { font-weight:700; }
+    .urg-done .fold-body { border-top:1px dashed var(--border); margin-top:10px; padding-top:4px; }
+    .urg-done .fold-body > .card { box-shadow:none; background:transparent; padding:10px 0 !important; margin:0; border-radius:0; }
+    .urg-done .fold-body > .card + .card { border-top:1px solid #f0f0f0; }
     #avatar-strip { position:fixed; left:0; right:0; bottom:var(--nav-h); height:var(--strip-h); z-index:90; pointer-events:none; display:none; overflow:hidden; }
     #avatar-strip.on { display:block; }
     #avatar-strip .sa-actor { bottom:4px; }
@@ -763,17 +776,21 @@
 
   <div id="parent-daily"></div>
 
-  <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
-    <span>👧 สมาชิกเด็ก</span>
-    <button class="btn btn-sm" style="background:#fff;border:1.5px solid var(--border);color:var(--text)" onclick="openSummary()">📊 สรุปรายวัน</button>
+  <div class="section-title fold-h" onclick="foldToggle('kids')">
+    <span class="fh-t">👧 สมาชิกเด็ก</span>
+    <span class="fold-sum" id="fold-sum-kids"></span>
+    <button class="btn btn-sm" style="background:#fff;border:1.5px solid var(--border);color:var(--text)" onclick="event.stopPropagation();openSummary()">📊 สรุปรายวัน</button>
+    <button type="button" class="fold-tg" data-fold-tg="kids" aria-label="พับ/กาง">−</button>
   </div>
-  <div id="parent-children-list"></div>
+  <div id="parent-children-list" class="fold-body" data-fold="kids"></div>
 
-  <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
-    <span>⚡ ภารกิจด่วน</span>
-    <button class="btn btn-sm" style="background:linear-gradient(135deg,#FF5A36,#FF7A45);color:#fff" onclick="showCreateUrgent()">+ สร้าง</button>
+  <div class="section-title fold-h" onclick="foldToggle('urg')">
+    <span class="fh-t">⚡ ภารกิจด่วน</span>
+    <span class="fold-sum" id="fold-sum-urg"></span>
+    <button class="btn btn-sm" style="background:linear-gradient(135deg,#FF5A36,#FF7A45);color:#fff" onclick="event.stopPropagation();showCreateUrgent()">+ สร้าง</button>
+    <button type="button" class="fold-tg" data-fold-tg="urg" aria-label="พับ/กาง">−</button>
   </div>
-  <div id="parent-urgent"></div>
+  <div id="parent-urgent" class="fold-body" data-fold="urg"></div>
   <div id="parent-gifts"></div>
 
   <div id="redemption-alert-box" style="display:none;background:#FFF8E6;border:2px solid var(--gold);border-radius:var(--radius);padding:16px;margin-bottom:16px;animation:pulse-border 2s ease-in-out infinite">
@@ -1294,6 +1311,8 @@ function renderParentHome(d) {
 
   // children stars
   const cl = document.getElementById('parent-children-list');
+  var ks = document.getElementById('fold-sum-kids');
+  if (ks) ks.textContent = d.children.length === 1 ? d.children[0].name + ' ⭐ ' + d.children[0].stats.balance : (d.children.length ? d.children.length + ' คน' : '');
   if (!d.children.length) {
     cl.innerHTML = '<div class="empty-state"><div class="es-icon">👧</div>ยังไม่มีสมาชิกเด็ก</div>';
   } else {
@@ -2794,7 +2813,7 @@ function renderUrgentParent(d) {
   urgSync(d.serverNow);
   var g = d.urgent || [];
   if (!g.length) { box.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;margin:-4px 0 16px">สั่งภารกิจเร่งด่วนพร้อมนับเวลาถอยหลัง ลูกได้แจ้งเตือนทันที</div>'; return; }
-  box.innerHTML = g.map(function (x) {
+  function card(x) {
     return '<div class="card" style="padding:14px' + (x.active ? ';border:2px solid #FF5A36' : '') + '">' +
       '<div class="u-row"><span class="u-ico" style="font-size:1.7rem">' + esc(x.icon) + '</span><div style="flex:1;min-width:0"><div class="u-title">' + esc(x.title) + '</div>' +
       '<div class="u-sub">⭐ ' + x.stars + ' ดาว · ' + urgDur(x.duration_sec) + ' · โดย ' + esc(x.from_name) + '</div></div></div>' +
@@ -2805,8 +2824,21 @@ function renderUrgentParent(d) {
       }).join('') + '</div>' +
       (x.active ? '<button class="u-btn ghost" style="margin-top:8px;padding:9px;font-size:.9rem" onclick="cancelUrgentBatch(this,\'' + x.batch_id + '\')">ยกเลิกภารกิจด่วน</button>' : '') +
       '</div>';
-  }).join('');
+  }
+  var open = g.filter(function (x) { return urgLive(x); }), done = g.filter(function (x) { return !urgLive(x); });
+  var html = open.map(card).join('');
+  if (!open.length && !done.length) html = '';
+  if (done.length) html += '<div class="card urg-done"><div class="fold-h" onclick="foldToggle(\'urgdone\')"><span class="fh-t">✅ จบแล้ว ' + done.length + ' รายการ</span><button type="button" class="fold-tg" data-fold-tg="urgdone" aria-label="พับ/กาง">+</button></div>' +
+    '<div class="fold-body" data-fold="urgdone">' + done.map(card).join('') + '</div></div>';
+  box.innerHTML = html;
+  var us = document.getElementById('fold-sum-urg');
+  if (us) { var run = 0, wait = 0; open.forEach(function (x) { x.kids.forEach(function (k) { if (k.status === 'submitted' && k.review !== 'approved' && k.review !== 'rejected') wait++; else if (k.status === 'pending' || k.status === 'running') run++; }); }); us.textContent = (run ? 'กำลังทำ ' + run : '') + (run && wait ? ' · ' : '') + (wait ? 'รออนุมัติ ' + wait : ''); }
+  foldApply();
   urgStartTick();
+}
+// ภารกิจด่วนที่ยังไม่จบ = มีเด็กสักคนยังไม่เปิดดู / กำลังทำ / ส่งแล้วรออนุมัติ
+function urgLive(x) {
+  return x.active || x.kids.some(function (k) { return k.status === 'pending' || k.status === 'running' || (k.status === 'submitted' && k.review !== 'approved' && k.review !== 'rejected'); });
 }
 
 function cancelUrgentBatch(btn, batchId) {
@@ -3119,6 +3151,20 @@ function dqRow(q, canClaim) {
     '<div class="dq-r">' + right + '</div></div>';
 }
 
+// พับ/กางหัวข้อ · ค่าเริ่มต้น: ประจำวัน+จบแล้ว พับ · สมาชิกเด็ก+ภารกิจด่วน กาง · จำในเครื่อง (localStorage)
+var FOLD_DEF = { daily: 1, kids: 0, urg: 0, urgdone: 1 };
+function foldState() { var s = {}; try { s = JSON.parse(localStorage.getItem('sb_fold') || '{}') || {}; } catch (e) {} var o = {}; for (var k in FOLD_DEF) o[k] = k in s ? s[k] : FOLD_DEF[k]; return o; }
+function foldApply() {
+  var st = foldState();
+  document.querySelectorAll('[data-fold]').forEach(function (b) { b.classList.toggle('folded', !!st[b.getAttribute('data-fold')]); });
+  document.querySelectorAll('[data-fold-tg]').forEach(function (t) { var f = !!st[t.getAttribute('data-fold-tg')]; t.textContent = f ? '+' : '−'; var h = t.closest('.fold-h'); if (h) h.classList.toggle('open', !f); });
+}
+function foldToggle(k) {
+  var st = foldState(); st[k] = st[k] ? 0 : 1;
+  try { localStorage.setItem('sb_fold', JSON.stringify(st)); } catch (e) {}
+  foldApply();
+}
+
 function renderDaily(d) {
   var dl = d && d.daily; if (!dl) return;
   var isKid = currentMember && currentMember.role === 'child';
@@ -3129,11 +3175,16 @@ function renderDaily(d) {
   if (isKid) {
     html = '<div class="dq-card">' + head + (dl.mine.length ? dl.mine.map(function (q) { return dqRow(q, true); }).join('') : '<div class="dq-t" style="color:var(--text-muted)">วันนี้ยังไม่มีภารกิจ</div>') + '</div>';
   } else {
-    html = '<div class="dq-card">' + head + (dl.parents ? dqRow(dl.parents, true) : '') +
+    var all = (dl.parents ? [dl.parents] : []).concat(dl.kids), nd = all.filter(function (q) { return q.status !== 'active'; }).length;
+    head = '<h3>👨‍👩‍👧 ภารกิจร่วมผู้ปกครอง <small>' + PSTAR + ' ' + dl.wallet.purple + ' ของครอบครัว</small></h3>';
+    html = '<div class="section-title fold-h" onclick="foldToggle(\'daily\')"><span class="fh-t">🌞 ภารกิจประจำวัน</span><span class="fold-sum">' + (all.length ? nd + '/' + all.length + ' เสร็จ' : '') + '</span><button type="button" class="fold-tg" data-fold-tg="daily" aria-label="พับ/กาง">+</button></div><div class="fold-body" data-fold="daily">' +
+      '<div class="dq-card">' + head + (dl.parents ? dqRow(dl.parents, true) : '') +
       (dl.parents ? '<div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">ภารกิจร่วมของผู้ปกครอง ใครทำก็นับ</div>' : '') + '</div>';
     if (dl.kids.length) html += '<div class="dq-card"><h3>👧 ภารกิจของลูกวันนี้</h3>' + dl.kids.map(function (q) { return dqRow(q, true); }).join('') + '</div>';
+    html += '</div>';
   }
   el.innerHTML = html;
+  foldApply();
   feReplace(el);
   // รอให้ป้ายภารกิจด่วน/กล่องของขวัญ (สำคัญกว่า) เปิดก่อน แล้วค่อยเด้งภารกิจประจำวัน
   setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 700);
