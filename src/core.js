@@ -1897,7 +1897,7 @@ export function createCore(S) {
     SHOP_ITEMS.push({ id: 'decor_' + d[0], kind: 'decor', set: d[4], name: d[1], art: d[0], h: d[2], fx: d[3], price: 0, currency: 'purple', egg: true });
   });
   var DEFAULT_FLOOR = 'floor_wood', DEFAULT_WALL = 'wall_cream', ROOM_MAX = 8, SCALE_MIN = 0.6, SCALE_MAX = 1.6;
-  var FIRST_DISCOUNT = 0.5;   // ตัวละครตัวแรกของครอบครัวลด 50%
+  var FIRST_DISCOUNT = 0.5;   // ของชิ้นแรกของครอบครัว (ชนิดไหนก็ได้) ลด 50%
   function shopItem_(id) { return SHOP_ITEMS.find(function(i) { return i.id === String(id); }); }
   function familyInv_(familyId) { return getAllRows_('Inventory').filter(function(r) { return String(r.family_id) === String(familyId); }); }
   function priceFor_(familyId, item) { return familyInv_(familyId).length ? item.price : Math.ceil(item.price * (1 - FIRST_DISCOUNT)); }

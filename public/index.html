@@ -3667,7 +3667,7 @@ function renderShop() {
   var b = document.getElementById('shop-badge');
   if (b) { b.style.display = wishCount ? 'inline-flex' : 'none'; b.textContent = wishCount; }
   root.innerHTML = '<div class="shop-top"><h2>🛍️ ร้านค้า</h2><span class="wallet-pill">' + COIN + ' ' + d.wallet.gold + '</span><span class="wallet-pill">' + PSTAR + ' ' + d.wallet.purple + '</span></div>' +
-    (d.firstDiscount ? '<div class="shop-sale">🎉 ตัวละครตัวแรกของครอบครัว ลด ' + d.discountPct + '%</div>' : '') +
+    (d.firstDiscount ? '<div class="shop-sale">🎉 ซื้อชิ้นแรกของครอบครัว ลด ' + d.discountPct + '% · เลือกได้ทุกอย่างในร้าน</div>' : '') +
     '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · ผนัง ' + cnt('wall') + ' · พื้น ' + cnt('floor') + ' · ตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
     '<div class="shop-tabs">' + tabs.map(function (t) { return '<button class="' + (SHOP.tab === t[0] ? 'on' : '') + '" onclick="shopTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
     '<div class="shop-grid">' + items.map(function (it) {
