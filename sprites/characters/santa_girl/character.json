@@ -1,0 +1,85 @@
+{
+  "id": "santa_girl",
+  "name": "santa_girl",
+  "headWidth": 150,
+  "sheets": {
+    "celebrate": {
+      "file": "celebrate.webp",
+      "frames": 3,
+      "cell": [
+        202,
+        252
+      ],
+      "facing": "right",
+      "extent": [
+        87,
+        97
+      ],
+      "cut": {
+        "src": "src/celebrate.jpg",
+        "frames": 3,
+        "facing": "right"
+      }
+    },
+    "walk": {
+      "file": "walk.webp",
+      "frames": 6,
+      "cell": [
+        188,
+        250
+      ],
+      "facing": "right",
+      "extent": [
+        84,
+        90
+      ],
+      "cut": {
+        "src": "src/walk.jpg",
+        "frames": 6,
+        "method": "split",
+        "facing": "right"
+      }
+    },
+    "snow": {
+      "file": "snow.webp",
+      "frames": 6,
+      "cell": [
+        222,
+        281
+      ],
+      "facing": "right",
+      "extent": [
+        98,
+        107
+      ],
+      "cut": {
+        "src": "src/snow.jpg",
+        "frames": 6,
+        "method": "split",
+        "facing": "right"
+      }
+    },
+    "cheer": {
+      "file": "cheer.webp",
+      "frames": 6,
+      "cell": [
+        198,
+        318
+      ],
+      "facing": "right",
+      "extent": [
+        84,
+        95
+      ],
+      "cut": {
+        "src": "src/cheer.jpg",
+        "frames": 6,
+        "method": "split",
+        "facing": "right",
+        "keep_y": true
+      }
+    }
+  },
+  "anims": {},
+  "life": []
+}
