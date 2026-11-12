@@ -20,7 +20,7 @@ const MEMBER_ARG = {
   setWheelEnabled: 0, setWheelPrizes: 0, getWheelStatus: 0,
   createUrgent: 0, cancelUrgent: 0, urgentSeen: 0, acceptUrgent: 0, submitUrgent: 0, declineUrgent: 0,
   sendGift: 0, cancelGift: 0, openGift: 0,
-  questSeen: 0, treeSeen: 0, setTheme: 0, setFloor: 0, placeDecor: 0, claimQuest: 0, getShop: 0, buyItem: 0, assignAvatar: 0, wishItem: 0,
+  questSeen: 0, treeSeen: 0, setTheme: 0, setFloor: 0, setWall: 0, placeDecor: 0, claimQuest: 0, getShop: 0, buyItem: 0, assignAvatar: 0, wishItem: 0,
 };
 // คำสั่งเข้าระบบแบบเก่า (ลิงก์ ?auto=, รหัสครอบครัว) ถูกแทนด้วย /auth/* แล้ว
 

@@ -22,15 +22,17 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   const mom = await open(P1);
   await mom.waitForSelector('#avatar-strip.on', { timeout: 15000 });
   ok(await mom.evaluate(() => /floors\/wood\.webp/.test(getComputedStyle(document.querySelector('#avatar-strip .stage-floor')).backgroundImage)), 'แถบล่างมีพื้นไม้');
+  ok(await mom.evaluate(() => /walls\/cream\.webp/.test(getComputedStyle(document.querySelector('#avatar-strip .stage-wall')).backgroundImage)), 'แถบล่างมีผนังครีม');
+  ok(await mom.evaluate(() => document.querySelector('.xmas-scene').getBoundingClientRect().bottom <= document.getElementById('avatar-strip').getBoundingClientRect().top + 5), 'พื้นหลังธีมยกขึ้นเหนือแถบ');
   await mom.waitForTimeout(2500); await mom.screenshot({ path: OUT + 'g1-strip-floor.png' });
 
   await mom.click('#pnav-shop'); await mom.waitForSelector('.inv-card');
-  ok(/ตัวละคร 3 · พื้น 1 · ของตกแต่ง 0/.test(await mom.textContent('.inv-card')), 'การ์ดของของครอบครัวนับถูก');
-  await mom.click('.shop-tabs button:nth-child(2)'); await mom.waitForSelector('.shop-floor');
+  ok(/ตัวละคร 3 · ผนัง 1 · พื้น 1 · ตกแต่ง 0/.test(await mom.textContent('.inv-card')), 'การ์ดของของครอบครัวนับถูก');
+  await mom.click('.shop-tabs button:nth-child(3)'); await mom.waitForSelector('.shop-floor');
   ok(/ใช้อยู่/.test(await mom.textContent('#screen-parent-shop .shop-item')), 'แท็บพื้น: พื้นไม้ "ใช้อยู่"');
   ok(await mom.isVisible('text=พื้นแบบใหม่ เร็ว ๆ นี้'), 'แท็บพื้น: เร็ว ๆ นี้');
   await mom.screenshot({ path: OUT + 'g2-shop-floor.png' });
-  await mom.click('.shop-tabs button:nth-child(3)'); ok(await mom.isVisible('text=ของตกแต่ง เร็ว ๆ นี้'), 'แท็บของตกแต่ง: เร็ว ๆ นี้');
+  await mom.click('.shop-tabs button:nth-child(4)'); ok(await mom.isVisible('text=ของตกแต่ง เร็ว ๆ นี้'), 'แท็บของตกแต่ง: เร็ว ๆ นี้');
 
   await mom.click('.inv-card'); await mom.waitForSelector('#modal-content .inv-row', { timeout: 5000 });
   ok(await mom.locator('#modal-content .inv-row').count() === 3, 'ของของครอบครัว: ตัวละคร 3 ตัว');
@@ -41,9 +43,9 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await mom.click('#shop-who .u-chip'); await mom.click('#modal-content .dq-btn.p');
   await mom.waitForSelector('#modal-content .inv-row', { timeout: 5000 });
   ok((await db.prepare("SELECT assigned_to FROM Inventory WHERE inv_id='i3'").first()).assigned_to === C, 'ให้ลูกไดโนกับลูกได้จากหน้านี้');
-  await mom.click('#modal-content .shop-tabs button:nth-child(3)'); await mom.waitForSelector('.inv-slot');
+  await mom.click('#modal-content .shop-tabs button:nth-child(4)'); await mom.waitForSelector('.inv-slot');
   ok(await mom.locator('.inv-slot').count() === 5, 'แท็บตกแต่ง: จุดวางของ 5 จุดบนพรีวิวพื้น');
-  await mom.click('.inv-slot:nth-child(3)'); await mom.waitForSelector('text=วางอะไรที่จุด 2?');
+  await mom.locator('.inv-slot').nth(1).click(); await mom.waitForSelector('text=วางอะไรที่จุด 2?');
   ok(await mom.isVisible('text=ยังไม่มีของตกแต่ง'), 'แตะจุด → เลือกของ (ยังไม่มีของ)');
   await mom.screenshot({ path: OUT + 'g4-decor-pick.png' });
 
@@ -52,7 +54,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   ok(/ดู ›/.test(await kid.textContent('.inv-card')), 'เด็ก: ปุ่ม "ดู"');
   await kid.click('.inv-card'); await kid.waitForSelector('#modal-content .inv-row');
   ok(!(await kid.locator('#modal-content .inv-btn').count()) && await kid.isVisible('text=ดูได้อย่างเดียว'), 'เด็ก: ดูอย่างเดียว ไม่มีปุ่มแก้');
-  await kid.click('#modal-content .shop-tabs button:nth-child(3)');
+  await kid.click('#modal-content .shop-tabs button:nth-child(4)');
   ok(!(await kid.locator('.inv-slot').count()), 'เด็ก: แตะจุดวางของไม่ได้');
 
   ok(!errors.length, 'ไม่มี JS error', errors);

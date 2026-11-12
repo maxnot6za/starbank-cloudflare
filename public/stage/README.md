@@ -1,12 +1,16 @@
 # พื้นที่ตัวละครเดิน (แถบล่างจอ)
 
-- `floors/<art>.webp` พื้น (tile ต่อกันแนวนอน สูง 64px) · `decor/<art>.webp` ของตกแต่ง (พื้นโปร่งใส ~128px)
+- `walls/<art>.webp` ผนัง (tile สูง 160px) · `floors/<art>.webp` พื้น (tile ต่อกันแนวนอน สูง 64px) · `decor/<art>.webp` ของตกแต่ง (พื้นโปร่งใส ~128px)
 - ของในร้านประกาศใน `SHOP_ITEMS` (src/core.js): `kind: 'floor' | 'decor'`, `art`, `price` (พื้น 20 ดาวม่วง) · `free: true` = ทุกครอบครัวมี
-- ครอบครัวเลือกใช้ใน `Families.stage` = `{"floor": id, "slots": [5 ช่อง]}` ผ่าน `setFloor` / `placeDecor`
+- ครอบครัวเลือกใช้ใน `Families.stage` = `{"floor": id, "wall": id, "slots": [5 ช่อง]}` ผ่าน `setFloor` / `setWall` / `placeDecor` · มีแถบตัวละคร → พื้นหลังธีมยกขึ้นเหนือแถบ
 
 ## เพิ่มพื้นใหม่ — KC ส่ง
-1. ภาพแถบพื้น 16:9 ใช้ prompt พื้นไม้ (sprites/stage-src/README) เปลี่ยนวัสดุ · ชื่อไทย
-2. Claude: `cd sprites/stage-src && python3 floor.py <ภาพ> <art> <y_บน> <y_ล่าง>` → เพิ่มแถวใน `SHOP_ITEMS`
+1. ภาพแถบพื้น 16:9 แถบยาวเต็มกว้าง พื้นสีเรียบ `#EEF8F4` ต่อซ้าย-ขวาได้ · ชื่อไทย
+2. Claude: `cd sprites/stage-src && python3 tile.py <ภาพ> <art> <y_บน> <y_ล่าง>` → เพิ่มแถวใน `SHOP_ITEMS`
+
+## เพิ่มผนังใหม่ — KC ส่ง
+1. ภาพแถบผนัง 16:9 แบบเดียวกับผนังครีม (ขอบล่างตรง) · ชื่อไทย
+2. Claude: `python3 tile.py <ภาพ> <art> <y_บน> <y_ล่าง> walls 160 [x เริ่ม] [รอบลาย]` (ใส่รอบลายถ้ามีหน้าต่าง/ลายซ้ำ) → แถว `kind: 'wall'`
 
 ## เพิ่มของตกแต่ง — KC ส่ง
 1. ภาพของ 1 ชิ้นต่อรูป พื้นสีเรียบ `#EEF8F4` สไตล์เดียวกับตัวละคร · ชื่อไทย · ราคา

@@ -585,6 +585,9 @@
     .inv-prev .stage-floor { position:absolute; left:0; right:0; bottom:0; }
     .inv-slot { position:absolute; bottom:22px; width:40px; height:40px; margin-left:-20px; border:2px dashed var(--mint); border-radius:10px; display:grid; place-items:center; background:rgba(255,255,255,.7); color:var(--mint-dark); font-weight:700; cursor:pointer; padding:0; font:inherit; }
     .inv-slot img { width:100%; height:100%; object-fit:contain; }
+    .stage-wall { position:absolute; left:0; right:0; top:0; bottom:calc(var(--floor-h,30px) - 4px); background:var(--wl) repeat-x left bottom / auto 100%; }
+    /* มีแถบตัวละคร → ยกพื้นหลังธีมขึ้นเหนือแถบ (ไม่ให้ผนัง/พื้นบังฉาก) */
+    body.has-strip .xmas-scene { height:calc(100dvh - var(--nav-h) - var(--strip-h) + 4px); }
     .stage-floor { height:var(--floor-h,30px); background:var(--fl) repeat-x left bottom / auto 100%; }
     #avatar-strip .stage-floor { position:absolute; left:0; right:0; bottom:0; z-index:0; }
     #avatar-strip .stage-decor { position:absolute; bottom:calc(var(--floor-h,30px) - 8px); width:44px; height:44px; margin-left:-22px; object-fit:contain; z-index:0; }
@@ -3474,9 +3477,10 @@ function spriteReady() { return typeof SpriteActor !== 'undefined'; }
 
 // ---------- ร้านค้า ----------
 var SHOP = { data: null, tab: 'avatar', actors: [], inv: 'avatar' };
-var SHOP_KINDS = [['avatar', '🦖 ตัวละคร'], ['floor', '🏞️ พื้น'], ['decor', '🎀 ของตกแต่ง']];
+var SHOP_KINDS = [['avatar', '🦖 ตัวละคร'], ['wall', '🧱 ผนัง'], ['floor', '🏞️ พื้น'], ['decor', '🎀 ตกแต่ง']];
 function floorUrl(art) { return '/stage/floors/' + art + '.webp'; }
 function decorUrl(art) { return '/stage/decor/' + art + '.webp'; }
+function wallUrl(art) { return '/stage/walls/' + art + '.webp'; }
 function shopRoot() { var s = document.querySelector('.screen.active .shop-root'); return s; }
 function shopClearActors() { SHOP.actors.forEach(function (a) { try { a.destroy(); } catch (e) {} }); SHOP.actors = []; }
 function loadShop() {
@@ -3502,15 +3506,15 @@ function renderShop() {
   if (b) { b.style.display = wishCount ? 'inline-flex' : 'none'; b.textContent = wishCount; }
   root.innerHTML = '<div class="shop-top"><h2>🛍️ ร้านค้า</h2><span class="wallet-pill">' + COIN + ' ' + d.wallet.gold + '</span><span class="wallet-pill">' + PSTAR + ' ' + d.wallet.purple + '</span></div>' +
     (d.firstDiscount ? '<div class="shop-sale">🎉 ตัวละครตัวแรกของครอบครัว ลด ' + d.discountPct + '%</div>' : '') +
-    '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · พื้น ' + cnt('floor') + ' · ของตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
+    '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · ผนัง ' + cnt('wall') + ' · พื้น ' + cnt('floor') + ' · ตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
     '<div class="shop-tabs">' + tabs.map(function (t) { return '<button class="' + (SHOP.tab === t[0] ? 'on' : '') + '" onclick="shopTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
     '<div class="shop-grid">' + items.map(function (it) {
       var tag = it.assigned_to ? '<span class="shop-tag">' + esc(it.assigned_to.name) + ' ใช้อยู่</span>' : it.inUse === true ? '<span class="shop-tag">ใช้อยู่</span>' : it.owned ? '<span class="shop-tag">' + (it.free ? 'ฟรี' : 'มีแล้ว') + '</span>' : '';
       var wish = !it.owned && (it.iWish || (d.canBuy && it.wishedBy.length)) ? '<span class="shop-tag w">💜 ' + (d.canBuy ? esc(it.wishedBy.join(', ')) + ' อยากได้' : 'อยากได้') + '</span>' : '';
       return '<button type="button" class="shop-item" onclick="openShopItem(\'' + it.id + '\')">' + tag + wish +
         shopArt(it) + '<b>' + esc(it.name) + '</b>' + shopPrice(it) + '</button>';
-    }).join('') + (items.length < 2 ? '<div class="shop-soon">✨ ' + (SHOP.tab === 'decor' ? 'ของตกแต่ง' : SHOP.tab === 'floor' ? 'พื้นแบบใหม่' : 'ตัวละครใหม่') + ' เร็ว ๆ นี้</div>' : '') + '</div>' +
-    '<div class="shop-note">' + (d.canBuy ? (SHOP.tab === 'avatar' ? 'ซื้อแล้วเลือกได้ว่าให้ใครในบ้านใช้ ตัวละครจะเดินอยู่ด้านล่างจอของทุกคนในครอบครัว' : 'พื้นและของตกแต่งจะอยู่ด้านล่างจอของทุกคนในครอบครัว')
+    }).join('') + (items.length < 2 ? '<div class="shop-soon">✨ ' + (SHOP.tab === 'decor' ? 'ของตกแต่ง' : SHOP.tab === 'floor' ? 'พื้นแบบใหม่' : SHOP.tab === 'wall' ? 'ผนังแบบใหม่' : 'ตัวละครใหม่') + ' เร็ว ๆ นี้</div>' : '') + '</div>' +
+    '<div class="shop-note">' + (d.canBuy ? (SHOP.tab === 'avatar' ? 'ซื้อแล้วเลือกได้ว่าให้ใครในบ้านใช้ ตัวละครจะเดินอยู่ด้านล่างจอของทุกคนในครอบครัว' : 'ผนัง พื้น และของตกแต่งจะอยู่ด้านล่างจอของทุกคนในครอบครัว')
       : 'ผู้ปกครองเป็นคนซื้อ · กด "อยากได้" ให้พ่อแม่รู้ได้นะ 💜') + '<br>เหรียญทอง: เร็ว ๆ นี้</div>';
   feReplace(root);
   if (!spriteReady()) return;
@@ -3525,6 +3529,7 @@ function renderShop() {
 }
 function shopArt(it, big) {
   if (it.kind === 'floor') return '<div class="shop-floor" style="--fl:url(' + floorUrl(it.art) + ')' + (big ? ';height:110px' : '') + '"></div>';
+  if (it.kind === 'wall') return '<div class="shop-floor" style="--fl:url(' + wallUrl(it.art) + ');background-size:auto 100%' + (big ? ';height:110px' : '') + '"></div>';
   if (it.kind === 'decor') return '<div class="shop-stage" style="display:grid;place-items:center"><img src="' + decorUrl(it.art) + '" alt="" style="max-height:90px"></div>';
   return '<div class="shop-stage" data-sprite="' + it.sprite + '"></div>';
 }
@@ -3562,19 +3567,20 @@ function openShopItem(id) {
 function openStageItem(it) {
   var d = SHOP.data, lack = !it.owned && d.wallet.purple < it.pay ? it.pay - d.wallet.purple : 0, actions;
   if (!d.canBuy) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.owned ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '💔 ยกเลิกอยากได้' : '💜 อยากได้!') + '</button>');
-  else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\')">ใช้พื้นนี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปวางของ</button>');
+  else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' || it.kind === 'wall' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\',\'' + it.kind + '\')">ใช้' + (it.kind === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปวางของ</button>');
   else actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') + ' onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + it.pay + ' ดาวม่วง</button>';
   openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2>' + shopArt(it, true) +
-    '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
+    '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : it.kind === 'wall' ? 'ผนังหลังตัวละคร' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
     (it.owned ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') +
     '<div style="display:flex;gap:8px;margin-top:10px">' + actions + '</div>' +
     (d.canBuy && lack ? '<div style="font-size:.8rem;color:var(--text-muted);margin-top:8px">มี ' + d.wallet.purple + ' ดาวม่วง · ขาดอีก ' + lack + '</div>' : '') + '</div>');
   feReplace(document.getElementById('modal-content'));
 }
-function useFloor(btn, id) {
+function useFloor(btn, id, kind) {
   if (btn) btn.disabled = true;
-  google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; renderShop(); if (INV.open) renderInventory(); else closeModal(); toast('✅ เปลี่ยนพื้นแล้ว'); Live.request(); })
-    .withFailureHandler(function (e) { if (btn) btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); }).setFloor(currentMember.memberId, id);
+  var run = google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; renderShop(); if (INV.open) renderInventory(); else closeModal(); toast(kind === 'wall' ? '✅ เปลี่ยนผนังแล้ว' : '✅ เปลี่ยนพื้นแล้ว'); Live.request(); })
+    .withFailureHandler(function (e) { if (btn) btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); });
+  if (kind === 'wall') run.setWall(currentMember.memberId, id); else run.setFloor(currentMember.memberId, id);
 }
 
 // ---------- ของของครอบครัว: จัดการตัวละคร / พื้น / ของตกแต่ง (ผู้ปกครองแก้ได้ · เด็กดูอย่างเดียว) ----------
@@ -3594,10 +3600,10 @@ function renderInventory() {
         '<small' + (it.assigned_to ? '>อวาตาร์ของ ' + esc(it.assigned_to.name) : ' style="color:var(--danger)">ยังไม่ได้ให้ใคร') + '</small></div>' +
         (edit ? '<button class="inv-btn' + (it.assigned_to ? ' g' : '') + '" onclick="INV.open=false;window.__invBack=true;openShopItem(\'' + it.id + '\')">' + (it.assigned_to ? 'เปลี่ยนคน' : 'ให้ใครดี?') + '</button>' : '') + '</div>';
     }).join('') : '<div class="shop-soon" style="box-shadow:none">ยังไม่มีตัวละคร · ซื้อได้ที่ร้านค้า</div>';
-  } else if (k === 'floor') {
+  } else if (k === 'floor' || k === 'wall') {
     body = mine.map(function (it) {
-      return '<div class="inv-row"><div class="inv-ic stage-floor" style="--fl:url(' + floorUrl(it.art) + ');height:46px"></div><div class="inv-t">' + esc(it.name) + '<small>' + (it.inUse === true ? 'ใช้อยู่' : it.free ? 'ฟรี' : 'มีแล้ว') + '</small></div>' +
-        (it.inUse === true ? '<span class="shop-tag" style="position:static">ใช้อยู่</span>' : edit ? '<button class="inv-btn" onclick="useFloor(this,\'' + it.id + '\')">ใช้พื้นนี้</button>' : '') + '</div>';
+      return '<div class="inv-row"><div class="inv-ic stage-floor" style="--fl:url(' + (k === 'wall' ? wallUrl(it.art) : floorUrl(it.art)) + ');height:46px"></div><div class="inv-t">' + esc(it.name) + '<small>' + (it.inUse === true ? 'ใช้อยู่' : it.free ? 'ฟรี' : 'มีแล้ว') + '</small></div>' +
+        (it.inUse === true ? '<span class="shop-tag" style="position:static">ใช้อยู่</span>' : edit ? '<button class="inv-btn" onclick="useFloor(this,\'' + it.id + '\',\'' + k + '\')">ใช้' + (k === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>' : '') + '</div>';
     }).join('');
   } else {
     body = (mine.length ? '' : '<div class="shop-soon" style="box-shadow:none">✨ ของตกแต่ง เร็ว ๆ นี้</div>') +
@@ -3613,11 +3619,15 @@ function renderInventory() {
     spriteManifest(id).then(function (m) { if (!st.isConnected) return; var a = SpriteActor.create(st, m, { size: 18, basePath: '/sprites/characters/' + id + '/', x: 23 }); a.loop(m.idle || m.walk || 'walk'); SHOP.actors.push(a); });
   });
 }
+// ผนัง (เต็มแถบ ถึงขอบบนของพื้น) + พื้น
+function stageBase(st) {
+  return (st.wall ? '<div class="stage-wall" style="--wl:url(' + wallUrl(st.wall.art) + ')"></div>' : '') + '<div class="stage-floor" style="--fl:url(' + floorUrl(st.floor.art) + ')"></div>';
+}
 // พรีวิวพื้นจริง + จุดวางของ 5 จุด
 function stagePreview(st, edit) {
   if (!st) return '';
   var n = st.slots.length;
-  return '<div class="inv-prev"><div class="stage-floor" style="--fl:url(' + floorUrl(st.floor.art) + ')"></div>' + st.slots.map(function (x, i) {
+  return '<div class="inv-prev">' + stageBase(st) + st.slots.map(function (x, i) {
     var left = ((i + .5) / n * 100) + '%';
     if (!edit && !x) return '';
     return '<button type="button" class="inv-slot" style="left:' + left + '" ' + (edit ? 'onclick="pickDecor(' + i + ')"' : 'disabled') + '>' + (x ? '<img src="' + decorUrl(x.art) + '" alt="">' : (i + 1)) + '</button>';
@@ -3682,7 +3692,7 @@ function stripUpdate(avatars, stage) {
   }
   el.classList.add('on'); document.body.classList.add('has-strip');
   // พื้น + ของตกแต่ง (อยู่หลังตัวละคร) · ตัวละครยืนบนผิวพื้น
-  el.innerHTML = stage ? '<div class="stage-floor" style="--fl:url(' + floorUrl(stage.floor.art) + ')"></div>' + stage.slots.map(function (x, i) {
+  el.innerHTML = stage ? stageBase(stage) + stage.slots.map(function (x, i) {
     return x ? '<img class="stage-decor" src="' + decorUrl(x.art) + '" alt="" style="left:' + ((i + .5) / stage.slots.length * 100) + '%">' : '';
   }).join('') : '';
   var rulesP = STRIP.rules || (STRIP.rules = fetch('/sprites/scenes/family.json').then(function (r) { return r.json(); }).catch(function () { return { interactions: [] }; }));

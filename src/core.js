@@ -13,7 +13,7 @@ export const PUBLIC_API = [
   'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
   'sendGift', 'cancelGift', 'openGift',
-  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'placeDecor', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
+  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'placeDecor', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
 ];
 
 export function createCore(S) {
@@ -1874,15 +1874,16 @@ export function createCore(S) {
 
   // ---------- ร้านค้า ----------
   // kind: avatar = ตัวละคร (type dad/mom = ผู้ปกครองใช้ · kid = เด็กใช้ · sprite = โฟลเดอร์ใน /sprites/characters/)
-  //       floor = พื้นที่ตัวละครเดิน (art = /stage/floors/<art>.webp) · decor = ของตกแต่งวางบนพื้น 5 จุด (art = /stage/decor/<art>.webp)
+  //       floor = พื้นที่ตัวละครเดิน (art = /stage/floors/<art>.webp) · wall = ผนังหลังตัวละคร (/stage/walls/<art>.webp) · decor = ของตกแต่งวางบนพื้น 5 จุด (art = /stage/decor/<art>.webp)
   // free = ทุกครอบครัวมีอยู่แล้ว ไม่ต้องซื้อ · เพิ่มของใหม่ = เพิ่มแถวที่นี่ + ใส่ภาพใน public/stage/
   var SHOP_ITEMS = [
     { id: 'dino_dad', kind: 'avatar', name: 'พ่อไดโน', type: 'dad', sprite: 'dad',  price: 50, currency: 'purple' },
     { id: 'dino_mom', kind: 'avatar', name: 'แม่ไดโน', type: 'mom', sprite: 'mom',  price: 50, currency: 'purple' },
     { id: 'dino_kid', kind: 'avatar', name: 'ลูกไดโน', type: 'kid', sprite: 'dino', price: 50, currency: 'purple' },
-    { id: 'floor_wood', kind: 'floor', name: 'พื้นไม้', art: 'wood', price: 0, currency: 'purple', free: true }
+    { id: 'floor_wood', kind: 'floor', name: 'พื้นไม้', art: 'wood', price: 0, currency: 'purple', free: true },
+    { id: 'wall_cream', kind: 'wall', name: 'ผนังครีมหน้าต่างฟ้า', art: 'cream', price: 0, currency: 'purple', free: true }
   ];
-  var DEFAULT_FLOOR = 'floor_wood', STAGE_SLOTS = 5;
+  var DEFAULT_FLOOR = 'floor_wood', DEFAULT_WALL = 'wall_cream', STAGE_SLOTS = 5;
   var FIRST_DISCOUNT = 0.5;   // ตัวละครตัวแรกของครอบครัวลด 50%
   function shopItem_(id) { return SHOP_ITEMS.find(function(i) { return i.id === String(id); }); }
   function familyInv_(familyId) { return getAllRows_('Inventory').filter(function(r) { return String(r.family_id) === String(familyId); }); }
@@ -1896,21 +1897,25 @@ export function createCore(S) {
     var floor = shopItem_(st.floor);
     var slots = [];
     for (var i = 0; i < STAGE_SLOTS; i++) { var d = shopItem_((st.slots || [])[i]); slots.push(d && d.kind === 'decor' && owns_(familyId, d) ? d.id : ''); }
-    return { floor: floor && floor.kind === 'floor' && owns_(familyId, floor) ? floor.id : DEFAULT_FLOOR, slots: slots };
+    var wall = shopItem_(st.wall);
+    return { floor: floor && floor.kind === 'floor' && owns_(familyId, floor) ? floor.id : DEFAULT_FLOOR,
+      wall: wall && wall.kind === 'wall' && owns_(familyId, wall) ? wall.id : DEFAULT_WALL, slots: slots };
   }
   function familyStage_(familyId) {
-    var st = stageRaw_(familyId), f = shopItem_(st.floor);
-    return { floor: { id: f.id, art: f.art }, slots: st.slots.map(function(id) { var d = shopItem_(id); return d ? { id: d.id, art: d.art, name: d.name } : null; }) };
+    var st = stageRaw_(familyId), f = shopItem_(st.floor), w = shopItem_(st.wall);
+    return { floor: { id: f.id, art: f.art }, wall: { id: w.id, art: w.art }, slots: st.slots.map(function(id) { var d = shopItem_(id); return d ? { id: d.id, art: d.art, name: d.name } : null; }) };
   }
   function saveStage_(familyId, st) { updateRow_('Families', 'family_id', familyId, { stage: JSON.stringify(st) }); }
 
-  function setFloor(memberId, itemId) {
+  function setStageBase_(memberId, itemId, kind, label) {
     var parent = requireParent_(memberId), item = shopItem_(itemId);
-    if (!item || item.kind !== 'floor') throw new Error('ไม่พบพื้นนี้');
-    if (!owns_(parent.family_id, item)) throw new Error('ยังไม่ได้ซื้อพื้นนี้');
-    var st = stageRaw_(parent.family_id); st.floor = item.id; saveStage_(parent.family_id, st);
+    if (!item || item.kind !== kind) throw new Error('ไม่พบ' + label + 'นี้');
+    if (!owns_(parent.family_id, item)) throw new Error('ยังไม่ได้ซื้อ' + label + 'นี้');
+    var st = stageRaw_(parent.family_id); st[kind] = item.id; saveStage_(parent.family_id, st);
     return { stage: familyStage_(parent.family_id), shop: getShop(memberId) };
   }
+  function setFloor(memberId, itemId) { return setStageBase_(memberId, itemId, 'floor', 'พื้น'); }
+  function setWall(memberId, itemId) { return setStageBase_(memberId, itemId, 'wall', 'ผนัง'); }
   // วางของตกแต่งที่จุด slot (0–4) · itemId ว่าง = เอาออก · ของชิ้นเดียววางได้ 1 จุด (ย้ายจากจุดเดิม)
   function placeDecor(memberId, slot, itemId) {
     var parent = requireParent_(memberId), i = Number(slot);
@@ -1953,7 +1958,7 @@ export function createCore(S) {
         var ws = wishes.filter(function(w) { return w.item_id === it.id; });
         return { id: it.id, kind: it.kind, name: it.name, type: it.type, sprite: it.sprite, art: it.art, free: !!it.free, currency: it.currency, price: it.price,
           pay: first ? Math.ceil(it.price * (1 - FIRST_DISCOUNT)) : it.price, owned: !!own,
-          inUse: it.kind === 'floor' ? stage.floor === it.id : it.kind === 'decor' ? stage.slots.indexOf(it.id) : undefined,
+          inUse: it.kind === 'floor' ? stage.floor === it.id : it.kind === 'wall' ? stage.wall === it.id : it.kind === 'decor' ? stage.slots.indexOf(it.id) : undefined,
           assigned_to: who ? { member_id: who.member_id, name: who.name, avatar: who.avatar } : null,
           wishedBy: ws.map(function(w) { var k = getMember_(w.child_id); return k ? k.name : ''; }).filter(Boolean),
           iWish: ws.some(function(w) { return String(w.child_id) === String(m.member_id); }) };
@@ -2014,7 +2019,7 @@ export function createCore(S) {
   }
 
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
-    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, placeDecor };
+    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, placeDecor };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }
