@@ -585,6 +585,22 @@
     .urg-done .fold-body { border-top:1px dashed var(--border); margin-top:10px; padding-top:4px; }
     .urg-done .fold-body > .card { box-shadow:none; background:transparent; padding:10px 0 !important; margin:0; border-radius:0; }
     .urg-done .fold-body > .card + .card { border-top:1px solid #f0f0f0; }
+    /* ป๊อปอัปต้นคริสต์มาสครบ 5 วัน */
+    #tree-pop { position:fixed; inset:0; z-index:300; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:20px;
+      background:radial-gradient(circle at 50% 40%, rgba(255,250,235,.97), rgba(226,245,238,.97)); opacity:0; pointer-events:none; transition:opacity .35s; }
+    #tree-pop.on { opacity:1; pointer-events:auto; }
+    #tree-pop .tp-tag { background:#fff; color:var(--primary); border-radius:99px; padding:4px 14px; font-weight:600; font-size:.9rem; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    #tree-pop canvas.tp-anim { width:330px; height:300px; max-width:100%; }
+    #tree-pop .tp-msg { text-align:center; opacity:0; transform:scale(.6); transition:all .45s cubic-bezier(.3,1.6,.5,1); }
+    #tree-pop .tp-msg.on { opacity:1; transform:scale(1); }
+    #tree-pop h1 { margin:0; font-size:2rem; color:#1F3B35; }
+    #tree-pop p { margin:4px 0 0; color:var(--primary); }
+    #tree-pop .tp-dots { display:flex; gap:8px; justify-content:center; margin:10px 0 2px; }
+    #tree-pop .tp-dots span { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:#FFC24B; box-shadow:0 1px 3px rgba(0,0,0,.15); font-weight:700; color:#1F3B35; }
+    #tree-pop .tp-close { margin-top:14px; font-family:inherit; font-size:1.15rem; font-weight:700; color:#fff; border:0; border-radius:99px; padding:14px 56px;
+      background:linear-gradient(135deg,#FF5A36,#FF8A45); box-shadow:0 4px 0 #d9481f; opacity:0; transition:opacity .4s .5s; }
+    #tree-pop .tp-msg.on .tp-close { opacity:1; }
+    #tree-pop canvas.tp-cf { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
     #avatar-strip { position:fixed; left:0; right:0; bottom:var(--nav-h); height:var(--strip-h); z-index:90; pointer-events:none; display:none; overflow:hidden; }
     #avatar-strip.on { display:block; }
     #avatar-strip .sa-actor { bottom:4px; }
@@ -898,6 +914,14 @@
 
 <!-- ตัวละครของครอบครัวเดินด้านล่างของจอ (แสดงเมื่อมีคนใช้อวาตาร์จากร้านค้า) -->
 <div id="avatar-strip" aria-hidden="true"></div>
+<div id="tree-pop" role="dialog" aria-label="ครบ 5 วันแล้ว">
+  <div class="tp-tag">🎄 ภารกิจต้นคริสต์มาส</div>
+  <canvas class="tp-anim" width="660" height="600"></canvas>
+  <div class="tp-msg"><h1>ครบ 5 วันแล้ว! 🎉</h1><p>ต้นไม้ของหนูสว่างไสวเลย เก่งมาก!</p>
+    <div class="tp-dots"><span>✓</span><span>✓</span><span>✓</span><span>✓</span><span>⭐</span></div>
+    <button type="button" class="tp-close" onclick="treePopClose()">ปิด</button></div>
+  <canvas class="tp-cf"></canvas>
+</div>
 
 <!-- ==================== MODALS ==================== -->
 <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
@@ -2068,6 +2092,7 @@ function renderWheelCard(d) {
     '<div class="tree-legend"><span><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#E05A5A;vertical-align:middle"></span> แขวนแล้ว</span><span>⏳ รออนุมัติ</span><span><span style="color:#A86E00;font-weight:800">+</span> ส่งวันนี้</span></div></div></div>' +
     '<div class="tree-msg">' + msg + '</div></div>';
   el.innerHTML = html;
+  maybeTreePop(d);
 }
 
 // ---------- wheel screen ----------
@@ -3193,13 +3218,98 @@ function renderDaily(d) {
 
 // popup วันละครั้ง (เซิร์ฟเวอร์จำว่าเห็นแล้ว → เครื่องอื่นไม่เด้งซ้ำ)
 var __dqPopped = {};
+// ---------- ป๊อปอัปครบ 5 วัน (ต้นคริสต์มาส) ----------
+// ขึ้นเมื่อมีสิทธิ์หมุนที่ได้หลัง Members.tree_seen · มาทาง WebSocket ได้ทันทีโดยไม่ต้องเปิดแอปใหม่
+// ภาพ: public/sprites/tree/*.webp (ต้นฉบับ+สคริปต์ตัด sprites/tree/src) · เด็กที่ใช้อวาตาร์ลูกไดโน = มีน้องไดโนแขวนบอล
+var TREE = { open: false, popped: {}, img: null, raf: 0, ac: null };
+function maybeTreePop(d) {
+  var w = d && d.wheel, m = currentMember;
+  if (!w || !w.enabled || !w.lastEarned || !m || m.role !== 'child') return;
+  if (w.lastEarned <= (w.treeSeen || '') || TREE.popped[w.lastEarned] || TREE.open) return;
+  var ov = document.getElementById('modal-overlay');
+  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show'))) {
+    setTimeout(function () { if (dashboardData) maybeTreePop(dashboardData); }, 1500);   // รอหน้าต่างอื่นปิดก่อน
+    return;
+  }
+  TREE.popped[w.lastEarned] = true;
+  var dino = (d.avatars || []).some(function (a) { return a.member_id === d.member.member_id && a.item_id === 'dino_kid'; });
+  treeLoad(function () { treePopOpen(dino, w.lastEarned); });
+}
+function treeLoad(cb) {
+  if (TREE.img && TREE.img.n === 8) return cb();
+  var keys = ['bare', 't2', 't4', 't5', 'hold', 'reach', 'clasp', 'jump'], I = { n: 0 };
+  keys.forEach(function (k) { var im = new Image(); im.onload = im.onerror = function () { if (++I.n === keys.length) { TREE.img = I; cb(); } }; im.src = '/sprites/tree/' + k + '.webp'; I[k] = im; });
+}
+function treePopOpen(dino, earned) {
+  TREE.open = true; TREE.earned = earned;
+  var pop = document.getElementById('tree-pop'), msg = pop.querySelector('.tp-msg');
+  msg.classList.remove('on'); pop.classList.add('on');
+  var c = pop.querySelector('.tp-anim').getContext('2d'), t0 = performance.now(), I = TREE.img;
+  var G = 280, TX = 178, TY = G - 261, BALL = { x: TX + 90, y: TY + 125 }, STAR = { x: TX + 62, y: TY + 92 };
+  var COL = ['#FF5A36', '#2A9479', '#FFC24B', '#FF8E8E', '#7FD3F7'];
+  function cl(x) { return x < 0 ? 0 : x > 1 ? 1 : x; } function eo(t) { return 1 - Math.pow(1 - t, 3); } function eio(t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function seg(t, a, b) { return cl((t - a) / (b - a)); }
+  function draw(k, x, y, al, sx, sy) { var im = I[k]; if (al <= 0 || !im || !im.width) return; sx = sx || 1; sy = sy || sx; c.save(); c.globalAlpha = al; c.translate(x + im.width / 2, y); c.scale(sx, sy); c.drawImage(im, -im.width / 2, -im.height); c.restore(); }
+  function glow(x, y, r, a) { if (a <= 0) return; var g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(255,214,90,' + a + ')'); g.addColorStop(1, 'rgba(255,214,90,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
+  function twinkle(x, y, s, a) { if (a <= 0) return; c.save(); c.globalAlpha = a; c.fillStyle = '#FFC24B'; c.translate(x, y); c.beginPath(); for (var i = 0; i < 8; i++) { var r = i % 2 ? s * .3 : s, an = i * Math.PI / 4; c.lineTo(Math.cos(an) * r, Math.sin(an) * r); } c.fill(); c.restore(); }
+  function confetti(t, ox, oy) { if (t < 0 || t > 1.6) return; for (var i = 0; i < 26; i++) { var an = -Math.PI / 2 + (i / 26 - .5) * 2.6, sp = 90 + (i * 37 % 60); var x = ox + Math.cos(an) * sp * t, y = oy + Math.sin(an) * sp * t + 120 * t * t; c.save(); c.globalAlpha = cl(1.6 - t); c.fillStyle = COL[i % 5]; c.translate(x, y); c.rotate(t * 8 + i); c.fillRect(-3, -1.5, 6, 3); c.restore(); } }
+  function burst(t, x, y) { if (!(t > 0 && t < 1)) return; for (var i = 0; i < 8; i++) { var an = i * Math.PI / 4, d = 6 + 22 * eo(t); twinkle(x + Math.cos(an) * d, y + Math.sin(an) * d, 4 * (1 - t) + 1, 1 - t); } }
+  function tree(t, lit) {
+    var a2 = seg(t, lit[0], lit[0] + .25), a4 = seg(t, lit[1], lit[1] + .4), a5 = seg(t, lit[2], lit[2] + .5);
+    draw('bare', TX, G, 1 - a2); draw('t2', TX, G, a2 * (1 - a4)); draw('t4', TX, G, a4 * (1 - a5)); draw('t5', TX, G, a5);
+    var pulse = .5 + .5 * Math.sin(t * 4); glow(STAR.x, STAR.y, 34 + 6 * pulse, a4 * (.45 + .2 * pulse));
+    if (a5 > 0) [[-30, 40], [34, 60], [-40, 120], [40, 150], [0, 20], [-20, 180], [30, 200]].forEach(function (p, i) { twinkle(STAR.x + p[0], STAR.y + p[1], 3.5, a5 * (.5 + .5 * Math.sin(t * 5 + i * 1.7))); });
+  }
+  function A(t) {
+    tree(t, [2.0, 2.7, 3.4]); var bob = Math.sin(t * 5) * 1.5;
+    if (t < 1.0) draw('hold', 30, G, 1, 1, 1 + bob * .004);
+    else if (t < 2.0) { var m = eio(seg(t, 1.0, 1.45)), x = 30 + 98 * m, hop = -Math.sin(m * Math.PI) * 8; draw('hold', x, G + hop, 1 - seg(t, 1.25, 1.45)); draw('reach', x, G + hop, seg(t, 1.25, 1.45)); }
+    else if (t < 3.4) { var x2 = 128 - 73 * eio(seg(t, 2.15, 2.6)); draw('reach', x2, G, 1 - seg(t, 2.15, 2.35)); draw('clasp', x2, G, seg(t, 2.15, 2.35), 1, 1 + bob * .006); }
+    else if (t < 4.3) { var j = seg(t, 3.4, 4.2), sq = j < .08 ? 1 - .8 * j : (j > .92 ? .95 : 1); draw('jump', 55, G - Math.sin(j * Math.PI) * 34, 1, 2 - sq, sq); }
+    else { var s = seg(t, 4.3, 4.42); draw('clasp', 55, G, 1, 1 + .06 * (1 - s), .94 + .06 * s + bob * .004); }
+    burst((t - 2.0) / .6, BALL.x, BALL.y); confetti((t - 3.45) / 1.2 * 1.6, 110, 170);
+  }
+  function B(t) {
+    c.translate(-70, 0);
+    var bx0 = BALL.x - 30, by0 = TY + 15, m = eio(seg(t, .3, 1.6)), bx = bx0 + (BALL.x - bx0) * m + Math.sin(t * 6) * (1 - m) * 4, by = by0 + (BALL.y - by0) * m;
+    tree(t, [1.6, 2.3, 3.0]);
+    if (t < 1.75) { c.save(); c.globalAlpha = 1 - seg(t, 1.6, 1.75); c.fillStyle = '#E9B33A'; c.strokeStyle = '#1F3B35'; c.lineWidth = 1.5; c.beginPath(); c.arc(bx, by, 9, 0, 7); c.fill(); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.arc(bx - 3, by - 3, 3, 0, 7); c.fill(); c.fillStyle = '#b8862a'; c.fillRect(bx - 3, by - 13, 6, 4); c.restore();
+      for (var i = 1; i < 4; i++) twinkle(bx - 6 * i + Math.sin(t * 9 + i) * 3, by - 8 * i, 2.5, (1 - m) * (.8 - i * .2)); }
+    burst((t - 1.6) / .6, BALL.x, BALL.y); confetti((t - 3.05) / 1.2 * 1.6, STAR.x, STAR.y + 40);
+  }
+  cancelAnimationFrame(TREE.raf);
+  (function f(now) { if (!TREE.open) return; var t = (now - t0) / 1000; c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, 330, 300); (dino ? A : B)(t); TREE.raf = requestAnimationFrame(f); })(t0);
+  setTimeout(function () { if (!TREE.open) return; msg.classList.add('on'); treeConfetti(); treeChime(); }, (dino ? 3.4 : 3.0) * 1000);
+}
+function treePopClose() {
+  TREE.open = false; cancelAnimationFrame(TREE.raf);
+  document.getElementById('tree-pop').classList.remove('on');
+  if (TREE.earned && currentMember) google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).treeSeen(currentMember.memberId, TREE.earned);
+  if (dashboardData && dashboardData.wheel) dashboardData.wheel.treeSeen = TREE.earned;
+}
+function treeChime() {
+  try { var AC = TREE.ac = TREE.ac || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); var t = AC.currentTime;
+    [1318.5, 1568, 2093, 2637].forEach(function (f, i) { var o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, t + i * .09); g.gain.linearRampToValueAtTime(.18, t + i * .09 + .01); g.gain.exponentialRampToValueAtTime(.001, t + i * .09 + 1.2);
+      o.connect(g); g.connect(AC.destination); o.start(t + i * .09); o.stop(t + i * .09 + 1.3); }); } catch (e) {}
+}
+function treeConfetti() {
+  var cv = document.querySelector('#tree-pop .tp-cf'), W = innerWidth, H = innerHeight; cv.width = W * 2; cv.height = H * 2;
+  var c = cv.getContext('2d'), P = [], t0 = performance.now(), COL = ['#FF5A36', '#2A9479', '#FFC24B', '#FF8E8E', '#7FD3F7'];
+  for (var i = 0; i < 90; i++) P.push({ x: W / 2 + (Math.random() - .5) * 60, y: H * .4, vx: (Math.random() - .5) * 9, vy: -6 - Math.random() * 9, r: Math.random() * 6, s: 4 + Math.random() * 5, c: COL[i % 5] });
+  (function f(now) { c.setTransform(2, 0, 0, 2, 0, 0); c.clearRect(0, 0, W, H); var alive = false;
+    P.forEach(function (p) { p.vy += .25; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += .15; if (p.y < H + 20) { alive = true; c.save(); c.translate(p.x, p.y); c.rotate(p.r); c.fillStyle = p.c; c.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); c.restore(); } });
+    if (alive && now - t0 < 5000) requestAnimationFrame(f); else c.clearRect(0, 0, W, H); })(t0);
+}
+
 function maybeQuestPopup(d) {
   var dl = d.daily, m = currentMember;
   if (!dl || dl.seen || !m) return;
   var key = m.memberId + '|' + dl.date;
   if (__dqPopped[key]) return;
   var ov = document.getElementById('modal-overlay');
-  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show'))) {
+  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || TREE.open) {
     setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 1500);   // รอหน้าต่างอื่นปิดก่อน
     return;
   }

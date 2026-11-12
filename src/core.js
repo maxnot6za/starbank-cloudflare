@@ -13,7 +13,7 @@ export const PUBLIC_API = [
   'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
   'sendGift', 'cancelGift', 'openGift',
-  'questSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
+  'questSeen', 'treeSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
 ];
 
 export function createCore(S) {
@@ -1246,6 +1246,9 @@ export function createCore(S) {
         enabled: true, prizes: ws.prizes, startedAt: ws.startedAt,
         run: prog.run, pendingCount: prog.pendingCount, todayStatus: prog.todayStatus, broke: prog.broke,
         spins: mine.filter(function(s) { return !s.used_at; }).length,
+        // ป๊อปอัปครบ 5 วัน: สิทธิ์ล่าสุดที่ได้หลังจากเห็นครั้งก่อน
+        lastEarned: mine.reduce(function(m, s) { var e = String(s.earned_at || ''); return e > m ? e : m; }, ''),
+        treeSeen: String(child.tree_seen || ''),
         history: used.slice(0, 10).map(function(s) { return { stars: Number(s.prize_stars || 0), used_at: s.used_at }; })
       };
     } finally {
@@ -1829,6 +1832,15 @@ export function createCore(S) {
       wallet: { purple: Number(fam.purple || 0), gold: Number(fam.gold || 0) } };
   }
 
+  // เด็กปิดป๊อปอัปครบ 5 วัน → จำ earned_at ล่าสุดที่เห็น (ไม่ย้อนกลับ)
+  function treeSeen(memberId, earnedAt) {
+    var m = getMember_(memberId);
+    if (!m) throw new Error('ไม่พบสมาชิก');
+    var e = String(earnedAt || '').slice(0, 40);
+    if (e && e > String(m.tree_seen || '')) updateRow_('Members', 'member_id', m.member_id, { tree_seen: e });
+    return { seen: e };
+  }
+
   function questSeen(memberId) {
     var m = getMember_(memberId);
     if (!m) throw new Error('ไม่พบสมาชิก');
@@ -1948,7 +1960,7 @@ export function createCore(S) {
   }
 
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
-    questSeen, claimQuest, getShop, buyItem, assignAvatar, wishItem };
+    questSeen, treeSeen, claimQuest, getShop, buyItem, assignAvatar, wishItem };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }
