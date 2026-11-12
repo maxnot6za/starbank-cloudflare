@@ -222,7 +222,7 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 - ทดสอบ: `egg.test.js` (API) + `ui-egg.test.js` (หน้าจอ)
 
 ### 8.11 สัตว์เลี้ยง (ตัวละครประเภทที่ 4 ต่อจาก ลูก/แม่/พ่อ)
-- `SHOP_ITEMS` kind `pet` (ตอนนี้ `pet_dino` ไดโนจิ๋ว `petdino` และ `pet_dino_pink` ไดโนชมพู `petpink` ตัวละ 20 ดาวม่วง) · ของทั้งครอบครัว ไม่มีเจ้าของรายคน
+- `SHOP_ITEMS` kind `pet` (ตอนนี้ `pet_dino` ไดโนจิ๋ว `petdino` `pet_dino_pink` ไดโนชมพู `petpink` และ `pet_dino_yellow` ไดโนเหลือง `petyellow` ตัวละ 20 ดาวม่วง) · ของทั้งครอบครัว ไม่มีเจ้าของรายคน
 - ห้อง `Families.stage.pets = [item_id]` สูงสุด `PET_MAX` 2 · ซื้อแล้วเข้าห้องเองถ้ายังมีที่ · `setPets(memberId, json)` ผู้ปกครองเท่านั้น (ร้าน: พาเข้า/ออกห้อง · ของของครอบครัว: แท็บ 🐾)
 - แถบห้อง: สัตว์เลี้ยงอยู่ใน cast ของ SpriteScene (scale 0.8) · มีสัตว์เลี้ยงแล้วไม่ขึ้นป้ายชวนซื้อตัวละคร
 - ท่า (`sprites/characters/petdino`): เดิน · ลง/ลุก (ชีต down) · อมอมยิ้ม · นั่งเล่นบอล · หมอบหลับ · โหม่งบอล (แตะ) · `life` ใช้ `{"walk":"near"}` = เดินแค่ 1–2 ช่วงหัว (เพิ่มใน sprite-actor.js)

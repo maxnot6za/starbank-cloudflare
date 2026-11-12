@@ -1,0 +1,342 @@
+{
+  "id": "petyellow",
+  "name": "ไดโนเหลือง",
+  "headWidth": 150,
+  "sheets": {
+    "walk": {
+      "file": "walk.webp",
+      "frames": 6,
+      "cell": [
+        188,
+        229
+      ],
+      "facing": "right",
+      "extent": [
+        90,
+        85
+      ],
+      "cut": {
+        "src": "src/walk.webp",
+        "frames": 6,
+        "facing": "right"
+      }
+    },
+    "down": {
+      "file": "down.webp",
+      "frames": 6,
+      "cell": [
+        351,
+        232
+      ],
+      "facing": "right",
+      "extent": [
+        172,
+        86
+      ],
+      "cut": {
+        "src": "src/down.webp",
+        "frames": 6,
+        "facing": "right"
+      }
+    },
+    "lolly": {
+      "file": "lolly.webp",
+      "frames": 8,
+      "cell": [
+        178,
+        223
+      ],
+      "facing": "right",
+      "extent": [
+        81,
+        85
+      ],
+      "cut": {
+        "src": "src/lolly.webp",
+        "frames": 8,
+        "facing": "right"
+      }
+    },
+    "ball": {
+      "file": "ball.webp",
+      "frames": 6,
+      "cell": [
+        208,
+        223
+      ],
+      "facing": "right",
+      "extent": [
+        100,
+        99
+      ],
+      "cut": {
+        "src": "src/ball.webp",
+        "frames": 6,
+        "facing": "right"
+      }
+    },
+    "head": {
+      "file": "head.webp",
+      "frames": 6,
+      "cell": [
+        194,
+        297
+      ],
+      "facing": "right",
+      "extent": [
+        93,
+        86
+      ],
+      "cut": {
+        "src": "src/head-fixed.webp",
+        "frames": 6,
+        "order": "1,2,6,3,4,5",
+        "facing": "right",
+        "keep_y": true
+      }
+    }
+  },
+  "anims": {
+    "walk": {
+      "label": "เดิน",
+      "sheet": "walk",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "ms": 150,
+      "loop": true,
+      "speed": 0.7,
+      "bob": [
+        0,
+        -1,
+        -1.5,
+        0,
+        -1,
+        -1.5
+      ]
+    },
+    "stand": {
+      "label": "ยืน",
+      "sheet": "down",
+      "frames": [
+        0
+      ],
+      "ms": 600
+    },
+    "sitDown": {
+      "label": "นั่งลง",
+      "sheet": "down",
+      "frames": [
+        0,
+        1,
+        2
+      ],
+      "ms": [
+        300,
+        200,
+        400
+      ]
+    },
+    "standUp": {
+      "label": "ลุกขึ้น",
+      "sheet": "down",
+      "frames": [
+        2,
+        1,
+        0
+      ],
+      "ms": [
+        200,
+        200,
+        300
+      ]
+    },
+    "lolly": {
+      "label": "นั่งอมอมยิ้ม",
+      "sheet": "lolly",
+      "loop": true,
+      "steps": [
+        [
+          0,
+          700
+        ],
+        [
+          1,
+          350
+        ],
+        [
+          2,
+          500
+        ],
+        [
+          3,
+          600
+        ],
+        [
+          4,
+          500
+        ],
+        [
+          5,
+          350
+        ],
+        [
+          6,
+          450
+        ],
+        [
+          7,
+          600
+        ]
+      ]
+    },
+    "ballSit": {
+      "label": "นั่งเล่นบอล",
+      "sheet": "ball",
+      "loop": true,
+      "steps": [
+        [
+          0,
+          500
+        ],
+        [
+          1,
+          220
+        ],
+        [
+          2,
+          320
+        ],
+        [
+          3,
+          220
+        ],
+        [
+          4,
+          450
+        ],
+        [
+          5,
+          500
+        ]
+      ]
+    },
+    "nap": {
+      "label": "หมอบหลับ",
+      "sheet": "down",
+      "steps": [
+        [
+          2,
+          300
+        ],
+        [
+          3,
+          300
+        ],
+        [
+          4,
+          900
+        ],
+        [
+          5,
+          5000
+        ],
+        [
+          4,
+          400
+        ],
+        [
+          3,
+          250
+        ],
+        [
+          2,
+          300
+        ]
+      ]
+    },
+    "header": {
+      "label": "โหม่งบอล",
+      "sheet": "head",
+      "loop": true,
+      "steps": [
+        [
+          0,
+          260
+        ],
+        [
+          1,
+          200
+        ],
+        [
+          2,
+          240
+        ],
+        [
+          3,
+          200
+        ],
+        [
+          4,
+          260
+        ],
+        [
+          5,
+          200
+        ]
+      ]
+    }
+  },
+  "life": [
+    {
+      "walk": "near"
+    },
+    {
+      "play": "stand"
+    },
+    {
+      "chance": 0.35,
+      "do": [
+        {
+          "pick": [
+            "header"
+          ],
+          "for": [
+            2500,
+            4000
+          ]
+        }
+      ]
+    },
+    {
+      "play": "sitDown"
+    },
+    {
+      "pick": [
+        "lolly",
+        "ballSit",
+        "nap"
+      ],
+      "for": [
+        5000,
+        8000
+      ]
+    },
+    {
+      "play": "standUp"
+    }
+  ],
+  "kind": "pet",
+  "scale": 0.8,
+  "idle": "stand",
+  "walk": "walk",
+  "tap": {
+    "anim": "header"
+  },
+  "notes": "สัตว์เลี้ยงสีเหลือง (ท่าชุดเดียวกับ petdino)"
+}

@@ -1884,6 +1884,7 @@ export function createCore(S) {
     // สัตว์เลี้ยง (ตัวละครประเภทที่ 4): ของทั้งครอบครัว · อยู่ในห้องได้สูงสุด PET_MAX ตัว · เดินนิดเดียวแล้วนั่งเล่น/หลับ
     { id: 'pet_dino', kind: 'pet', name: 'ไดโนจิ๋ว', sprite: 'petdino', price: 20, currency: 'purple' },
     { id: 'pet_dino_pink', kind: 'pet', name: 'ไดโนชมพู', sprite: 'petpink', price: 20, currency: 'purple' },
+    { id: 'pet_dino_yellow', kind: 'pet', name: 'ไดโนเหลือง', sprite: 'petyellow', price: 20, currency: 'purple' },
     { id: 'floor_wood', kind: 'floor', name: 'พื้นไม้', art: 'wood', price: 0, currency: 'purple', free: true },
     { id: 'wall_cream', kind: 'wall', name: 'ผนังครีมหน้าต่างฟ้า', art: 'cream', price: 0, currency: 'purple', free: true }
   ];
