@@ -119,7 +119,7 @@ const thaiToday = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0
 
   // --- พื้น / ของตกแต่ง ---
   let st = (await call(mf, 'getChildDashboard', C)).value.stage;
-  ok(st && st.floor.id === 'floor_wood' && st.wall.id === 'wall_cream' && st.slots.length === 5 && st.slots.every(x => x === null), 'ค่าเริ่มต้น: พื้นไม้ + 5 จุดว่าง', st);
+  ok(st && st.floor.id === 'floor_wood' && st.wall.id === 'wall_cream' && Array.isArray(st.decor) && st.decor.length === 0, 'ค่าเริ่มต้น: พื้นไม้ + ห้องว่าง', st);
   shop = (await call(mf, 'getShop', P1)).value;
   const wood = shop.items.find(i => i.id === 'floor_wood');
   ok(wood && wood.free && wood.owned && wood.inUse === true, 'พื้นไม้ฟรี มีแล้ว ใช้อยู่', wood);
@@ -129,12 +129,11 @@ const thaiToday = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0
   r = await call(mf, 'setFloor', P1, 'floor_wood'); ok(r.ok && r.value.stage.floor.id === 'floor_wood', 'ผู้ปกครองตั้งพื้นได้');
   r = await call(mf, 'setWall', P1, 'wall_cream'); ok(r.ok && r.value.stage.wall.id === 'wall_cream', 'ผู้ปกครองตั้งผนังได้');
   r = await call(mf, 'setWall', P1, 'floor_wood'); ok(!r.ok, 'พื้นใช้เป็นผนังไม่ได้');
-  r = await call(mf, 'placeDecor', P1, 7, ''); ok(!r.ok, 'จุดที่ไม่มี → ปฏิเสธ');
-  r = await call(mf, 'placeDecor', P1, 1, 'floor_wood'); ok(!r.ok, 'พื้นวางเป็นของตกแต่งไม่ได้');
-  r = await call(mf, 'placeDecor', P1, 1, ''); ok(r.ok && r.value.stage.slots[1] === null, 'เอาของออกจากจุดได้');
-  await db.prepare("UPDATE Families SET stage = ? WHERE family_id = ?").bind('{"floor":"nope","slots":["x","","","",""]}', FAM).run();
+  r = await call(mf, 'saveRoom', P1, JSON.stringify([{ id: 'floor_wood', x: .5 }])); ok(!r.ok, 'พื้นวางเป็นของตกแต่งไม่ได้');
+  r = await call(mf, 'saveRoom', P1, '[]'); ok(r.ok && r.value.stage.decor.length === 0, 'ล้างห้องได้');
+  await db.prepare("UPDATE Families SET stage = ? WHERE family_id = ?").bind('{"floor":"nope","decor":[{"id":"x","x":0.5}]}', FAM).run();
   st = (await call(mf, 'getParentDashboard', P1)).value.stage;
-  ok(st.floor.id === 'floor_wood' && st.slots[0] === null, 'ข้อมูลเสีย/ของไม่รู้จัก → กลับเป็นค่าเริ่มต้น', st);
+  ok(st.floor.id === 'floor_wood' && st.decor.length === 0, 'ข้อมูลเสีย/ของไม่รู้จัก → กลับเป็นค่าเริ่มต้น', st);
 
   await mf.dispose();
   console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด');

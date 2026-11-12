@@ -592,6 +592,60 @@
     .stage-floor { height:var(--floor-h,30px); background:var(--fl) repeat-x left bottom / auto 100%; }
     #avatar-strip .stage-floor { position:absolute; left:0; right:0; bottom:0; z-index:0; }
     #avatar-strip .stage-decor { position:absolute; bottom:calc(var(--floor-h,30px) - 8px); width:44px; height:44px; margin-left:-22px; object-fit:contain; z-index:0; }
+    /* ของตกแต่งในห้อง + ท่าขยับ (ภาพนิ่ง 1 ภาพ ขยับด้วย CSS) */
+    .dc { position:absolute; transform:translateX(-50%); display:flex; align-items:flex-end; justify-content:center; }
+    .dc img { display:block; transform-origin:50% 100%; position:relative; z-index:1; pointer-events:none; }
+    .dc.sway img { animation:dcSway 3.2s ease-in-out infinite; } @keyframes dcSway { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+    .dc.rock img { animation:dcRock 2.4s ease-in-out infinite; } @keyframes dcRock { 0%,100%{transform:rotate(-7deg)} 50%{transform:rotate(7deg)} }
+    .dc.breathe img { animation:dcBreathe 2.8s ease-in-out infinite; } @keyframes dcBreathe { 0%,100%{transform:scale(1,1)} 50%{transform:scale(1.03,.97)} }
+    .dc.hover img { animation:dcHover 2.2s ease-in-out infinite; } @keyframes dcHover { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8%)} }
+    .dc.bounce img { animation:dcBounce 1.6s cubic-bezier(.3,0,.7,1) infinite; } @keyframes dcBounce { 0%,100%{transform:translateY(0) scale(1.06,.94)} 12%,88%{transform:translateY(0) scale(1)} 50%{transform:translateY(-25%) rotate(20deg)} }
+    .dc.beat img { animation:dcBeat 1s ease-in-out infinite; } @keyframes dcBeat { 0%,40%,100%{transform:scale(1)} 10%{transform:scale(1.06,.93)} 25%{transform:scale(1.04,.95)} }
+    .dc.wiggle img { animation:dcWiggle 4s ease-in-out infinite; } @keyframes dcWiggle { 0%,80%,100%{transform:rotate(0)} 84%{transform:rotate(-6deg)} 88%{transform:rotate(6deg)} 92%{transform:rotate(-4deg)} 96%{transform:rotate(3deg)} }
+    .dc.hop img { animation:dcHop 3s ease-in-out infinite; } @keyframes dcHop { 0%,70%,100%{transform:translateY(0)} 78%{transform:translateY(-12%)} 86%{transform:translateY(0) scale(1.04,.96)} 92%{transform:translateY(-4%)} }
+    .dc.slide img { animation:dcSlide 3.6s ease-in-out infinite; } @keyframes dcSlide { 0%,100%{transform:translateX(-4%) rotate(-1deg)} 50%{transform:translateX(4%) rotate(1deg)} }
+    .dc.lamp::before, .dc.fire::before, .dc.twinkle::before { content:""; position:absolute; left:50%; border-radius:50%; transform:translateX(-50%); animation:dcGlow 1.8s ease-in-out infinite; z-index:0; }
+    .dc.lamp::before { top:-15%; width:120%; aspect-ratio:1; background:radial-gradient(#FFE08Acc,transparent 70%); }
+    .dc.fire::before { bottom:5%; width:60%; aspect-ratio:1; background:radial-gradient(#FF9A3Ccc,transparent 70%); animation-duration:.5s; }
+    .dc.twinkle::before { top:-12%; width:45%; aspect-ratio:1; background:radial-gradient(#FFE08Add,transparent 70%); }
+    @keyframes dcGlow { 0%,100%{opacity:.45} 50%{opacity:1} }
+    @media (prefers-reduced-motion: reduce) { .dc img, .dc::before { animation:none !important; } }
+    /* ไข่ในห้อง */
+    #avatar-strip .strip-egg { position:absolute; right:10px; bottom:12px; width:40px; z-index:6; pointer-events:auto; cursor:pointer; transform-origin:50% 90%; }
+    #avatar-strip .strip-egg.ready { animation:eggWob .9s ease-in-out infinite; }
+    @keyframes eggWob { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
+    #avatar-strip .strip-egg .eb { position:absolute; top:-9px; left:3px; right:3px; height:5px; border-radius:9px; background:#fff; box-shadow:0 0 0 1.5px #1F3B35; overflow:hidden; }
+    #avatar-strip .strip-egg .eb i { display:block; height:100%; background:#FF7A8A; }
+    #avatar-strip .strip-egg .ed { position:absolute; top:-4px; right:-4px; width:12px; height:12px; border-radius:50%; background:#E84545; border:2px solid #fff; }
+    #avatar-strip .strip-sign { position:absolute; left:50%; top:8px; transform:translateX(-50%); z-index:6; pointer-events:auto; background:#fffe; border:0; border-radius:99px; padding:4px 12px; font:inherit; font-size:.72rem; font-weight:600; color:var(--mint-dark,#1F6F5C); box-shadow:0 1px 4px rgba(0,0,0,.15); white-space:nowrap; cursor:pointer; }
+    .egg-hb { height:12px; border-radius:9px; background:#FFE6EC; overflow:hidden; margin:8px 0 4px; } .egg-hb i { display:block; height:100%; background:linear-gradient(90deg,#FF8E8E,#FF5A7A); }
+    .egg-who { display:flex; flex-wrap:wrap; justify-content:center; gap:4px 12px; font-size:.82rem; color:var(--text-muted); margin:6px 0 10px; }
+    .egg-pool { display:flex; flex-wrap:wrap; justify-content:center; gap:4px; margin-top:8px; } .egg-pool img { height:26px; } .egg-pool img.no { filter:brightness(0) opacity(.2); }
+    #egg-pop { position:fixed; inset:0; z-index:310; display:none; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:20px; text-align:center;
+      background:radial-gradient(circle at 50% 40%, rgba(255,250,240,.97), rgba(226,245,238,.97)); }
+    #egg-pop.on { display:flex; }
+    #egg-pop .ep-stage { position:relative; width:240px; height:240px; display:grid; place-items:center; }
+    #egg-pop .ep-rays { position:absolute; inset:0; border-radius:50%; background:repeating-conic-gradient(#FFE08A66 0 10deg, transparent 10deg 30deg); animation:epSpin 8s linear infinite; opacity:0; transition:opacity .4s; }
+    #egg-pop .ep-rays.on { opacity:1; } @keyframes epSpin { to { transform:rotate(360deg); } }
+    #egg-pop .ep-egg { width:130px; cursor:pointer; transform-origin:50% 90%; position:relative; }
+    #egg-pop .ep-stage > * { grid-area:1/1; }
+    #egg-pop .ep-prize { max-height:150px; max-width:200px; opacity:0; transform:scale(.3) translateY(40px); transition:all .6s cubic-bezier(.3,1.6,.5,1); }
+    #egg-pop .ep-prize.on { opacity:1; transform:scale(1); }
+    #egg-pop .dq-btn { white-space:nowrap; padding:12px 24px; flex:none; }
+    #egg-pop h2 { margin:0; font-size:1.7rem; color:#1F3B35; }
+    .room-ed { position:relative; height:170px; border-radius:14px; overflow:hidden; touch-action:none; user-select:none; -webkit-user-select:none; margin-top:8px; }
+    .room-ed .stage-wall { bottom:34px; } .room-ed .stage-floor { position:absolute; left:0; right:0; bottom:0; height:40px; }
+    .room-ed .dc { bottom:20px; cursor:grab; touch-action:none; }
+    .room-ed .dc.sel img { filter:drop-shadow(0 0 2px #2A9479) drop-shadow(0 0 2px #2A9479); }
+    .room-ed .dc.drag img { transform:translateY(-8px) scale(1.06); animation:none; }
+    .room-tool { position:absolute; display:none; gap:3px; transform:translateX(-50%); z-index:30; background:#fff; border-radius:99px; padding:3px; box-shadow:0 2px 8px rgba(0,0,0,.2); align-items:center; }
+    .room-tool.on { display:flex; } .room-tool button { border:0; background:#F2F8F5; border-radius:99px; width:32px; height:32px; font-size:.95rem; cursor:pointer; padding:0; }
+    .room-tool span { font-size:.7rem; min-width:32px; text-align:center; color:var(--mint-dark,#1F6F5C); font-weight:700; }
+    .room-pal { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:8px; }
+    .room-pal button { border:0; background:#fff; border-radius:12px; height:70px; position:relative; font:inherit; font-size:.6rem; color:var(--text-muted); display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding:3px; box-shadow:0 1px 3px rgba(0,0,0,.08); cursor:pointer; }
+    .room-pal img { max-height:40px; max-width:52px; margin-bottom:2px; } .room-pal button.used { opacity:.45; }
+    .room-pal .tg { position:absolute; top:2px; right:3px; font-size:.55rem; background:var(--mint,#2A9479); color:#fff; border-radius:99px; padding:0 5px; }
+    .shop-item.egg-only { opacity:.75; }
     .shop-note { font-size:.8rem; color:var(--text-muted); text-align:center; margin:12px 0; background:rgba(255,255,255,0.88); border-radius:14px; padding:8px 12px; box-shadow:var(--shadow); }
     .shop-sale { background:linear-gradient(135deg,#F3EDFF,#fff); border:2px dashed #C9B5FF; border-radius:16px; padding:8px 12px; font-size:.85rem; font-weight:600; color:var(--purple-d); text-align:center; margin-bottom:12px; }
     .shop-big { position:relative; height:190px; border-radius:18px; overflow:hidden; background:linear-gradient(#F6FCF9 0 74%,#CFEBDF 74%); margin:4px 0 12px; }
@@ -3333,11 +3387,116 @@ function renderDaily(d) {
   feReplace(el);
   // รอให้ป้ายภารกิจด่วน/กล่องของขวัญ (สำคัญกว่า) เปิดก่อน แล้วค่อยเด้งภารกิจประจำวัน
   setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 700);
-  stripUpdate(d.avatars || [], d.stage);
+  stripUpdate(d.avatars || [], d.stage, d.egg);
+  setTimeout(function () { if (dashboardData) maybeEggEvent(dashboardData); }, 900);
 }
 
 // popup วันละครั้ง (เซิร์ฟเวอร์จำว่าเห็นแล้ว → เครื่องอื่นไม่เด้งซ้ำ)
 var __dqPopped = {};
+// ---------- ไข่ปริศนา ----------
+// เจอตอนผู้ปกครองอนุมัติภารกิจของลูก · ทุกคนกอดไข่ได้วันละครั้ง · ครบแล้วลูกแตะฟัก 3 ครั้ง → ได้ของตกแต่ง
+// ทุกคนในบ้านเห็นตอนเจอ/ฟัก (เปิดแอปอยู่ = เห็นทันทีทาง Live · ไม่ได้เปิด = เห็นตอนเปิดครั้งถัดไป) · Members.egg_seen กันเด้งซ้ำ
+function eggStage(c) { return c.status === 'ready' ? 3 : c.warm >= c.goal * 2 / 3 ? 2 : c.warm >= c.goal / 3 ? 1 : 0; }
+function eggSVG(stage, glow) {
+  var cr = ['', '<path d="M48 22 l5 7 l-4 4 l6 6" fill="none"/>', '<path d="M48 22 l5 7 l-4 4 l6 6 M22 58 l8 -4 l5 6 l8 -5 l7 6 l8 -5 l8 4" fill="none"/>',
+    '<path d="M48 22 l5 7 l-4 4 l6 6 M22 58 l8 -4 l5 6 l8 -5 l7 6 l8 -5 l8 4 M30 40 l6 4 l-3 6" fill="none"/>'][stage] || '';
+  var sh = 'M50 14 C78 14 86 60 84 76 C82 98 66 108 50 108 C34 108 18 98 16 76 C14 60 22 14 50 14Z';
+  return '<svg viewBox="0 0 100 120" width="100%" style="display:block">' + (glow ? '<ellipse cx="50" cy="64" rx="46" ry="52" fill="#FFE08A" opacity=".55"/>' : '') +
+    '<ellipse cx="50" cy="108" rx="30" ry="9" fill="#D9A066" stroke="#1F3B35" stroke-width="2.5"/>' +
+    '<path d="' + sh + '" fill="#fff" stroke="#fff" stroke-width="9"/><path d="' + sh + '" fill="#FFF8EA" stroke="#1F3B35" stroke-width="2.5"/>' +
+    '<circle cx="34" cy="44" r="5" fill="#7FD3C0"/><circle cx="64" cy="58" r="6" fill="#7FD3C0"/><circle cx="40" cy="82" r="4" fill="#7FD3C0"/><circle cx="66" cy="88" r="4" fill="#FFB3C1"/>' +
+    '<path d="M58 32 l2 5 l5 .5 l-4 3 l1.5 5 l-4.5 -3 l-4.5 3 l1.5 -5 l-4 -3 l5 -.5Z" fill="#FFC24B" stroke="#1F3B35" stroke-width="1.5"/>' +
+    '<g stroke="#1F3B35" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' + cr + '</g><ellipse cx="36" cy="32" rx="6" ry="10" fill="#fff" opacity=".7"/></svg>';
+}
+function goShop() { var b = document.getElementById(currentMember && currentMember.role === 'child' ? 'cnav-shop' : 'pnav-shop'); if (b) b.click(); }
+function openEgg() {
+  var e = dashboardData && dashboardData.egg, c = e && e.current; if (!c) return;
+  var ready = c.status === 'ready', kid = e.canHatch;
+  openModal('<div style="text-align:center"><h2>🥚 ไข่ปริศนาของบ้านเรา</h2><div style="width:86px;margin:6px auto">' + eggSVG(eggStage(c), ready) + '</div>' +
+    '<div class="egg-hb"><i style="width:' + Math.min(100, c.warm / c.goal * 100) + '%"></i></div>' +
+    '<div>' + (ready ? '<b style="color:var(--danger)">ไข่พร้อมฟักแล้ว!</b> ' + (kid ? 'แตะ "ฟักเลย" ได้เลย' : 'ให้ลูกเป็นคนฟักนะ') : 'ความอบอุ่น <b>' + c.warm + ' / ' + c.goal + '</b> ❤️ · วันนี้ได้อีก ' + c.todayLeft) + '</div>' +
+    '<div class="egg-who">' + c.contrib.map(function (x) { return esc(x.name) + ' ' + x.n; }).join('<span>·</span>') + '</div>' +
+    (ready ? '' : '<div style="font-size:.76rem;color:var(--text-muted)">ภารกิจลูกที่อนุมัติ +1 · กอดไข่คนละครั้งต่อวัน +1 · ทั้งบ้านได้วันละไม่เกิน ' + c.dayCap + '</div>') +
+    '<div style="font-size:.76rem;color:var(--text-muted);margin-top:8px">อาจได้</div><div class="egg-pool">' + e.pool.map(function (p) { return '<img src="' + decorUrl(p.art) + '" class="' + (p.owned ? '' : 'no') + '" alt="">'; }).join('') + '</div>' +
+    '<div style="display:flex;gap:8px;margin-top:14px"><button class="dq-btn g" onclick="closeModal()">ปิด</button>' +
+    (ready ? (kid ? '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();eggHatchStart()">✨ ฟักเลย!</button>' : '') :
+      '<button class="dq-btn p" style="flex:1.6" ' + (c.huggedToday ? 'disabled' : '') + ' onclick="eggHug(this)">' + (c.huggedToday ? 'กอดแล้ววันนี้ 💗' : '🤗 กอดไข่ (+1)') + '</button>') + '</div></div>');
+}
+function eggHug(btn) {
+  btn.disabled = true;
+  google.script.run.withSuccessHandler(function (res) {
+    dashboardData.egg = res.egg; toast(res.added ? '💗 +1 ความอบอุ่น' : 'วันนี้ไข่อุ่นเต็มที่แล้ว พรุ่งนี้มาใหม่นะ');
+    STRIP.key = ''; stripUpdate(dashboardData.avatars || [], dashboardData.stage, dashboardData.egg); openEgg(); Live.request();
+  }).withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); }).hugEgg(currentMember.memberId);
+}
+// ป๊อปอัปเต็มจอ: mode = 'hatch' (ลูกแตะ 3 ครั้ง) · 'found' (เจอไข่) · 'show' (คนอื่นฟักแล้ว)
+var EGG = { taps: 0, busy: false, res: null, open: false };
+function eggPop(html) {
+  var el = document.getElementById('egg-pop');
+  if (!el) { el = document.createElement('div'); el.id = 'egg-pop'; el.setAttribute('role', 'dialog'); document.body.appendChild(el); }
+  el.innerHTML = html; el.classList.add('on'); EGG.open = true;
+}
+function eggPopClose(key) {
+  var el = document.getElementById('egg-pop'); if (el) el.classList.remove('on'); EGG.open = false;
+  if (key) { google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).eggSeen(currentMember.memberId, key); if (dashboardData && dashboardData.egg) dashboardData.egg.event = null; }
+}
+function eggPrizeHtml(p) {
+  if (!p) return '';
+  return p.kind === 'purple' ? '<div class="ep-prize" style="font-size:5rem;line-height:1">💜</div>' : '<img class="ep-prize" src="' + decorUrl(p.art) + '" alt="">';
+}
+function eggPrizeText(p) { return !p ? '' : p.kind === 'purple' ? 'ดาวม่วง ' + p.amount + ' ดวง!' : esc(p.name) + '!'; }
+function eggHatchStart() {
+  EGG.taps = 0; EGG.res = null; EGG.busy = false;
+  eggPop('<div style="font-weight:700;color:var(--mint-dark,#1F6F5C)" id="ep-tag">แตะไข่ 3 ครั้ง!</div><div class="ep-stage"><div class="ep-rays" id="ep-rays"></div><div class="ep-egg" id="ep-egg" onclick="eggTap()">' + eggSVG(3, true) + '</div><span id="ep-prize"></span></div><div id="ep-msg" style="min-height:120px"></div>');
+}
+function eggTap() {
+  if (EGG.taps >= 3 || EGG.busy) return;
+  EGG.taps++;
+  var egg = document.getElementById('ep-egg');
+  egg.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-14deg)' }, { transform: 'rotate(12deg)' }, { transform: 'rotate(0)' }], { duration: 350 });
+  document.getElementById('ep-tag').textContent = EGG.taps < 3 ? 'อีก ' + (3 - EGG.taps) + ' ครั้ง!' : '...';
+  if (EGG.taps < 3) return;
+  EGG.busy = true;
+  google.script.run.withSuccessHandler(function (res) {
+    dashboardData.egg = res.egg;
+    eggReveal(res.prize, 'ได้' + (res.prize && res.prize.kind === 'purple' ? '' : 'ของตกแต่ง') + ' ' + eggPrizeText(res.prize), '', null);
+    Live.request();
+  }).withFailureHandler(function (e) { EGG.busy = false; EGG.taps = 0; toast(e.message || 'ฟักไม่สำเร็จ'); eggPopClose(); }).hatchEgg(currentMember.memberId);
+}
+function eggReveal(prize, title, sub, seenKey) {
+  var egg = document.getElementById('ep-egg');
+  if (egg) egg.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.4)', opacity: 0 }], { duration: 300, fill: 'forwards' });
+  setTimeout(function () {
+    if (egg) egg.style.display = 'none';
+    document.getElementById('ep-prize').innerHTML = eggPrizeHtml(prize);
+    var pz = document.querySelector('#egg-pop .ep-prize'); if (pz) requestAnimationFrame(function () { pz.classList.add('on'); });
+    document.getElementById('ep-rays').classList.add('on'); document.getElementById('ep-tag').textContent = '';
+    if (typeof confetti === 'function') confetti();
+    if (typeof treeChime === 'function') treeChime();
+    var canPlace = currentMember.role === 'parent' && prize && prize.kind === 'decor';
+    document.getElementById('ep-msg').innerHTML = '<h2>' + title + '</h2>' + (sub ? '<div style="color:var(--text-muted);margin-top:4px">' + sub + '</div>' : '') +
+      '<div style="display:flex;gap:8px;justify-content:center;margin-top:14px"><button class="dq-btn ' + (canPlace ? 'g' : 'p') + '" onclick="eggPopClose(' + (seenKey ? '\'' + seenKey + '\'' : '') + ')">เย้!</button>' +
+      (canPlace ? '<button class="dq-btn p" onclick="eggPopClose(' + (seenKey ? '\'' + seenKey + '\'' : '') + ');openInventory(\'decor\')">วางในห้องเลย</button>' : '') + '</div>';
+  }, 300);
+}
+// เหตุการณ์ไข่ที่ยังไม่เห็น (เจอ/ฟัก) → ป๊อปอัป · รอหน้าต่างอื่นปิดก่อน
+function maybeEggEvent(d) {
+  var ev = d && d.egg && d.egg.event; if (!ev || EGG.open || EGG.shown === ev.key) return;
+  var ov = document.getElementById('modal-overlay');
+  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || (typeof TREE !== 'undefined' && TREE.open)) {
+    setTimeout(function () { if (dashboardData) maybeEggEvent(dashboardData); }, 1500); return;
+  }
+  EGG.shown = ev.key;
+  if (ev.type === 'found') {
+    eggPop('<div style="font-size:1.6rem;font-weight:700">🎉 เจอไข่ปริศนา!</div><div style="width:120px">' + eggSVG(0) + '</div>' +
+      '<div style="color:var(--text-muted)">' + (ev.byMe ? 'หนูทำภารกิจจนเจอไข่!' : esc(ev.by) + ' ทำภารกิจจนเจอไข่!') + '<br>ช่วยกันกอดไข่ทุกวัน แล้วรอฟักนะ</div>' +
+      '<button class="dq-btn p" style="margin-top:12px;padding:12px 30px" onclick="eggPopClose(\'' + ev.key + '\')">เอาไปไว้ในห้อง</button>');
+  } else {
+    eggPop('<div style="font-weight:700;color:var(--mint-dark,#1F6F5C)" id="ep-tag"></div><div class="ep-stage"><div class="ep-rays" id="ep-rays"></div><div class="ep-egg" id="ep-egg">' + eggSVG(3, true) + '</div><span id="ep-prize"></span></div><div id="ep-msg" style="min-height:120px"></div>');
+    setTimeout(function () { eggReveal(ev.prize, esc(ev.by) + ' ฟักไข่ได้ ' + eggPrizeText(ev.prize), '', ev.key); }, 700);
+  }
+}
+
 // ---------- ป๊อปอัปครบ 5 วัน (ต้นคริสต์มาส) ----------
 // ขึ้นเมื่อมีสิทธิ์หมุนที่ได้หลัง Members.tree_seen · มาทาง WebSocket ได้ทันทีโดยไม่ต้องเปิดแอปใหม่
 // ภาพ: public/themes/<ธีม>/celebrate/ (คริสต์มาส: ต้นฉบับ+สคริปต์ตัด sprites/tree/src) · เด็กที่ใช้อวาตาร์ลูกไดโน = มีน้องไดโนแขวนบอล
@@ -3443,7 +3602,7 @@ function maybeQuestPopup(d) {
   var key = m.memberId + '|' + dl.date;
   if (__dqPopped[key]) return;
   var ov = document.getElementById('modal-overlay');
-  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || TREE.open) {
+  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || TREE.open || EGG.open) {
     setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 1500);   // รอหน้าต่างอื่นปิดก่อน
     return;
   }
@@ -3494,6 +3653,7 @@ function loadShop() {
 function shopTab(t) { SHOP.tab = t; renderShop(); }
 function shopPrice(it) {
   if (it.owned) return '';
+  if (it.egg) return '<span class="shop-price" style="color:var(--text-muted)">ลุ้นจากไข่</span>';
   return '<span class="shop-price">' + (it.currency === 'gold' ? COIN : PSTAR) + ' ' + it.pay + (it.pay !== it.price ? ' <s>' + it.price + '</s>' : '') + '</span>';
 }
 function renderShop() {
@@ -3510,7 +3670,7 @@ function renderShop() {
     '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · ผนัง ' + cnt('wall') + ' · พื้น ' + cnt('floor') + ' · ตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
     '<div class="shop-tabs">' + tabs.map(function (t) { return '<button class="' + (SHOP.tab === t[0] ? 'on' : '') + '" onclick="shopTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
     '<div class="shop-grid">' + items.map(function (it) {
-      var tag = it.assigned_to ? '<span class="shop-tag">' + esc(it.assigned_to.name) + ' ใช้อยู่</span>' : it.inUse === true ? '<span class="shop-tag">ใช้อยู่</span>' : it.owned ? '<span class="shop-tag">' + (it.free ? 'ฟรี' : 'มีแล้ว') + '</span>' : '';
+      var tag = it.assigned_to ? '<span class="shop-tag">' + esc(it.assigned_to.name) + ' ใช้อยู่</span>' : it.inUse === true ? '<span class="shop-tag">' + (it.kind === 'decor' ? 'อยู่ในห้อง' : 'ใช้อยู่') + '</span>' : it.owned ? '<span class="shop-tag">' + (it.free ? 'ฟรี' : 'มีแล้ว') + '</span>' : it.egg ? '<span class="shop-tag" style="background:#FFC24B;color:#1F3B35">🥚 จากไข่</span>' : '';
       var wish = !it.owned && (it.iWish || (d.canBuy && it.wishedBy.length)) ? '<span class="shop-tag w">💜 ' + (d.canBuy ? esc(it.wishedBy.join(', ')) + ' อยากได้' : 'อยากได้') + '</span>' : '';
       return '<button type="button" class="shop-item" onclick="openShopItem(\'' + it.id + '\')">' + tag + wish +
         shopArt(it) + '<b>' + esc(it.name) + '</b>' + shopPrice(it) + '</button>';
@@ -3519,7 +3679,7 @@ function renderShop() {
       : 'ผู้ปกครองเป็นคนซื้อ · กด "อยากได้" ให้พ่อแม่รู้ได้นะ 💜') + '<br>เหรียญทอง: เร็ว ๆ นี้</div>';
   feReplace(root);
   if (!spriteReady()) return;
-  root.querySelectorAll('.shop-stage').forEach(function (st) {
+  root.querySelectorAll('.shop-stage[data-sprite]').forEach(function (st) {
     var id = st.getAttribute('data-sprite');
     spriteManifest(id).then(function (m) {
       if (!st.isConnected) return;
@@ -3531,7 +3691,7 @@ function renderShop() {
 function shopArt(it, big) {
   if (it.kind === 'floor') return '<div class="shop-floor" style="--fl:url(' + floorUrl(it.art) + ')' + (big ? ';height:110px' : '') + '"></div>';
   if (it.kind === 'wall') return '<div class="shop-floor" style="--fl:url(' + wallUrl(it.art) + ');background-size:auto 100%' + (big ? ';height:110px' : '') + '"></div>';
-  if (it.kind === 'decor') return '<div class="shop-stage" style="display:grid;place-items:center"><img src="' + decorUrl(it.art) + '" alt="" style="max-height:90px"></div>';
+  if (it.kind === 'decor') return '<div class="shop-stage" style="display:grid;place-items:center"><div class="dc ' + esc(it.fx || '') + '" style="position:relative;transform:none"><img src="' + decorUrl(it.art) + '" alt="" style="max-height:' + (big ? 120 : 84) + 'px;max-width:' + (big ? 180 : 110) + 'px;' + (it.egg && !it.owned ? 'filter:brightness(0) opacity(.25)' : '') + '"></div></div>';
   return '<div class="shop-stage" data-sprite="' + it.sprite + '"></div>';
 }
 function openShopItem(id) {
@@ -3566,9 +3726,15 @@ function openShopItem(id) {
   });
 }
 function openStageItem(it) {
+  if (it.egg && !it.owned) {
+    openModal('<div style="text-align:center"><h2>❓ ของปริศนา</h2>' + shopArt(it, true) + '<div style="margin-top:10px">ของชิ้นนี้ <b>ได้จากไข่ปริศนาเท่านั้น</b></div>' +
+      '<div style="font-size:.85rem;color:var(--text-muted);margin-top:6px">ลูกส่งภารกิจ ผู้ปกครองอนุมัติ → ลุ้นเจอไข่ · ช่วยกันกอดไข่จนฟัก</div>' +
+      '<div style="display:flex;gap:8px;margin-top:14px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div></div>');
+    return;
+  }
   var d = SHOP.data, lack = !it.owned && d.wallet.purple < it.pay ? it.pay - d.wallet.purple : 0, actions;
   if (!d.canBuy) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.owned ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '💔 ยกเลิกอยากได้' : '💜 อยากได้!') + '</button>');
-  else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' || it.kind === 'wall' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\',\'' + it.kind + '\')">ใช้' + (it.kind === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปวางของ</button>');
+  else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' || it.kind === 'wall' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\',\'' + it.kind + '\')">ใช้' + (it.kind === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปจัดห้อง</button>');
   else actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') + ' onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + it.pay + ' ดาวม่วง</button>';
   openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2>' + shopArt(it, true) +
     '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : it.kind === 'wall' ? 'ผนังหลังตัวละคร' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
@@ -3607,14 +3773,15 @@ function renderInventory() {
         (it.inUse === true ? '<span class="shop-tag" style="position:static">ใช้อยู่</span>' : edit ? '<button class="inv-btn" onclick="useFloor(this,\'' + it.id + '\',\'' + k + '\')">ใช้' + (k === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>' : '') + '</div>';
     }).join('');
   } else {
-    body = (mine.length ? '' : '<div class="shop-soon" style="box-shadow:none">✨ ของตกแต่ง เร็ว ๆ นี้</div>') +
-      '<div style="font-size:.8rem;color:var(--text-muted);margin-top:8px">' + (edit ? 'แตะจุดบนพื้นเพื่อวางของ' : 'ของที่วางบนพื้นของครอบครัว') + '</div>' + stagePreview(d.stage, edit);
+    body = roomEditorHtml(d, mine, edit);
   }
   openModal('<h2>🎒 ของของครอบครัว</h2><div class="shop-tabs">' + SHOP_KINDS.map(function (t) { return '<button class="' + (k === t[0] ? 'on' : '') + '" onclick="invTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
-    '<div>' + body + '</div>' + (k !== 'decor' ? stagePreview(d.stage, false) : '') +
+    '<div>' + body + '</div>' + (k !== 'decor' ? stagePreview(d.stage) : '') +
     (edit ? '' : '<div style="font-size:.8rem;color:var(--text-muted);text-align:center;margin-top:10px">ผู้ปกครองเป็นคนจัดการ · ดูได้อย่างเดียว</div>') +
-    '<div style="display:flex;gap:8px;margin-top:12px"><button class="dq-btn g" onclick="INV.open=false;closeModal()">ปิด</button></div>');
+    '<div style="display:flex;gap:8px;margin-top:12px"><button class="dq-btn g" onclick="INV.open=false;closeModal()">ปิด</button>' +
+    (k === 'decor' && edit ? '<button class="dq-btn p" style="flex:1.6" onclick="roomSave(this)">💾 บันทึกห้อง</button>' : '') + '</div>');
   feReplace(document.getElementById('modal-content'));
+  if (k === 'decor') roomEditorInit(edit);
   if (spriteReady()) document.querySelectorAll('#modal-content .inv-ic[data-sprite]').forEach(function (st) {
     var id = st.getAttribute('data-sprite');
     spriteManifest(id).then(function (m) { if (!st.isConnected) return; var a = SpriteActor.create(st, m, { size: 18, basePath: '/sprites/characters/' + id + '/', x: 23 }); a.loop(m.idle || m.walk || 'walk'); SHOP.actors.push(a); });
@@ -3624,29 +3791,84 @@ function renderInventory() {
 function stageBase(st) {
   return (st.wall ? '<div class="stage-wall" style="--wl:url(' + wallUrl(st.wall.art) + ')"></div>' : '') + '<div class="stage-floor" style="--fl:url(' + floorUrl(st.floor.art) + ')"></div>';
 }
-// พรีวิวพื้นจริง + จุดวางของ 5 จุด
-function stagePreview(st, edit) {
+// พรีวิวห้อง (ดูอย่างเดียว)
+function stagePreview(st) {
   if (!st) return '';
-  var n = st.slots.length;
-  return '<div class="inv-prev">' + stageBase(st) + st.slots.map(function (x, i) {
-    var left = ((i + .5) / n * 100) + '%';
-    if (!edit && !x) return '';
-    return '<button type="button" class="inv-slot" style="left:' + left + '" ' + (edit ? 'onclick="pickDecor(' + i + ')"' : 'disabled') + '>' + (x ? '<img src="' + decorUrl(x.art) + '" alt="">' : (i + 1)) + '</button>';
-  }).join('') + '</div>';
+  return '<div class="room-ed" style="height:110px">' + stageBase(st) + decorHtml(st.decor, 110, 20) + '</div>';
 }
-function pickDecor(i) {
-  var d = SHOP.data, mine = d.items.filter(function (it) { return it.kind === 'decor' && it.owned; }), cur = d.stage.slots[i];
-  openModal('<h2>วางอะไรที่จุด ' + (i + 1) + '?</h2><div style="font-size:.8rem;color:var(--text-muted);text-align:center;margin-bottom:8px">ของ 1 ชิ้นวางได้ 1 จุด</div><div class="shop-grid">' +
-    mine.map(function (it) { var at = it.inUse >= 0 ? '<span class="shop-tag">จุด ' + (it.inUse + 1) + '</span>' : '';
-      return '<button type="button" class="shop-item" onclick="placeDecorAt(' + i + ',\'' + it.id + '\')">' + at + '<img src="' + decorUrl(it.art) + '" alt="" style="height:64px;object-fit:contain"><b>' + esc(it.name) + '</b></button>'; }).join('') +
-    (cur ? '<button type="button" class="shop-item" style="border:2px dashed #ddd;box-shadow:none" onclick="placeDecorAt(' + i + ',\'\')"><div style="font-size:2rem">🚫</div><b>เอาออก</b></button>' : '') +
-    (mine.length ? '' : '<div class="shop-soon" style="box-shadow:none">ยังไม่มีของตกแต่ง · ซื้อได้ที่ร้านค้า</div>') + '</div>' +
-    '<div style="display:flex;gap:8px;margin-top:12px"><button class="dq-btn g" onclick="renderInventory()">กลับ</button></div>');
-  feReplace(document.getElementById('modal-content'));
+// ของตกแต่งในห้อง · ความสูง = ความสูงตัวละคร × h × s (ไม่เกินฉาก) · ลำดับใน array = หลัง→หน้า
+var DECOR_KH = 58;   // ความสูงตัวละครในแถบล่าง (px)
+function decorH(it, roomH, groundY, kh) {
+  var k = kh || roomH * (DECOR_KH / 96), h = Math.max(k * 0.38, k * (it.h || 0.6)) * (it.s || 1);
+  return Math.min(h, roomH - groundY - 4);
 }
-function placeDecorAt(i, id) {
-  google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; renderInventory(); renderShop(); Live.request(); })
-    .withFailureHandler(function (e) { toast(e.message || 'ไม่สำเร็จ'); }).placeDecor(currentMember.memberId, i, id);
+function decorHtml(list, roomH, groundY, kh) {
+  return (list || []).map(function (d, i) {
+    return '<div class="dc ' + esc(d.fx || '') + '" data-i="' + i + '" style="left:' + (d.x * 100) + '%;bottom:' + groundY + 'px;z-index:' + (2 + i) + '"><img src="' + decorUrl(d.art) + '" alt="" style="height:' + Math.round(decorH(d, roomH, groundY, kh)) + 'px"></div>';
+  }).join('');
+}
+// ---------- จัดห้อง (ลากซ้าย-ขวา · ปรับขนาด · หน้า/หลัง) ----------
+var ROOM = { list: [], sel: -1, dirty: false };
+function roomEditorHtml(d, mine, edit) {
+  ROOM.list = d.stage.decor.map(function (x) { return { id: x.id, art: x.art, name: x.name, h: x.h, fx: x.fx, x: x.x, s: x.s }; });
+  ROOM.sel = -1; ROOM.max = d.stage.max || 8; ROOM.smin = d.stage.scaleMin || .6; ROOM.smax = d.stage.scaleMax || 1.6; ROOM.mine = mine; ROOM.st = d.stage;
+  if (!mine.length) return '<div class="shop-soon" style="box-shadow:none">ยังไม่มีของตกแต่ง<br><small>🎄 ชุดคริสต์มาสซื้อได้ที่ร้านค้า · 🥚 ชุดอื่นลุ้นจากไข่ปริศนา</small></div>' + stagePreview(d.stage);
+  return '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">' + (edit ? 'แตะของด้านล่างเพื่อวาง · ลากซ้าย-ขวา · แตะของในห้องเพื่อปรับขนาด/ลบ' : 'ห้องของครอบครัว · ผู้ปกครองเป็นคนจัด') + '</div>' +
+    '<div class="room-ed" id="room-ed">' + stageBase(d.stage) + '<div class="room-tool" id="room-tool"><button onclick="roomSize(-1)">➖</button><span id="room-pct"></span><button onclick="roomSize(1)">➕</button><button onclick="roomZ(1)">⬆️</button><button onclick="roomZ(-1)">⬇️</button><button onclick="roomDel()">🗑️</button></div></div>' +
+    (edit ? '<div style="font-size:.75rem;color:var(--text-muted);margin-top:6px;text-align:right" id="room-cnt"></div><div class="room-pal" id="room-pal"></div>' : '');
+}
+function roomEditorInit(edit) { ROOM.edit = edit; roomRender(); }
+function roomRender() {
+  var ed = document.getElementById('room-ed'); if (!ed) return;
+  ed.querySelectorAll('.dc').forEach(function (e) { e.remove(); });
+  ed.insertAdjacentHTML('beforeend', decorHtml(ROOM.list, ed.clientHeight, 20, 64));
+  ed.querySelectorAll('.dc').forEach(function (e) { var i = +e.getAttribute('data-i'); if (i === ROOM.sel) e.classList.add('sel'); if (ROOM.edit) roomDrag(e, i); });
+  var pal = document.getElementById('room-pal');
+  if (pal) pal.innerHTML = ROOM.mine.map(function (it) {
+    var used = ROOM.list.some(function (x) { return x.id === it.id; });
+    return '<button type="button" class="' + (used ? 'used' : '') + '" onclick="roomAdd(\'' + it.id + '\')">' + (used ? '<span class="tg">ในห้อง</span>' : '') + '<img src="' + decorUrl(it.art) + '" alt="">' + esc(it.name) + '</button>';
+  }).join('');
+  var c = document.getElementById('room-cnt'); if (c) c.textContent = ROOM.list.length + '/' + ROOM.max + ' ชิ้น';
+  roomTool();
+}
+function roomTool() {
+  var t = document.getElementById('room-tool'), ed = document.getElementById('room-ed'); if (!t) return;
+  var it = ROOM.list[ROOM.sel]; if (!it || !ROOM.edit) { t.classList.remove('on'); return; }
+  var e = ed.querySelector('.dc[data-i="' + ROOM.sel + '"]'), top = ed.clientHeight - 20 - (e ? e.offsetHeight : 40) - 42;
+  t.classList.add('on'); var W = ed.clientWidth, tw = t.offsetWidth / 2 + 4;
+  t.style.left = Math.max(tw, Math.min(W - tw, it.x * W)) + 'px'; t.style.top = Math.max(4, top) + 'px';
+  document.getElementById('room-pct').textContent = Math.round(it.s * 100) + '%'; t.classList.add('on');
+}
+function roomDrag(e, i) {
+  var sx, ox, ed = document.getElementById('room-ed');
+  e.addEventListener('pointerdown', function (ev) { ev.preventDefault(); e.setPointerCapture(ev.pointerId); sx = ev.clientX; ox = ROOM.list[i].x; ROOM.sel = i;
+    e.classList.add('drag'); ed.querySelectorAll('.dc').forEach(function (d) { d.classList.toggle('sel', d === e); }); document.getElementById('room-tool').classList.remove('on'); });
+  e.addEventListener('pointermove', function (ev) { if (!e.classList.contains('drag')) return;
+    var x = Math.max(.04, Math.min(.96, ox + (ev.clientX - sx) / ed.clientWidth)); ROOM.list[i].x = Math.round(x * 1000) / 1000; e.style.left = (x * 100) + '%'; ROOM.dirty = true; });
+  e.addEventListener('pointerup', function () { e.classList.remove('drag'); roomTool(); });
+}
+function roomAdd(id) {
+  var i = ROOM.list.findIndex(function (x) { return x.id === id; });
+  if (i >= 0) { ROOM.sel = i; roomRender(); return; }
+  if (ROOM.list.length >= ROOM.max) { toast('วางได้สูงสุด ' + ROOM.max + ' ชิ้น'); return; }
+  var it = ROOM.mine.find(function (x) { return x.id === id; });
+  ROOM.list.push({ id: it.id, art: it.art, name: it.name, h: it.h, fx: it.fx, x: .5, s: 1 }); ROOM.sel = ROOM.list.length - 1; ROOM.dirty = true; roomRender();
+}
+function roomSize(d) {
+  var it = ROOM.list[ROOM.sel]; if (!it) return;
+  var s = Math.round((it.s + d * .1) * 10) / 10, ed = document.getElementById('room-ed');
+  if (s < ROOM.smin) return toast('เล็กสุดแล้ว');
+  if (s > ROOM.smax) return toast('ใหญ่สุดแล้ว');
+  if (d > 0 && decorH({ h: it.h, s: s }, 1e4, 0, 64) > ed.clientHeight - 24) return toast('ใหญ่เกินฉากแล้ว');
+  it.s = s; ROOM.dirty = true; roomRender();
+}
+function roomZ(d) { var i = ROOM.sel, it = ROOM.list[i]; if (!it) return; ROOM.list.splice(i, 1); if (d > 0) ROOM.list.push(it); else ROOM.list.unshift(it); ROOM.sel = d > 0 ? ROOM.list.length - 1 : 0; ROOM.dirty = true; roomRender(); }
+function roomDel() { ROOM.list.splice(ROOM.sel, 1); ROOM.sel = -1; ROOM.dirty = true; roomRender(); }
+function roomSave(btn) {
+  btn.disabled = true;
+  google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; ROOM.dirty = false; btn.disabled = false; toast('✅ บันทึกห้องแล้ว · ทุกคนในบ้านเห็นแล้ว'); Live.request(); renderShop(); })
+    .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'บันทึกไม่สำเร็จ'); })
+    .saveRoom(currentMember.memberId, JSON.stringify(ROOM.list.map(function (x) { return { id: x.id, x: x.x, s: x.s }; })));
 }
 
 function shopPick(btn, id) {
@@ -3676,26 +3898,32 @@ function shopWish(btn, id) {
 
 // ---------- ตัวละครของครอบครัวเดินด้านล่างจอ ----------
 var STRIP = { key: '', scene: null, rules: null };
-function stripUpdate(avatars, stage) {
+// แถบห้องขึ้นเมื่อ: มีตัวละคร หรือ มีไข่กำลังฟัก หรือ มีของตกแต่งในห้อง
+function stripUpdate(avatars, stage, egg) {
   var el = document.getElementById('avatar-strip');
   if (!el) return;
   var list = (avatars || []).slice().sort(function (a, b) { return a.sprite < b.sprite ? -1 : 1; });
-  var key = list.map(function (a) { return a.sprite + ':' + a.member_id; }).join(',') + '|' + JSON.stringify(stage || '');
+  var cur = egg && egg.current, decor = (stage && stage.decor) || [];
+  var key = list.map(function (a) { return a.sprite + ':' + a.member_id; }).join(',') + '|' + JSON.stringify(stage || '') + '|' + (cur ? cur.status + cur.warm : '');
   if (key === STRIP.key) return;
   STRIP.key = key;
   if (STRIP.scene) { STRIP.scene.stop(); el.innerHTML = ''; STRIP.scene = null; }
   var nav = document.getElementById(currentMember && currentMember.role === 'child' ? 'nav-child' : 'nav-parent');
   if (nav && nav.offsetHeight) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
-  if (!list.length || !spriteReady() || typeof SpriteScene === 'undefined') {
-    el.classList.remove('on'); document.body.classList.remove('has-strip');
-    if (list.length) setTimeout(function () { STRIP.key = ''; stripUpdate(avatars, stage); }, 800);   // สคริปต์ตัวละครยังโหลดไม่เสร็จ
+  if (!stage || (!list.length && !cur && !decor.length)) { el.classList.remove('on'); document.body.classList.remove('has-strip'); el.innerHTML = ''; return; }
+  if (list.length && (!spriteReady() || typeof SpriteScene === 'undefined')) {
+    setTimeout(function () { STRIP.key = ''; stripUpdate(avatars, stage, egg); }, 800);   // สคริปต์ตัวละครยังโหลดไม่เสร็จ
     return;
   }
   el.classList.add('on'); document.body.classList.add('has-strip');
-  // พื้น + ของตกแต่ง (อยู่หลังตัวละคร) · ตัวละครยืนบนผิวพื้น
-  el.innerHTML = stage ? stageBase(stage) + stage.slots.map(function (x, i) {
-    return x ? '<img class="stage-decor" src="' + decorUrl(x.art) + '" alt="" style="left:' + ((i + .5) / stage.slots.length * 100) + '%">' : '';
-  }).join('') : '';
+  // ผนัง + พื้น + ของตกแต่ง (หลังตัวละคร) · ไข่ · ป้ายชวนซื้อตัวละคร (ห้องยังไม่มีใครเดิน)
+  el.innerHTML = stageBase(stage) + decorHtml(decor, el.clientHeight || 96, 16) +
+    (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + '" onclick="openEgg()" role="button" aria-label="ไข่ปริศนา">' +
+      '<div class="eb"><i style="width:' + Math.min(100, cur.warm / cur.goal * 100) + '%"></i></div>' + eggSVG(eggStage(cur), cur.status === 'ready') + (cur.status === 'ready' ? '<div class="ed"></div>' : '') + '</div>' : '') +
+    (list.length ? '' : '<button type="button" class="strip-sign" onclick="goShop()">🛒 พาตัวละครมาอยู่ในห้องสิ</button>');
+  if (!list.length) return;
+  // จุดที่มีของตกแต่ง → ตัวละครเดินผ่านได้ แต่ไม่หยุดยืนทับ
+  var blocked = function () { var w = el.clientWidth; return Array.prototype.map.call(el.querySelectorAll('.dc'), function (d) { var r = d.getBoundingClientRect(), b = el.getBoundingClientRect(); return [r.left - b.left, r.right - b.left]; }).filter(function (b) { return w && b[1] > b[0]; }); };
   var rulesP = STRIP.rules || (STRIP.rules = fetch('/sprites/scenes/family.json').then(function (r) { return r.json(); }).catch(function () { return { interactions: [] }; }));
   Promise.all([rulesP].concat(list.map(function (a) { return spriteManifest(a.sprite); }))).then(function (res) {
     if (STRIP.key !== key) return;
@@ -3707,7 +3935,7 @@ function stripUpdate(avatars, stage) {
       return { id: a.sprite, manifest: m };
     });
     var rules = (sc.interactions || []).filter(function (r) { return r.who.every(function (w) { return ids.indexOf(w) >= 0; }); });
-    STRIP.scene = SpriteScene.create(el, { size: Math.max(22, Math.min(30, el.clientWidth / 14)), ground: stage ? 16 : 4, laneGap: 4, cast: cast, interactions: rules });
+    STRIP.scene = SpriteScene.create(el, { size: Math.max(22, Math.min(30, el.clientWidth / 14)), ground: stage ? 16 : 4, laneGap: 4, cast: cast, interactions: rules, blocked: blocked });
     STRIP.scene.start();
   });
 }

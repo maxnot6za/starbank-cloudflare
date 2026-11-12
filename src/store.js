@@ -4,8 +4,8 @@
 // - ทุกการแก้แถวมีเงื่อนไข "ค่าเดิมต้องยังเหมือนตอนอ่าน" กันสองเครื่องแก้ทับกัน (แทน LockService)
 
 export const TABLES = {
-  Families:    { pk: 'family_id', cols: ['family_id','family_name','join_code','created_at','wheel_enabled','wheel_started_at','wheel_prizes','purple','gold','theme','stage'], bools: ['wheel_enabled'] },
-  Members:     { pk: 'member_id', cols: ['member_id','family_id','name','role','avatar','line_user_id','web_token','created_at','notify_submission','quest_seen','tree_seen'], bools: ['notify_submission'] },
+  Families:    { pk: 'family_id', cols: ['family_id','family_name','join_code','created_at','wheel_enabled','wheel_started_at','wheel_prizes','purple','gold','theme','stage','egg_pity'], bools: ['wheel_enabled'] },
+  Members:     { pk: 'member_id', cols: ['member_id','family_id','name','role','avatar','line_user_id','web_token','created_at','notify_submission','quest_seen','tree_seen','egg_seen'], bools: ['notify_submission'] },
   Missions:    { pk: 'mission_id', cols: ['mission_id','family_id','title','description','base_stars','multiplier','icon','is_active','created_by','created_at'], bools: ['is_active'] },
   Submissions: { pk: 'submission_id', cols: ['submission_id','mission_id','child_id','family_id','mission_title','status','stars_earned','submitted_at','reviewed_by','reviewed_at'], bools: [] },
   Rewards:     { pk: 'reward_id', cols: ['reward_id','family_id','title','description','stars_cost','type','secret_data','quantity','icon','is_active','created_by','created_at'], bools: ['is_active'] },
@@ -18,12 +18,13 @@ export const TABLES = {
   Inventory:   { pk: 'inv_id', cols: ['inv_id','family_id','item_id','price','currency','bought_by','bought_at','assigned_to'], bools: [] },
   Wishes:      { pk: 'wish_id', cols: ['wish_id','family_id','child_id','item_id','created_at'], bools: [] },
   WalletLog:   { pk: 'log_id', cols: ['log_id','family_id','currency','amount','kind','ref','member_id','created_at'], bools: [], writeOnly: true },
+  Eggs:        { pk: 'egg_id', cols: ['egg_id','family_id','status','warm','goal','day','day_warm','contrib','hugs','found_by','found_at','hatched_by','hatched_at','prize','created_at'], bools: [] },
   Spins:       { pk: 'spin_id', cols: ['spin_id','child_id','family_id','round_key','earned_at','used_at','prize_stars','prize_index','request_id'], bools: [], ignoreDup: true },
 };
 
 const NUM_COLS = new Set(['base_stars','multiplier','stars_earned','stars_cost','quantity','stars_spent','prize_stars','prize_index',
   'stars_earned_today','stars_spent_today','balance','missions_completed_today','stars','duration_sec',
-  'purple','gold','target','progress','reward','price','amount']);
+  'purple','gold','target','progress','reward','price','amount','warm','goal','day_warm','egg_pity']);
 
 export class ConflictError extends Error {}
 
@@ -309,7 +310,7 @@ export class Store {
       if (msg.includes('ดาวไม่พอ')) throw new Error('ดาวไม่พอ');
       if (/CHECK constraint failed/i.test(msg)) throw new ConflictError('ข้อมูลเพิ่งถูกแก้จากอีกเครื่อง กรุณาลองใหม่อีกครั้ง');
       // สองเครื่องสร้างแถวเดียวกันพร้อมกัน (เช่น สุ่มภารกิจประจำวัน) → โหลดใหม่แล้วใช้แถวที่บันทึกก่อน
-      if (/UNIQUE constraint failed: (DailyQuests|Inventory)/i.test(msg)) throw new ConflictError('ข้อมูลเพิ่งถูกแก้จากอีกเครื่อง กรุณาลองใหม่อีกครั้ง');
+      if (/UNIQUE constraint failed: (DailyQuests|Inventory|Eggs)/i.test(msg)) throw new ConflictError('ข้อมูลเพิ่งถูกแก้จากอีกเครื่อง กรุณาลองใหม่อีกครั้ง');
       throw e;
     }
   }

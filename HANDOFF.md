@@ -206,10 +206,19 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 - ตั้งค่าผู้ปกครองมีการ์ด "🎨 ธีมของครอบครัว" · ยังเหลือ logo + ไอคอน Fluent ที่ starbank-assets (ไม่ผูกธีม)
 
 ### 8.8 ผนัง + พื้น + ของตกแต่ง + หน้า "ของของครอบครัว" (migration 0013) — ดู `public/stage/README.md`
-- `SHOP_ITEMS` มี `kind` (avatar/floor/decor) · `floor_wood` + `wall_cream` ฟรีเป็นค่าเริ่มต้น · `Families.stage` JSON · `setFloor`/`setWall`/`placeDecor` เฉพาะผู้ปกครอง · ของที่ไม่รู้จัก → ค่าเริ่มต้น
-- ร้านแยกแท็บตามประเภท + การ์ด "🎒 ของของครอบครัว" → `openInventory()` (modal) จัดการตัวละคร/พื้น/วางของ 5 จุด · เด็กดูอย่างเดียว
+- `SHOP_ITEMS` มี `kind` (avatar/floor/decor) · `floor_wood` + `wall_cream` ฟรีเป็นค่าเริ่มต้น · `Families.stage` JSON · `setFloor`/`setWall`/`saveRoom` เฉพาะผู้ปกครอง · ของที่ไม่รู้จัก → ค่าเริ่มต้น
+- ร้านแยกแท็บตามประเภท + การ์ด "🎒 ของของครอบครัว" → `openInventory()` (modal) จัดการตัวละคร/พื้น/จัดห้อง · เด็กดูอย่างเดียว
 - แถบล่าง `stripUpdate(avatars, stage)` วาดผนัง + พื้น + ของตกแต่ง ตัวละครยืน `ground:16` · มีแถบ → `.xmas-scene` สั้นลง (พื้นหลังธีมยกขึ้น)
-- ค้าง: ยังไม่มีพื้นขาย/ของตกแต่ง (รอภาพจาก KC) · ตัวละครยังไม่หลบจุดของตกแต่ง
+- ค้าง: ยังไม่มีพื้น/ผนังขาย (รอภาพจาก KC)
+
+### 8.9 ไข่ปริศนา + ของตกแต่ง 18 ชิ้น + จัดห้องอิสระ (migration 0014)
+- ของตกแต่ง `decor_<art>` ภาพที่ `public/stage/decor/` · ชุด xmas 6 ชิ้นขาย 10 ดาวม่วง (ใช้ส่วนลด 50% ชิ้นแรก) · ชุด room/toys 12 ชิ้น `egg:true` ได้จากไข่เท่านั้น
+- ห้อง `Families.stage.decor = [{id,x,s}]` (x 0–1, s 0.6–1.6, ลำดับ = หลัง→หน้า, สูงสุด 8) · `saveRoom(memberId, json)` ผู้ปกครองเท่านั้น · หน้าจอ `roomEditorHtml/roomRender/roomSave` ในแท็บตกแต่งของ "ของของครอบครัว"
+- ท่าขยับของตกแต่ง = CSS class `fx` (sway/rock/breathe/hover/bounce/beat/wiggle/hop/slide + lamp/fire/twinkle) จาก `SHOP_ITEMS` ไม่ต้องมีเฟรม
+- ตัวละครเดินผ่านของได้แต่ไม่หยุดยืนทับ: `SpriteScene` รับ `cfg.blocked()` (แก้ใน `sprites/scene.js` แล้วคัดลอกไป `public/sprites/`)
+- แถบห้องขึ้นเมื่อมีตัวละคร หรือไข่ หรือของตกแต่ง · ไม่มีตัวละคร → ป้าย "🛒 พาตัวละครมาอยู่ในห้องสิ"
+- ไข่ (`Eggs`, `Families.egg_pity`, `Members.egg_seen`): เจอตอนอนุมัติภารกิจลูก 20% การันตีครั้งที่ 8 · เป้า 15 อุ่นวันละไม่เกิน 5 (อนุมัติ +1, กอดคนละครั้ง/วัน +1) · ลูกเท่านั้นฟัก (แตะ 3 ครั้ง) · ได้ของจากไข่ที่ยังไม่มีแบบสุ่ม ครบแล้วได้ดาวม่วง 15 · ป๊อปอัปเจอ/ฟักขึ้นให้ทุกคนครั้งเดียว (`eggSeen`)
+- ทดสอบ: `egg.test.js` (API) + `ui-egg.test.js` (หน้าจอ)
 
 ## 9. การทดสอบ
 

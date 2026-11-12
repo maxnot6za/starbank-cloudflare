@@ -139,6 +139,9 @@
   P.spot = function (o) { return o.target != null ? o.target : o.x; };
   P.isFree = function (a, x, except) {
     var self = this;
+    // cfg.blocked() = ช่วง [ซ้าย, ขวา] (px) ที่มีของตกแต่งวางอยู่ → เดินผ่านได้ แต่ไม่หยุดยืนทับ
+    var bl = this.cfg.blocked ? this.cfg.blocked() : null, h = this.half(a) * 0.6;
+    if (bl && bl.some(function (b) { return x > b[0] - h && x < b[1] + h; })) return false;
     return this._others(a).every(function (o) {
       return (except && except.indexOf(o) >= 0) || Math.abs(self.spot(o) - x) >= self.space(a, o);
     });
