@@ -3460,6 +3460,7 @@ var Live = (function () {
     } catch (e) { ws = null; return; }
     ws.onopen = function () {
       retry = 0;
+      checkNewVersion();
       clearInterval(pingTimer);
       pingTimer = setInterval(function () { try { ws.send('ping'); } catch (e) {} }, 30000);
     };
@@ -3526,9 +3527,29 @@ var Live = (function () {
   });
   window.addEventListener('online', function () { ensure(); request(); });
   // ใช้ตรวจ: login/logout แล้ว และอัปเดตที่รอไว้ตอนปิดหน้าต่าง
-  setInterval(function () { ensure(); tryRefresh(); }, 1000);
+  setInterval(function () { ensure(); tryRefresh(); maybeReload(); }, 1000);
 
-  return { ensure: ensure, request: request };
+  // มีเวอร์ชันใหม่ (deploy) → โหลดหน้าใหม่เอง · เช็กตอนต่อ WebSocket สำเร็จ (deploy ทำให้หลุดแล้วต่อใหม่)
+  // รอจนไม่มีหน้าต่าง/ป๊อปอัปเปิด ไม่ได้พิมพ์อยู่ และเปิดแอปอยู่ — กันข้อมูลที่กรอกหาย
+  var newVer = false, verChecking = false;
+  function checkNewVersion() {
+    if (verChecking || newVer || typeof appVersionMeta !== 'function') return;
+    var mine = appVersionMeta(); if (!mine.id || mine.id === 'dev') return;
+    verChecking = true;
+    fetch('/version', { cache: 'no-store' }).then(function (r) { return r.json(); })
+      .then(function (v) { verChecking = false; if (v && v.id && v.id !== mine.id) newVer = true; })
+      .catch(function () { verChecking = false; });
+  }
+  function maybeReload() {
+    if (!newVer || document.visibilityState !== 'visible' || busy() || inflight) return;
+    var a = document.activeElement;
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+    if (document.querySelector('#egg-pop.on, #tree-pop.on, .pp-banner, #wn-pop.on')) return;
+    newVer = false;
+    location.reload();
+  }
+
+  return { ensure: ensure, request: request, _ver: function () { newVer = true; } };
 })();
 </script>
 

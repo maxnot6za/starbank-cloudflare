@@ -284,6 +284,8 @@ node run.js           # ทั้งหมด ~2 นาที
 
 ## 10. Deploy และตรวจสอบ production
 
+- **หน้าเก่าโหลดใหม่เองหลัง deploy:** ตอน WebSocket ต่อสำเร็จ (deploy ทำให้หลุดแล้วต่อใหม่) หน้าเว็บเช็ก `/version` ถ้า id ไม่ตรงกับ `<meta app-version data-id>` → รอจนไม่มีหน้าต่าง/ป๊อปอัปเปิด ไม่ได้พิมพ์ และแอปเปิดอยู่ แล้ว `location.reload()` (`Live` → `checkNewVersion`/`maybeReload` · เทสต์ `ui-reload.test.js`) · **ถ้าเปลี่ยน/ลบ API ที่หน้าเก่าเรียก ยังต้องระวังช่วงก่อนหน้าเก่าโหลดใหม่**
+
 - push `main` → Workers Builds build และ deploy (ประมาณ 1 นาที)
 - เช็กเวอร์ชันที่ live: `GET /version`
 - หน้าเว็บแจ้งเตือนผู้ใช้เมื่อมีเวอร์ชันใหม่ (เทียบ meta version)
