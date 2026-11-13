@@ -16,7 +16,7 @@ const MEMBER_ARG = {
   submitMission: 1, redeemReward: 1, spinWheel: 0,
   reviewSubmission: 2, acknowledgeRedemptions: 1, checkRejectImpact: 1,
   webSaveMission: 1, webSaveReward: 1, webDeleteMission: 1, webDeleteReward: 1,
-  toggleSubmissionNotify: 0, getDailySummary: 2,
+  toggleSubmissionNotify: 0, getDailySummary: 2, getWeeklySummary: 0,
   setWheelEnabled: 0, setWheelPrizes: 0, getWheelStatus: 0,
   createUrgent: 0, cancelUrgent: 0, urgentSeen: 0, acceptUrgent: 0, submitUrgent: 0, declineUrgent: 0,
   sendGift: 0, cancelGift: 0, openGift: 0,

@@ -10,7 +10,7 @@ export const PUBLIC_API = [
   'getChildDashboard', 'submitMission', 'redeemReward', 'spinWheel',
   'getParentDashboard', 'acknowledgeRedemptions', 'checkRejectImpact', 'reviewSubmission',
   'webSaveMission', 'webSaveReward', 'webDeleteMission', 'webDeleteReward',
-  'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
+  'toggleSubmissionNotify', 'getDailySummary', 'getWeeklySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
   'sendGift', 'cancelGift', 'openGift',
   'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'purpleSeen', 'newsSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
@@ -1071,6 +1071,38 @@ export function createCore(S) {
       result.push(dayData);
     }
     return result;
+  }
+
+  // 📊 สรุปประจำสัปดาห์ (ผู้ปกครอง): 7 วันจบที่ endKey (จันทร์–อาทิตย์) เทียบกับ 7 วันก่อนหน้า · ต่อลูกแต่ละคน
+  function getWeeklySummary(memberId, endKey) {
+    var familyId = requireParent_(memberId).family_id;
+    endKey = /^\d{4}-\d{2}-\d{2}$/.test(String(endKey || '')) ? String(endKey) : thaiDateKey_(new Date(nowMs_()));
+    var startKey = addDaysKey_(endKey, -6), prevStart = addDaysKey_(endKey, -13), prevEnd = addDaysKey_(endKey, -7);
+    var days = []; for (var i = 0; i < 7; i++) days.push(addDaysKey_(startKey, i));
+    var kids = getAllRows_('Members').filter(function(m) { return String(m.family_id) === String(familyId) && m.role === 'child'; });
+    var missions = getAllRows_('Missions').filter(function(m) { return String(m.family_id) === String(familyId) && m.is_active === true; });
+    var mById = {}; missions.forEach(function(m) { mById[String(m.mission_id)] = m; });
+    var subs = getAllRows_('Submissions').filter(function(s) { return String(s.family_id) === String(familyId) && s.status === 'approved' && s.reviewed_at; });
+    var urg = urgentRows_(familyId);
+    var inR = function(k, a, b) { return k && k >= a && k <= b; };
+    return { start: startKey, end: endKey, kids: kids.map(function(c) {
+      var mine = subs.filter(function(s) { return String(s.child_id) === String(c.member_id); });
+      var wk = mine.filter(function(s) { return inR(thaiDateKey_(s.reviewed_at), startKey, endKey); });
+      var pv = mine.filter(function(s) { return inR(thaiDateKey_(s.reviewed_at), prevStart, prevEnd); });
+      var sum = function(a) { return a.reduce(function(t, s) { return t + (Number(s.stars_earned) || 0); }, 0); };
+      var perDay = days.map(function(k) { return wk.filter(function(s) { return thaiDateKey_(s.reviewed_at) === k; }).length; });
+      // ภารกิจปกติ (ไม่นับภารกิจด่วน) · นับครั้ง + จำนวนวันที่ทำ
+      var cnt = {};
+      wk.forEach(function(s) { var m = mById[String(s.mission_id)]; if (!m) return;
+        var x = cnt[m.mission_id] || (cnt[m.mission_id] = { title: m.title, icon: m.icon || '⭐', n: 0, days: {} }); x.n++; x.days[thaiDateKey_(s.reviewed_at)] = 1; });
+      var top = Object.keys(cnt).map(function(k) { var x = cnt[k]; return { title: x.title, icon: x.icon, n: x.n, days: Object.keys(x.days).length }; })
+        .sort(function(a, b) { return b.n - a.n; }).slice(0, 3);
+      var low = missions.filter(function(m) { return !cnt[m.mission_id]; }).map(function(m) { return { title: m.title, icon: m.icon || '⭐' }; }).slice(0, 3);
+      var u = urg.filter(function(x) { return String(x.child_id) === String(c.member_id) && inR(thaiDateKey_(x.created_at), startKey, endKey) && x.status !== 'cancelled' && x.status !== 'pending' && x.status !== 'running'; });
+      return { member_id: c.member_id, name: c.name, avatar: c.avatar,
+        missions: wk.length, stars: sum(wk), prevMissions: pv.length, prevStars: sum(pv), perDay: perDay, top: top, low: low,
+        urgentTotal: u.length, urgentOnTime: u.filter(function(x) { return x.status === 'submitted'; }).length };
+    }) };
   }
 
   function formatDate_(d) { return thaiDateKey_(d); }   // เวลาไทยเสมอ (Worker ใช้ UTC)
@@ -2278,7 +2310,7 @@ export function createCore(S) {
     return { wished: true, replaced: old ? old.name : '', shop: getShop(memberId) };
   }
 
-  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
+  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, getWeeklySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
     questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen, newsSeen };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };

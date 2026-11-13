@@ -1,10 +1,183 @@
 {
   "id": "bearfamily",
-  "name": "ครอบครัวหมี (ตัวอย่าง)",
+  "name": "ครอบครัวหมี",
   "cast": [
     "beardad",
     "bearmom",
     "beargirl"
   ],
-  "interactions": []
+  "interactions": [
+    {
+      "id": "bearDanceCheer",
+      "label": "ลูกสาวเต้น พ่อเดินมาเชียร์",
+      "who": [
+        "beardad",
+        "beargirl"
+      ],
+      "near": 5,
+      "chance": 0.6,
+      "cooldown": 30000,
+      "when": {
+        "beargirl": [
+          "dance"
+        ],
+        "beardad": [
+          "walk",
+          "belly"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.0
+        },
+        {
+          "beardad": "cheer",
+          "say": "เต้นเก่งจังลูก 👏"
+        },
+        {
+          "beargirl": "say",
+          "say": "🥰",
+          "ms": 1100
+        }
+      ]
+    },
+    {
+      "id": "bearDanceMom",
+      "label": "ลูกสาวเต้น แม่เดินมาเชียร์",
+      "who": [
+        "bearmom",
+        "beargirl"
+      ],
+      "near": 5,
+      "chance": 0.6,
+      "cooldown": 30000,
+      "when": {
+        "beargirl": [
+          "dance"
+        ],
+        "bearmom": [
+          "walk"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.0
+        },
+        {
+          "bearmom": "cheer",
+          "say": "สวยมากจ้ะ 💕"
+        },
+        {
+          "beargirl": "cheer"
+        }
+      ]
+    },
+    {
+      "id": "bearCookie",
+      "label": "แม่ถือคุกกี้ ลูกสาวเดินมาขอ",
+      "who": [
+        "bearmom",
+        "beargirl"
+      ],
+      "near": 4,
+      "chance": 0.6,
+      "cooldown": 30000,
+      "when": {
+        "bearmom": [
+          "cookie"
+        ],
+        "beargirl": [
+          "walk"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.8
+        },
+        {
+          "beargirl": "say",
+          "say": "ขอคุกกี้หน่อยค่ะ 🍪",
+          "ms": 1300
+        },
+        {
+          "bearmom": "say",
+          "say": "ได้เลยจ้ะ 😊",
+          "ms": 1100
+        },
+        {
+          "beargirl": "cheer"
+        }
+      ]
+    },
+    {
+      "id": "bearRead",
+      "label": "พ่ออ่านหนังสือ ลูกสาวเดินมาชวน",
+      "who": [
+        "beardad",
+        "beargirl"
+      ],
+      "near": 4,
+      "chance": 0.5,
+      "cooldown": 30000,
+      "when": {
+        "beardad": [
+          "read"
+        ],
+        "beargirl": [
+          "walk"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.8
+        },
+        {
+          "beargirl": "say",
+          "say": "อ่านให้ฟังหน่อย 📖",
+          "ms": 1300
+        },
+        {
+          "beardad": "cheer",
+          "say": "มานั่งนี่มา"
+        }
+      ]
+    },
+    {
+      "id": "bearParents",
+      "label": "พ่อแม่หมีทักกัน",
+      "who": [
+        "beardad",
+        "bearmom"
+      ],
+      "near": 3,
+      "chance": 0.5,
+      "cooldown": 25000,
+      "when": {
+        "beardad": [
+          "walk"
+        ],
+        "bearmom": [
+          "walk"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.1
+        },
+        {
+          "together": [
+            {
+              "bearmom": "cheer",
+              "say": "วันนี้เป็นไงบ้าง"
+            },
+            {
+              "beardad": "say",
+              "say": "สบายมาก 😄",
+              "ms": 1300
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

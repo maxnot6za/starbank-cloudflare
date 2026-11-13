@@ -499,6 +499,17 @@
     #urg-fab.img .ring{inset:-3px -9px -9px -9px}
     #urg-fab.img.drag{filter:drop-shadow(0 10px 14px rgba(224,69,31,.5))}
     .wn-date{font-size:.75rem;font-weight:800;color:var(--text-muted);margin:10px 2px 2px;letter-spacing:.02em}
+    .wk-h{text-align:center}.wk-h small{color:var(--text-muted)}
+    .wk-tabs{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}.wk-tabs button{border:1.5px solid var(--border);background:#fff;border-radius:99px;padding:4px 12px;font:inherit;font-weight:700;font-size:.85rem}.wk-tabs .on{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .wk-kid{display:flex;align-items:center;gap:10px;margin:14px 0 8px}.wk-kid .av{font-size:2rem}.wk-kid b{font-size:1.1rem}.wk-kid span{color:var(--text-muted);font-size:.8rem;display:block}
+    .wk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .wk-st{background:var(--bg);border-radius:14px;padding:10px 6px;text-align:center}.wk-st b{display:block;font-size:1.3rem}.wk-st small{font-size:.72rem;color:var(--text-muted)}
+    .wk-up{color:#1F9D6B;font-size:.72rem;font-weight:800}.wk-dn{color:#E5484D;font-size:.72rem;font-weight:800}.wk-eq{color:var(--text-muted);font-size:.72rem}
+    .wk-days{display:flex;gap:4px;align-items:flex-end;height:64px;margin:14px 0 4px;padding:0 4px}.wk-days div{flex:1;background:#BFE7D8;border-radius:6px 6px 2px 2px;min-height:3px}.wk-days div.t{background:#2A9479}
+    .wk-dl{display:flex;gap:4px;padding:0 4px;font-size:.7rem;color:var(--text-muted)}.wk-dl span{flex:1;text-align:center}
+    .wk-sec{font-weight:800;font-size:.85rem;margin:14px 2px 6px}
+    .wk-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:12px;margin-bottom:6px;font-size:.88rem}.wk-row .n{margin-left:auto;font-weight:800;white-space:nowrap}.wk-row.low{background:#FFF4EC}.wk-row.low .n{color:#E0451F}
+    .wk-praise{background:#FFF8E1;border-radius:14px;padding:10px 12px;font-size:.85rem;margin-top:12px}
     #urg-fab .b{position:absolute;top:-6px;right:-4px;background:#E5484D;color:#fff;border-radius:99px;min-width:22px;height:22px;padding:0 5px;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
     .pg-h{font-weight:800;font-size:.85rem;margin:10px 2px 6px}.pg-h.u{color:#E0451F}.pg-h.n{color:var(--text-muted)}
     .pending-item.urg{border-left:5px solid #FF5A36;background:#FFF6F2}
@@ -2022,6 +2033,7 @@ function showSettings() {
       <div class="info-row"><span>รหัสครอบครัว (เด็กใช้เข้าระบบ)</span><strong style="letter-spacing:3px">${joinCode}</strong></div>
       <div class="info-row"><span>สมาชิกทั้งหมด</span><span>${d.members.length} คน</span></div>
     </div>
+    <button type="button" class="set-link" onclick="closeModal();showWeekly()"><span style="font-size:1.3rem">🗓️</span><span style="flex:1;text-align:left">สรุปสัปดาห์<small>7 วันที่ผ่านมา เทียบกับสัปดาห์ก่อน</small></span>›</button>
     <button type="button" class="set-link" onclick="closeModal();openSummary()"><span style="font-size:1.3rem">📊</span><span style="flex:1;text-align:left">สรุปรายวัน<small>ลูกทำอะไรไปบ้างวันนี้</small></span>›</button>
     <div class="divider"></div>
     <div id="theme-slot">${themeCard()}</div>
@@ -3615,6 +3627,7 @@ function renderDaily(d) {
   setTimeout(function () { if (dashboardData) maybeEggEvent(dashboardData); }, 900);
   setTimeout(function () { if (dashboardData) maybePurpleNews(dashboardData); }, 1100);
   setTimeout(function () { if (dashboardData) maybeWhatsNew(dashboardData); }, 1300);
+  setTimeout(function () { if (dashboardData) maybeWeekly(dashboardData); }, 1700);
 }
 
 // popup วันละครั้ง (เซิร์ฟเวอร์จำว่าเห็นแล้ว → เครื่องอื่นไม่เด้งซ้ำ)
@@ -4033,6 +4046,61 @@ function maybeWhatsNew(d) {
   google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).newsSeen(currentMember.memberId, top.v);
   d.newsSeen = top.v;
 }
+// 🗓️ สรุปประจำสัปดาห์ (ผู้ปกครอง) · เด้งเองครั้งเดียวต่อสัปดาห์ ช่วงอาทิตย์ 17:00 – อังคาร (จำในเครื่อง) · ดูย้อนได้ในตั้งค่า
+var WK = { key: 'sb_week_seen', data: null, kid: 0 };
+function wkEndKey() {
+  var t = new Date(Date.now() + 7 * 3600000), dow = t.getUTCDay(), h = t.getUTCHours();
+  var back = (dow === 0 && h >= 17) ? 0 : (dow === 0 ? 7 : dow);   // อาทิตย์เย็น = สัปดาห์นี้ · อื่น ๆ = อาทิตย์ที่แล้ว
+  return new Date(t.getTime() - back * 86400000).toISOString().slice(0, 10);
+}
+function maybeWeekly(d) {
+  if (!d || !currentMember || currentMember.role !== 'parent' || !(d.children || []).length) return;
+  var t = new Date(Date.now() + 7 * 3600000), dow = t.getUTCDay(), h = t.getUTCHours();
+  if (!((dow === 0 && h >= 17) || dow === 1 || dow === 2)) return;
+  var end = wkEndKey(), seen = ''; try { seen = localStorage.getItem(WK.key) || ''; } catch (e) {}
+  if (seen === end || WK.auto === end) return;
+  var ov = document.getElementById('modal-overlay');
+  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || (typeof TREE !== 'undefined' && TREE.open) || (typeof EGG !== 'undefined' && EGG.open)) {
+    setTimeout(function () { if (dashboardData) maybeWeekly(dashboardData); }, 1500); return;
+  }
+  WK.auto = end; showWeekly(true);
+}
+function showWeekly(auto) {
+  // เด้งเอง = สัปดาห์ จ–อา ล่าสุด · เปิดจากตั้งค่า = 7 วันล่าสุดถึงวันนี้
+  var end = auto ? wkEndKey() : new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+  google.script.run.withSuccessHandler(function (r) {
+    if (!r || !r.kids || !r.kids.length) return;
+    if (auto && !r.kids.some(function (k) { return k.missions || k.prevMissions; })) return;   // ยังไม่มีอะไรให้สรุป
+    if (auto) try { localStorage.setItem(WK.key, end); } catch (e) {}
+    WK.data = r; WK.kid = 0; openModal('<div id="wk-box"></div>'); wkRender();
+  }).withFailureHandler(function (e) { if (!auto) toast(e.message); }).getWeeklySummary(currentMember.memberId, end);
+}
+function wkDate(k) { return new Date(k + 'T00:00:00+07:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }); }
+function wkDiff(now, prev, unit) {
+  var d = now - prev;
+  if (!prev && !now) return '<div class="wk-eq">–</div>';
+  return d > 0 ? '<div class="wk-up">▲ ' + d + ' จากสัปดาห์ก่อน</div>' : d < 0 ? '<div class="wk-dn">▼ ' + (-d) + ' จากสัปดาห์ก่อน</div>' : '<div class="wk-eq">เท่าสัปดาห์ก่อน</div>';
+}
+function wkRender() {
+  var r = WK.data, box = document.getElementById('wk-box'); if (!r || !box) return;
+  var k = r.kids[WK.kid], mx = Math.max.apply(null, k.perDay.concat([1]));
+  var full = k.top.filter(function (x) { return x.days === 7; })[0], best = k.top[0];
+  var praise = full ? 'สัปดาห์นี้' + full.title + 'ครบทุกวันเลย เก่งมาก!' : best ? 'สัปดาห์นี้' + best.title + 'ไป ' + best.n + ' ครั้ง เก่งมาก!' : '';
+  var mood = k.missions > k.prevMissions ? 'ทำได้มากกว่าสัปดาห์ก่อน 🎉' : k.missions && k.missions === k.prevMissions ? 'สม่ำเสมอดีมาก 👍' : k.missions ? 'สัปดาห์นี้ทำน้อยลงนิดนึง' : 'สัปดาห์นี้ยังไม่ได้ทำภารกิจ';
+  box.innerHTML = '<div class="wk-h"><div style="font-size:1.8rem">🗓️</div><h2 style="margin:4px 0">สรุปสัปดาห์</h2><small>' + wkDate(r.start) + ' – ' + wkDate(r.end) + '</small>' +
+    (r.kids.length > 1 ? '<div class="wk-tabs">' + r.kids.map(function (x, i) { return '<button class="' + (i === WK.kid ? 'on' : '') + '" onclick="WK.kid=' + i + ';wkRender()">' + esc(x.avatar) + ' ' + esc(x.name) + '</button>'; }).join('') + '</div>' : '') + '</div>' +
+    '<div class="wk-kid"><span class="av">' + esc(k.avatar) + '</span><div><b>' + esc(k.name) + '</b><span>' + mood + '</span></div></div>' +
+    '<div class="wk-stats"><div class="wk-st"><b>' + k.missions + '</b><small>ภารกิจ</small>' + wkDiff(k.missions, k.prevMissions) + '</div>' +
+    '<div class="wk-st"><b>⭐ ' + k.stars + '</b><small>ดาวที่ได้</small>' + wkDiff(k.stars, k.prevStars) + '</div>' +
+    '<div class="wk-st"><b>⚡ ' + (k.urgentTotal ? k.urgentOnTime + '/' + k.urgentTotal : '–') + '</b><small>ด่วนทันเวลา</small>' + (k.urgentTotal ? (k.urgentOnTime === k.urgentTotal ? '<div class="wk-up">ทันทุกครั้ง</div>' : '<div class="wk-dn">ไม่ทัน ' + (k.urgentTotal - k.urgentOnTime) + '</div>') : '<div class="wk-eq">ไม่มีภารกิจด่วน</div>') + '</div></div>' +
+    '<div class="wk-days">' + k.perDay.map(function (n, i) { return '<div class="' + (i === 6 ? 't' : '') + '" style="height:' + Math.round(n / mx * 100) + '%" title="' + n + '"></div>'; }).join('') + '</div>' +
+    '<div class="wk-dl">' + [0, 1, 2, 3, 4, 5, 6].map(function (i) { var d = new Date(new Date(r.start + 'T00:00:00Z').getTime() + i * 86400000); return '<span>' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][d.getUTCDay()] + '</span>'; }).join('') + '</div>' +
+    (k.top.length ? '<div class="wk-sec">💪 ทำบ่อยสุด</div>' + k.top.map(function (x) { return '<div class="wk-row">' + esc(x.icon) + ' ' + esc(x.title) + '<span class="n">' + (x.days === 7 ? 'ทุกวัน' : x.n + ' ครั้ง') + '</span></div>'; }).join('') : '') +
+    (k.low.length ? '<div class="wk-sec">😴 ยังไม่ค่อยได้ทำ</div>' + k.low.map(function (x) { return '<div class="wk-row low">' + esc(x.icon) + ' ' + esc(x.title) + '<span class="n">ยังไม่ได้ทำ</span></div>'; }).join('') : '') +
+    (praise ? '<div class="wk-praise">💬 <b>ชวนชม:</b> "' + esc(praise) + '"</div>' : '') +
+    '<div style="display:flex;margin-top:14px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div>';
+}
+
 // ข่าวดาวม่วงที่คนอื่นรับให้ / ระบบเก็บให้ ตอนเราไม่ได้อยู่ → ขึ้นครั้งเดียว · รอหน้าต่างอื่นปิดก่อน
 function maybePurpleNews(d) {
   var got = d && d.daily && d.daily.got, nw = d && d.daily && d.daily.news;
@@ -4446,7 +4514,10 @@ function stripUpdate(avatars, stage, egg) {
   if (!list.length) return;
   // จุดที่มีของตกแต่ง → ตัวละครเดินผ่านได้ แต่ไม่หยุดยืนทับ
   var blocked = function () { var w = el.clientWidth; return Array.prototype.map.call(el.querySelectorAll('.dc'), function (d) { var r = d.getBoundingClientRect(), b = el.getBoundingClientRect(); return [r.left - b.left, r.right - b.left]; }).filter(function (b) { return w && b[1] > b[0]; }); };
-  var rulesP = STRIP.rules || (STRIP.rules = fetch('/sprites/scenes/family.json').then(function (r) { return r.json(); }).catch(function () { return { interactions: [] }; }));
+  // ฉากโต้ตอบ: ครอบครัวไดโน + ครอบครัวหมี + สัตว์เลี้ยง (ใช้เฉพาะฉากที่ตัวละครอยู่ในห้องครบ)
+  var rulesP = STRIP.rules || (STRIP.rules = Promise.all(['family', 'bearfamily', 'petroom'].map(function (n) {
+    return fetch('/sprites/scenes/' + n + '.json').then(function (r) { return r.json(); }).catch(function () { return { interactions: [] }; });
+  })).then(function (all) { return { interactions: [].concat.apply([], all.map(function (x) { return x.interactions || []; })) }; }));
   Promise.all([rulesP].concat(list.map(function (a) { return spriteManifest(a.sprite); }))).then(function (res) {
     if (STRIP.key !== key) return;
     var sc = res[0], ids = list.map(function (a) { return a.sprite; });

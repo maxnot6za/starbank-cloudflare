@@ -160,7 +160,7 @@ export class Store {
   async _loadSubmissions(ids, subIds, fn) {
     const db = this.db, q = ids.map(() => '?').join(',');
     const known = !!fn;
-    const needSummary = !known || fn === 'getDailySummary';         // สรุปรายวันย้อนหลังสูงสุด 60 วัน
+    const needSummary = !known || fn === 'getDailySummary' || fn === 'getWeeklySummary';   // สรุปรายวัน (≤60 วัน) / สรุปสัปดาห์ (14 วัน)
     const needReviews = !known || fn === 'getParentDashboard';      // ประวัติการตรวจ 20 รายการล่าสุด
     const needChildRecent = !known || fn === 'getChildDashboard';   // ประวัติของเด็ก 20 รายการล่าสุด
     // 2 วันล่าสุดเสมอ: เผื่อผู้ปกครองเพิ่งเปิดกงล้อในคำสั่งนี้ (เริ่มนับวันนี้)

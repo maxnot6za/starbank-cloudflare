@@ -1,10 +1,593 @@
 {
   "id": "petroom",
-  "name": "ห้องกับสัตว์เลี้ยง (ตัวอย่าง)",
+  "name": "ห้องกับสัตว์เลี้ยง",
   "cast": [
     "dino",
+    "beargirl",
+    "petdino",
+    "petpink",
+    "petyellow",
+    "petwalk",
     "petlamb",
     "petdragon"
   ],
-  "interactions": []
+  "interactions": [
+    {
+      "id": "pet_dino_petdino",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "dino",
+        "petdino"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "dino": [
+          "walk",
+          "stand"
+        ],
+        "petdino": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petdino": "say",
+          "say": "💚",
+          "ms": 1100
+        },
+        {
+          "dino": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_dino_petpink",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "dino",
+        "petpink"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "dino": [
+          "walk",
+          "stand"
+        ],
+        "petpink": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petpink": "say",
+          "say": "💚",
+          "ms": 1100
+        },
+        {
+          "dino": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_dino_petyellow",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "dino",
+        "petyellow"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "dino": [
+          "walk",
+          "stand"
+        ],
+        "petyellow": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petyellow": "say",
+          "say": "💚",
+          "ms": 1100
+        },
+        {
+          "dino": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_dino_petwalk",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "dino",
+        "petwalk"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "dino": [
+          "walk",
+          "stand"
+        ],
+        "petwalk": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petwalk": "stretch",
+          "say": "💚"
+        },
+        {
+          "dino": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_dino_petlamb",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "dino",
+        "petlamb"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "dino": [
+          "walk",
+          "stand"
+        ],
+        "petlamb": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petlamb": "hop",
+          "say": "💚"
+        },
+        {
+          "dino": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_dino_petdragon",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "dino",
+        "petdragon"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "dino": [
+          "walk",
+          "stand"
+        ],
+        "petdragon": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petdragon": "flap",
+          "say": "💚"
+        },
+        {
+          "dino": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_beargirl_petdino",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "beargirl",
+        "petdino"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "beargirl": [
+          "walk"
+        ],
+        "petdino": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petdino": "say",
+          "say": "💚",
+          "ms": 1100
+        },
+        {
+          "beargirl": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_beargirl_petpink",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "beargirl",
+        "petpink"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "beargirl": [
+          "walk"
+        ],
+        "petpink": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petpink": "say",
+          "say": "💚",
+          "ms": 1100
+        },
+        {
+          "beargirl": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_beargirl_petyellow",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "beargirl",
+        "petyellow"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "beargirl": [
+          "walk"
+        ],
+        "petyellow": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petyellow": "say",
+          "say": "💚",
+          "ms": 1100
+        },
+        {
+          "beargirl": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_beargirl_petwalk",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "beargirl",
+        "petwalk"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "beargirl": [
+          "walk"
+        ],
+        "petwalk": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petwalk": "stretch",
+          "say": "💚"
+        },
+        {
+          "beargirl": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_beargirl_petlamb",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "beargirl",
+        "petlamb"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "beargirl": [
+          "walk"
+        ],
+        "petlamb": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petlamb": "hop",
+          "say": "💚"
+        },
+        {
+          "beargirl": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "pet_beargirl_petdragon",
+      "label": "ลูกเดินมาเล่นกับสัตว์เลี้ยง",
+      "who": [
+        "beargirl",
+        "petdragon"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 40000,
+      "when": {
+        "beargirl": [
+          "walk"
+        ],
+        "petdragon": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.6
+        },
+        {
+          "petdragon": "flap",
+          "say": "💚"
+        },
+        {
+          "beargirl": "cheer",
+          "say": "น่ารักจัง 🥰"
+        }
+      ]
+    },
+    {
+      "id": "dragonFire_petlamb",
+      "label": "มังกรพ่นไฟ เพื่อนตกใจ",
+      "who": [
+        "petdragon",
+        "petlamb"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 45000,
+      "when": {
+        "petdragon": [
+          "walk",
+          "stand"
+        ],
+        "petlamb": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.5
+        },
+        {
+          "petdragon": "fire"
+        },
+        {
+          "petlamb": "shake",
+          "say": "😵"
+        }
+      ]
+    },
+    {
+      "id": "dragonFire_petdino",
+      "label": "มังกรพ่นไฟ เพื่อนตกใจ",
+      "who": [
+        "petdragon",
+        "petdino"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 45000,
+      "when": {
+        "petdragon": [
+          "walk",
+          "stand"
+        ],
+        "petdino": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.5
+        },
+        {
+          "petdragon": "fire"
+        },
+        {
+          "petdino": "say",
+          "say": "😲",
+          "ms": 1100
+        }
+      ]
+    },
+    {
+      "id": "dragonFire_petpink",
+      "label": "มังกรพ่นไฟ เพื่อนตกใจ",
+      "who": [
+        "petdragon",
+        "petpink"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 45000,
+      "when": {
+        "petdragon": [
+          "walk",
+          "stand"
+        ],
+        "petpink": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.5
+        },
+        {
+          "petdragon": "fire"
+        },
+        {
+          "petpink": "say",
+          "say": "😲",
+          "ms": 1100
+        }
+      ]
+    },
+    {
+      "id": "dragonFire_petyellow",
+      "label": "มังกรพ่นไฟ เพื่อนตกใจ",
+      "who": [
+        "petdragon",
+        "petyellow"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 45000,
+      "when": {
+        "petdragon": [
+          "walk",
+          "stand"
+        ],
+        "petyellow": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.5
+        },
+        {
+          "petdragon": "fire"
+        },
+        {
+          "petyellow": "say",
+          "say": "😲",
+          "ms": 1100
+        }
+      ]
+    },
+    {
+      "id": "dragonFire_petwalk",
+      "label": "มังกรพ่นไฟ เพื่อนตกใจ",
+      "who": [
+        "petdragon",
+        "petwalk"
+      ],
+      "near": 3,
+      "chance": 0.4,
+      "cooldown": 45000,
+      "when": {
+        "petdragon": [
+          "walk",
+          "stand"
+        ],
+        "petwalk": [
+          "walk",
+          "stand"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.5
+        },
+        {
+          "petdragon": "fire"
+        },
+        {
+          "petwalk": "say",
+          "say": "😲",
+          "ms": 1100
+        }
+      ]
+    }
+  ]
 }
