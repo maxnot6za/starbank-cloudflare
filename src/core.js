@@ -1885,6 +1885,10 @@ export function createCore(S) {
     { id: 'pet_dino', kind: 'pet', name: 'ไดโนจิ๋ว', sprite: 'petdino', price: 20, currency: 'purple' },
     { id: 'pet_dino_pink', kind: 'pet', name: 'ไดโนชมพู', sprite: 'petpink', price: 20, currency: 'purple' },
     { id: 'pet_dino_yellow', kind: 'pet', name: 'ไดโนเหลือง', sprite: 'petyellow', price: 20, currency: 'purple' },
+    // สัตว์เลี้ยงจากไข่ระดับ rare (ไม่ขายในร้าน) · thumb = ชีตท่ายืน/หมอบ เฟรมแรกใช้เป็นรูปเล็ก
+    { id: 'pet_godzero', kind: 'pet', name: 'ก๊อตซีโร่', sprite: 'petwalk', price: 0, currency: 'purple', egg: true, tier: 'rare', thumb: 'down', thumbFrames: 6 },
+    { id: 'pet_puymek', kind: 'pet', name: 'ปุยเมฆ', sprite: 'petlamb', price: 0, currency: 'purple', egg: true, tier: 'rare', thumb: 'down', thumbFrames: 6 },
+    { id: 'pet_firedragon', kind: 'pet', name: 'มังกรไฟจิ๋ว', sprite: 'petdragon', price: 0, currency: 'purple', egg: true, tier: 'rare', thumb: 'down', thumbFrames: 6 },
     { id: 'floor_wood', kind: 'floor', name: 'พื้นไม้', art: 'wood', price: 0, currency: 'purple', free: true },
     { id: 'wall_cream', kind: 'wall', name: 'ผนังครีมหน้าต่างฟ้า', art: 'cream', price: 0, currency: 'purple', free: true }
   ];
@@ -1984,6 +1988,10 @@ export function createCore(S) {
 
   // ---------- ไข่ปริศนา ----------
   var EGG_GOAL = 15, EGG_DAY_CAP = 5, EGG_CHANCE = 0.2, EGG_PITY = 8, EGG_PURPLE = 15;
+  // ระดับไข่: rare 25% · การันตี rare ทุกใบที่ EGG_RARE_PITY · rare ที่ได้ของครบแล้ว = ดาวม่วง 30 + คูปองลด 50%
+  var EGG_RARE_CHANCE = 0.25, EGG_RARE_PITY = 5, EGG_RARE_PURPLE = 30, EGG_RARE_COUPON = 50;
+  function eggTier_(egg) { return (egg && egg.tier) || 'normal'; }
+  function eggPool_(tier) { return SHOP_ITEMS.filter(function(it) { return it.egg && (it.tier || 'normal') === tier; }); }
   function familyEggs_(familyId) { return getAllRows_('Eggs').filter(function(e) { return String(e.family_id) === String(familyId); }); }
   function activeEgg_(familyId) { return familyEggs_(familyId).find(function(e) { return e.status !== 'hatched'; }) || null; }
   function jsonObj_(s) { try { return JSON.parse(s || '{}') || {}; } catch (e) { return {}; } }
@@ -2007,8 +2015,9 @@ export function createCore(S) {
     if (egg) { if (egg.status === 'warming') eggWarm_(egg, String(childId), 1); return; }
     var fam = familyRow_(familyId) || {}, pity = Number(fam.egg_pity || 0) + 1;
     if (Math.random() < EGG_CHANCE || pity >= EGG_PITY) {
-      updateRow_('Families', 'family_id', familyId, { egg_pity: 0 });
-      appendRow_('Eggs', { egg_id: familyId + '|' + (familyEggs_(familyId).length + 1), family_id: familyId, status: 'warming', warm: 0, goal: EGG_GOAL,
+      var rp = Number(fam.egg_rare_pity || 0) + 1, rare = Math.random() < EGG_RARE_CHANCE || rp >= EGG_RARE_PITY;
+      updateRow_('Families', 'family_id', familyId, { egg_pity: 0, egg_rare_pity: rare ? 0 : rp });
+      appendRow_('Eggs', { egg_id: familyId + '|' + (familyEggs_(familyId).length + 1), family_id: familyId, status: 'warming', warm: 0, goal: EGG_GOAL, tier: rare ? 'rare' : 'normal',
         day: '', day_warm: 0, contrib: '{}', hugs: '{}', found_by: String(childId), found_at: msIso_(nowMs_()), hatched_by: '', hatched_at: '', prize: '', created_at: msIso_(nowMs_()) });
     } else updateRow_('Families', 'family_id', familyId, { egg_pity: pity });
   }
@@ -2030,14 +2039,18 @@ export function createCore(S) {
     if (!m || m.role !== 'child') throw new Error('ให้ลูกเป็นคนฟักไข่นะ');
     var egg = activeEgg_(m.family_id);
     if (!egg || egg.status !== 'ready') throw new Error('ไข่ยังไม่พร้อมฟัก');
-    var pool = SHOP_ITEMS.filter(function(it) { return it.egg && !owns_(m.family_id, it); }), prize;
+    var tier = eggTier_(egg), pool = eggPool_(tier).filter(function(it) { return !owns_(m.family_id, it); }), prize, pct = 0;
     if (pool.length) {
       var it = pool[Math.floor(Math.random() * pool.length)];
       appendRow_('Inventory', { inv_id: genId_(), family_id: m.family_id, item_id: it.id, price: 0, currency: 'egg',
         bought_by: String(m.member_id), bought_at: msIso_(nowMs_()), assigned_to: '' });
+      // สัตว์เลี้ยงใหม่ → พาเข้าห้องเลยถ้ายังมีที่
+      if (it.kind === 'pet') { var st0 = stageRaw_(m.family_id); if (st0.pets.length < PET_MAX) { st0.pets.push(it.id); saveStage_(m.family_id, st0); } }
       prize = it.id;
-    } else { walletAdd_(m.family_id, 'purple', EGG_PURPLE, 'egg', egg.egg_id, String(m.member_id)); prize = 'purple:' + EGG_PURPLE; }
-    var pct = rollCoupon_();
+      pct = rollCoupon_();
+    } else if (tier === 'rare') {
+      walletAdd_(m.family_id, 'purple', EGG_RARE_PURPLE, 'egg', egg.egg_id, String(m.member_id)); prize = 'purple:' + EGG_RARE_PURPLE; pct = EGG_RARE_COUPON;
+    } else { walletAdd_(m.family_id, 'purple', EGG_PURPLE, 'egg', egg.egg_id, String(m.member_id)); prize = 'purple:' + EGG_PURPLE; pct = rollCoupon_(); }
     if (pct) { appendRow_('Coupons', { coupon_id: genId_(), family_id: m.family_id, pct: pct, egg_id: egg.egg_id, created_at: msIso_(nowMs_()), used_at: '', used_on: '' }); prize += '+c' + pct; }
     updateRow_('Eggs', 'egg_id', egg.egg_id, { status: 'hatched', hatched_by: String(m.member_id), hatched_at: msIso_(nowMs_()), prize: prize });
     updateRow_('Members', 'member_id', m.member_id, { egg_seen: egg.egg_id + ':h' });
@@ -2059,7 +2072,7 @@ export function createCore(S) {
   function prizeView1_(prize) {
     if (String(prize).indexOf('purple:') === 0) return { kind: 'purple', amount: Number(String(prize).split(':')[1]) || 0 };
     var it = shopItem_(prize);
-    return it ? { kind: it.kind, id: it.id, name: it.name, art: it.art, h: it.h, fx: it.fx, set: it.set } : null;
+    return it ? { kind: it.kind, id: it.id, name: it.name, art: it.art, h: it.h, fx: it.fx, set: it.set, sprite: it.sprite, thumb: it.thumb, thumbFrames: it.thumbFrames, tier: it.tier || 'normal' } : null;
   }
   // ข้อมูลไข่สำหรับหน้าจอ: ใบที่กำลังฟัก + เหตุการณ์ล่าสุด (เจอ/ฟัก) ที่สมาชิกคนนี้ยังไม่เห็น
   function eggView_(m) {
@@ -2070,16 +2083,16 @@ export function createCore(S) {
       var key = last.egg_id + (last.status === 'hatched' ? ':h' : ':f');
       if (String(m.egg_seen || '') !== key && !(last.status !== 'hatched' && String(m.egg_seen || '') === last.egg_id + ':h'))
         event = { key: key, type: last.status === 'hatched' ? 'hatched' : 'found', by: name(last.status === 'hatched' ? last.hatched_by : last.found_by),
-          byMe: String(last.status === 'hatched' ? last.hatched_by : last.found_by) === String(m.member_id), prize: prizeView_(last.prize) };
+          byMe: String(last.status === 'hatched' ? last.hatched_by : last.found_by) === String(m.member_id), prize: prizeView_(last.prize), tier: eggTier_(last) };
     }
     var c = cur ? jsonObj_(cur.contrib) : {};
     return {
-      current: cur ? { id: cur.egg_id, status: cur.status, warm: Number(cur.warm || 0), goal: Number(cur.goal), dayCap: EGG_DAY_CAP,
+      current: cur ? { id: cur.egg_id, tier: eggTier_(cur), status: cur.status, warm: Number(cur.warm || 0), goal: Number(cur.goal), dayCap: EGG_DAY_CAP,
         todayLeft: cur.day === today ? Math.max(0, EGG_DAY_CAP - Number(cur.day_warm || 0)) : EGG_DAY_CAP,
         huggedToday: jsonObj_(cur.hugs)[m.member_id] === today,
         contrib: getFamilyMembers_(m.family_id).map(function(x) { return { name: x.name, role: x.role, n: c[x.member_id] || 0 }; }) } : null,
       event: event, canHatch: m.role === 'child',
-      pool: SHOP_ITEMS.filter(function(it) { return it.egg; }).map(function(it) { return { art: it.art, owned: owns_(m.family_id, it) }; })
+      pool: eggPool_(eggTier_(cur)).map(function(it) { return { art: it.art, sprite: it.sprite, thumb: it.thumb, thumbFrames: it.thumbFrames, name: it.name, owned: owns_(m.family_id, it) }; })
     };
   }
 
@@ -2108,7 +2121,7 @@ export function createCore(S) {
         var own = it.free || inv.find(function(r) { return r.item_id === it.id; });
         var who = own && own.assigned_to ? getMember_(own.assigned_to) : null;   // ตัวละครเท่านั้น
         var ws = wishes.filter(function(w) { return w.item_id === it.id; });
-        return { id: it.id, kind: it.kind, name: it.name, type: it.type, sprite: it.sprite, art: it.art, free: !!it.free, egg: !!it.egg, set: it.set, h: it.h, fx: it.fx, currency: it.currency, price: it.price,
+        return { id: it.id, kind: it.kind, name: it.name, type: it.type, sprite: it.sprite, art: it.art, free: !!it.free, egg: !!it.egg, tier: it.tier || 'normal', set: it.set, h: it.h, fx: it.fx, currency: it.currency, price: it.price,
           pay: first ? discPrice_(it.price, FIRST_DISCOUNT * 100) : it.price, owned: !!own,
           inUse: it.kind === 'floor' ? stage.floor === it.id : it.kind === 'wall' ? stage.wall === it.id : it.kind === 'decor' ? stage.decor.some(function(d) { return d.id === it.id; }) : it.kind === 'pet' ? stage.pets.indexOf(it.id) >= 0 : undefined,
           assigned_to: who ? { member_id: who.member_id, name: who.name, avatar: who.avatar } : null,

@@ -4,7 +4,7 @@
 // - ทุกการแก้แถวมีเงื่อนไข "ค่าเดิมต้องยังเหมือนตอนอ่าน" กันสองเครื่องแก้ทับกัน (แทน LockService)
 
 export const TABLES = {
-  Families:    { pk: 'family_id', cols: ['family_id','family_name','join_code','created_at','wheel_enabled','wheel_started_at','wheel_prizes','purple','gold','theme','stage','egg_pity'], bools: ['wheel_enabled'] },
+  Families:    { pk: 'family_id', cols: ['family_id','family_name','join_code','created_at','wheel_enabled','wheel_started_at','wheel_prizes','purple','gold','theme','stage','egg_pity','egg_rare_pity'], bools: ['wheel_enabled'] },
   Members:     { pk: 'member_id', cols: ['member_id','family_id','name','role','avatar','line_user_id','web_token','created_at','notify_submission','quest_seen','tree_seen','egg_seen'], bools: ['notify_submission'] },
   Missions:    { pk: 'mission_id', cols: ['mission_id','family_id','title','description','base_stars','multiplier','icon','is_active','created_by','created_at'], bools: ['is_active'] },
   Submissions: { pk: 'submission_id', cols: ['submission_id','mission_id','child_id','family_id','mission_title','status','stars_earned','submitted_at','reviewed_by','reviewed_at'], bools: [] },
@@ -19,13 +19,13 @@ export const TABLES = {
   Wishes:      { pk: 'wish_id', cols: ['wish_id','family_id','child_id','item_id','created_at'], bools: [] },
   WalletLog:   { pk: 'log_id', cols: ['log_id','family_id','currency','amount','kind','ref','member_id','created_at'], bools: [], writeOnly: true },
   Coupons:     { pk: 'coupon_id', cols: ['coupon_id','family_id','pct','egg_id','created_at','used_at','used_on'], bools: [] },
-  Eggs:        { pk: 'egg_id', cols: ['egg_id','family_id','status','warm','goal','day','day_warm','contrib','hugs','found_by','found_at','hatched_by','hatched_at','prize','created_at'], bools: [] },
+  Eggs:        { pk: 'egg_id', cols: ['egg_id','family_id','status','warm','goal','day','day_warm','contrib','hugs','found_by','found_at','hatched_by','hatched_at','prize','created_at','tier'], bools: [] },
   Spins:       { pk: 'spin_id', cols: ['spin_id','child_id','family_id','round_key','earned_at','used_at','prize_stars','prize_index','request_id'], bools: [], ignoreDup: true },
 };
 
 const NUM_COLS = new Set(['pct','base_stars','multiplier','stars_earned','stars_cost','quantity','stars_spent','prize_stars','prize_index',
   'stars_earned_today','stars_spent_today','balance','missions_completed_today','stars','duration_sec',
-  'purple','gold','target','progress','reward','price','amount','warm','goal','day_warm','egg_pity']);
+  'purple','gold','target','progress','reward','price','amount','warm','goal','day_warm','egg_pity','egg_rare_pity']);
 
 export class ConflictError extends Error {}
 

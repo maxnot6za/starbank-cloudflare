@@ -16,6 +16,8 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   ok(await egg(), 'อนุมัติไม่เกิน 8 ครั้ง → เจอไข่แน่นอน', { n });
   const e0 = await egg();
   ok(e0.found_by === C && e0.goal === 15 && e0.warm === 0, 'ไข่ใบใหม่: เด็กคนที่ส่งงานเป็นคนเจอ · เป้า 15');
+  ok(['normal', 'rare'].includes(e0.tier), 'ไข่มีระดับ normal/rare', e0.tier);
+  await db.prepare("UPDATE Eggs SET tier = 'normal'").run();   // ทดสอบไข่ธรรมดาก่อน
   ok((await db.prepare('SELECT egg_pity FROM Families WHERE family_id = ?').bind(FAM).first()).egg_pity === 0, 'เจอไข่แล้ว รีเซ็ตตัวนับ');
   let cd = (await call(mf, 'getChildDashboard', C)).value;
   ok(cd.egg.current && cd.egg.event && cd.egg.event.type === 'found', 'dashboard มีไข่ + เหตุการณ์ "เจอไข่" ที่ยังไม่เห็น', cd.egg.event);
@@ -101,6 +103,29 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   const pz = (await db.prepare("SELECT prize FROM Eggs WHERE egg_id = ?").bind(FAM + '|99').first()).prize;
   const cnt = (await db.prepare("SELECT COUNT(*) n FROM Coupons WHERE egg_id = ?").bind(FAM + '|99').first()).n;
   ok(/\+c\d+$/.test(pz) === (cnt === 1) && (!r.value.prize.coupon || [10, 25, 50].includes(r.value.prize.coupon)), 'รางวัล+คูปองตรงกับตาราง', { pz, cnt, p: r.value.prize });
+
+  // --- ไข่ rare: ได้สัตว์เลี้ยง rare + เข้าห้อง · ครบแล้วได้ดาวม่วง 30 + คูปอง 50% · การันตีใบที่ 5 ---
+  await db.prepare("UPDATE Families SET stage = NULL WHERE family_id = ?").bind(FAM).run();
+  await db.prepare("INSERT INTO Eggs (egg_id,family_id,status,warm,goal,contrib,hugs,found_by,created_at,tier) VALUES (?,?,'ready',15,15,'{}','{}',?,'','rare')").bind(FAM + '|r1', FAM, C).run();
+  let cv = (await call(mf, 'getChildDashboard', C)).value.egg;
+  ok(cv.current.tier === 'rare' && cv.pool.length === 3 && cv.pool.every(p => p.sprite), 'ไข่ rare: รายการลุ้นเป็นสัตว์เลี้ยง 3 ตัว', cv.pool);
+  r = await call(mf, 'hatchEgg', C);
+  ok(r.ok && r.value.prize.kind === 'pet' && r.value.prize.tier === 'rare', 'ฟักไข่ rare → ได้สัตว์เลี้ยง rare', r.value && r.value.prize);
+  const st = JSON.parse((await db.prepare('SELECT stage FROM Families WHERE family_id = ?').bind(FAM).first()).stage);
+  ok(st.pets.includes(r.value.prize.id), 'สัตว์เลี้ยงจากไข่เข้าห้องเอง', st.pets);
+  for (const id of ['pet_godzero', 'pet_puymek', 'pet_firedragon']) await db.prepare("INSERT OR IGNORE INTO Inventory (inv_id,family_id,item_id,price,currency,bought_by,bought_at,assigned_to) VALUES (?,?,?,0,'egg',?,'','')").bind('y' + id, FAM, id, C).run();
+  await db.prepare("INSERT INTO Eggs (egg_id,family_id,status,warm,goal,contrib,hugs,found_by,created_at,tier) VALUES (?,?,'ready',15,15,'{}','{}',?,'','rare')").bind(FAM + '|r2', FAM, C).run();
+  const pb = (await db.prepare('SELECT purple FROM Families WHERE family_id = ?').bind(FAM).first()).purple;
+  r = await call(mf, 'hatchEgg', C);
+  ok(r.ok && r.value.prize.kind === 'purple' && r.value.prize.amount === 30 && r.value.prize.coupon === 50, 'rare ครบแล้ว → ดาวม่วง 30 + คูปอง 50%', r.value && r.value.prize);
+  ok((await db.prepare('SELECT purple FROM Families WHERE family_id = ?').bind(FAM).first()).purple === pb + 30, 'ดาวม่วง 30 เข้ากระเป๋า');
+  r = await call(mf, 'buyItem', P1, 'pet_godzero'); ok(!r.ok, 'สัตว์เลี้ยง rare ซื้อในร้านไม่ได้');
+  // การันตี rare: ตัวนับครบ 4 แล้ว ใบถัดไปต้องเป็น rare
+  await db.prepare("UPDATE Eggs SET status = 'hatched' WHERE family_id = ?").bind(FAM).run();
+  await db.prepare("UPDATE Families SET egg_pity = 7, egg_rare_pity = 4 WHERE family_id = ?").bind(FAM).run();
+  await approve();
+  const last = await db.prepare("SELECT tier FROM Eggs WHERE family_id = ? AND status = 'warming'").bind(FAM).first();
+  ok(last && last.tier === 'rare', 'การันตีไข่ rare ทุกใบที่ 5', last);
 
   await mf.dispose();
   console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด'); process.exit(fails ? 1 : 0);
