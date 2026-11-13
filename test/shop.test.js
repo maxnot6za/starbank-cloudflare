@@ -85,7 +85,7 @@ const thaiToday = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0
   // --- ร้านค้า ---
   await db.prepare('UPDATE Families SET purple = 30 WHERE family_id = ?').bind(FAM).run();
   let shop = (await call(mf, 'getShop', C)).value;
-  ok(shop.canBuy === false && shop.items.filter(i => i.kind === 'avatar').length === 3, 'เด็กเปิดร้านได้ แต่ซื้อไม่ได้');
+  ok(shop.canBuy === false && shop.items.filter(i => i.kind === 'avatar').length === 6, 'เด็กเปิดร้านได้ แต่ซื้อไม่ได้');
   ok(shop.firstDiscount && shop.items.every(i => i.pay === Math.ceil(i.price / 2)), 'ตัวแรกของครอบครัวลด 50%', shop.items.map(i => i.pay));
   ok(!(await call(mf, 'buyItem', C, 'dino_kid', C)).ok, 'เด็กยิงคำสั่งซื้อตรง ๆ → ถูกปฏิเสธ');
   r = await call(mf, 'wishItem', C, 'dino_kid');
