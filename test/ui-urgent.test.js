@@ -25,13 +25,13 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   const ready = p => p.waitForFunction(() => typeof dashboardData !== 'undefined' && dashboardData && dashboardData.member, null, { timeout: 10000 });
 
   const mom = await mk(P2); await mom.goto(base + '/'); await ready(mom);
-  ok(/สั่งภารกิจเร่งด่วน/.test(await mom.textContent('#parent-urgent')), 'หน้าแรกผู้ปกครองมีส่วนภารกิจด่วน');
+  ok(await mom.isVisible('#urg-fab') && !(await mom.isVisible('text=สรุปรายวัน')), 'หน้าแรกผู้ปกครองมีปุ่มลอย ⚡ · ไม่มีปุ่มสรุปรายวัน');
   const kid = await mk(C); await kid.goto(base + '/'); await ready(kid);
   await kid.waitForTimeout(800);
   ok(/เปิดแจ้งเตือน/.test(await kid.textContent('#kid-push-slot')), 'หน้าเด็กมีปุ่มเปิดแจ้งเตือน');
 
   // ผู้ปกครองสร้าง
-  await mom.click('#screen-parent-home >> text=+ สร้าง'); await mom.waitForSelector('#u-title');
+  await mom.click('#urg-fab'); await mom.waitForSelector('#u-title');
   await mom.fill('#u-title', 'เก็บของเล่นในห้องนั่งเล่น');
   await mom.click('#u-icons button:nth-child(2)');
   await mom.click('text=10 นาที');
@@ -52,7 +52,11 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await kid.click('#u-accept-btn');
   await mom.waitForFunction(() => /กำลังทำ/.test(document.getElementById('parent-urgent').textContent), null, { timeout: 8000 });
   ok(true, 'กดรับภารกิจ → ผู้ปกครองเห็น "กำลังทำ" ทันที');
-  await (await mom.$('#parent-urgent')).screenshot({ path: OUT + 'u3-parent-running.png' });
+  await mom.waitForSelector('#urg-fab.live .ring');
+  ok(true, 'ปุ่มลอยมีวงแหวนนับเวลา');
+  await mom.click('#urg-fab', { force: true }); await mom.waitForSelector('#urg-detail .u-kid');
+  await mom.screenshot({ path: OUT + 'u3-parent-running.png' });
+  await mom.evaluate(() => closeModal());
 
   await kid.waitForSelector('#u-submit-btn');
   await kid.waitForTimeout(1200);
@@ -65,6 +69,10 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await kid.screenshot({ path: OUT + 'u5-yay.png' });
   await mom.waitForFunction(() => /ส่งแล้ว รออนุมัติ/.test(document.getElementById('parent-urgent').textContent), null, { timeout: 8000 });
   ok(await mom.evaluate(() => dashboardData.pending.some(p => p.mission_title === '⚡ เก็บของเล่นในห้องนั่งเล่น')), 'ผู้ปกครอง: เข้ารายการรออนุมัติพร้อม ⚡');
+  await mom.waitForSelector('#parent-pending-home .pending-item.urg .urg-tag');
+  ok(/ภารกิจด่วน · 1/.test(await mom.textContent('#parent-pending-home')) && /ภารกิจทั่วไป/.test(await mom.textContent('#parent-pending-home')), 'รออนุมัติแยก ด่วน/ทั่วไป');
+  ok(await mom.textContent('#urg-fab .b') === '1', 'ปุ่มลอยมีจุดแดง 1');
+  await mom.screenshot({ path: OUT + 'u5b-pending-split.png' });
   await kid.click('text=ตกลง');
 
   // ภารกิจที่ 2: ปฏิเสธ
@@ -75,7 +83,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await kid.waitForSelector('text=ไม่เป็นไรนะ');
   await kid.waitForTimeout(400);
   await kid.screenshot({ path: OUT + 'u6-decline.png' });
-  await mom.waitForFunction(() => /ไว้คราวหน้า/.test(document.getElementById('parent-urgent').textContent), null, { timeout: 8000 });
+  await mom.waitForFunction(() => /ไว้คราวหน้า/.test(document.getElementById('review-history-list').textContent), null, { timeout: 8000 });
   ok(true, 'ปฏิเสธ → ผู้ปกครองเห็น "ไว้คราวหน้า"');
   await kid.click('text=ตกลง');
 
@@ -95,11 +103,24 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   // หมดเวลา → ผู้ปกครองมีปุ่มส่งดาวปลอบใจ
   await mom.evaluate(() => Live.request());
   // จบแล้ว → ย้ายไปกล่อง "จบแล้ว" ที่พับไว้ · กด + เพื่อกาง
-  await mom.waitForSelector('.urg-done', { timeout: 8000 });
-  ok(!(await mom.isVisible('text=ส่งดาวปลอบใจ')), 'ภารกิจด่วนที่จบแล้วพับอยู่ในกล่อง "จบแล้ว"');
-  await mom.click('.urg-done .fold-tg');
-  await mom.waitForSelector('text=ส่งดาวปลอบใจ', { timeout: 8000 });
-  ok(true, 'ลูกทำไม่ทัน/ปฏิเสธ → มีปุ่ม "🎁 ส่งดาวปลอบใจ"');
+  await mom.evaluate(() => parentNav('approvals'));
+  await mom.waitForSelector('#review-history-list .rh-row.urg >> text=ส่งดาวปลอบใจ', { timeout: 8000 });
+  const hist = await mom.textContent('#review-history-list');
+  ok(/ไว้คราวหน้า/.test(hist) && /หมดเวลา/.test(hist), 'ภารกิจด่วนที่จบแล้ว → อยู่ในประวัติอนุมัติ มีปุ่มส่งดาวปลอบใจ');
+  ok(!(await mom.isVisible('#urg-fab')), 'ปุ่มลอยไม่ขึ้นในแท็บอื่น');
+  await mom.screenshot({ path: OUT + 'u7b-history.png' });
+  await mom.evaluate(() => parentNav('home'));
+  // ลากปุ่มไปซ้าย → เด้งชิดขอบซ้าย + จำตำแหน่ง
+  const fb = await mom.locator('#urg-fab').boundingBox();
+  await mom.mouse.move(fb.x + 30, fb.y + 30); await mom.mouse.down(); await mom.mouse.move(60, 400, { steps: 8 }); await mom.mouse.up(); await mom.waitForTimeout(400);
+  const fb2 = await mom.locator('#urg-fab').boundingBox();
+  ok(fb2.x < 30 && !(await mom.isVisible('#modal-content h2:has-text("สร้างภารกิจด่วน")')), 'ลากปุ่ม → ชิดซ้าย ไม่เปิดหน้าสร้าง', fb2);
+  await mom.reload(); await ready(mom); await mom.waitForTimeout(800);
+  ok((await mom.locator('#urg-fab').boundingBox()).x < 30, 'เปิดใหม่ ปุ่มอยู่ที่เดิม');
+  await mom.click('.hdr-btn[aria-label="ตั้งค่า"]'); await mom.click('#modal-content .set-link');
+  await mom.waitForTimeout(800);
+  ok(!(await mom.isVisible('#modal-content .set-link')), 'ตั้งค่า → สรุปรายวัน เปิดได้');
+  await mom.evaluate(() => { try { closeModal(); } catch (e) {} parentNav('home'); });
 
   // ของขวัญ: ผู้ปกครองส่ง 120 ดาว → ยืนยัน → เด็กเปิดกล่อง
   await mom.click('#parent-children-list >> text=ส่งของขวัญ');
@@ -139,10 +160,11 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
 
   // ผู้ปกครอง: สร้างแล้วยกเลิก (แตะ 2 ครั้ง)
   await mom.evaluate(() => google.script.run.createUrgent(currentMember.memberId, { title: 'กวาดบ้าน', icon: '🧹', stars: 4, hours: 1, childIds: dashboardData.children.map(c => c.member_id) }));
-  await mom.waitForSelector('text=ยกเลิกภารกิจด่วน', { timeout: 8000 });
-  await mom.screenshot({ path: OUT + 'u8-parent-home.png', fullPage: true });
-  await mom.click('text=ยกเลิกภารกิจด่วน'); await mom.click('text=แตะอีกครั้งเพื่อยืนยันยกเลิก');
-  await mom.waitForFunction(() => /ยกเลิกแล้ว/.test(document.getElementById('parent-urgent').textContent), null, { timeout: 8000 });
+  await mom.waitForSelector('#urg-fab.live', { timeout: 8000 });
+  await mom.click('#urg-fab', { force: true }); await mom.waitForSelector('#urg-detail >> text=ยกเลิกภารกิจด่วน');
+  await mom.screenshot({ path: OUT + 'u8-parent-home.png' });
+  await mom.click('#urg-detail >> text=ยกเลิกภารกิจด่วน'); await mom.click('text=แตะอีกครั้งเพื่อยืนยันยกเลิก');
+  await mom.waitForFunction(() => !document.getElementById('urg-fab').classList.contains('live') && /ยกเลิกแล้ว/.test(document.getElementById('review-history-list').textContent), null, { timeout: 8000 });
   ok(true, 'ยกเลิก (แตะยืนยัน 2 ครั้ง)');
 
   ok(errors.length === 0, 'ไม่มี JS error', errors);

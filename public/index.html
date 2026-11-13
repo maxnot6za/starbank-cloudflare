@@ -487,6 +487,23 @@
     .g-after { opacity:0; pointer-events:none; transition:opacity .4s 1.6s; margin-top:12px; width:min(320px,85%); }
     .g-wrap.open ~ .g-after { opacity:1; pointer-events:auto; }
     /* ===== ภารกิจด่วน ===== */
+    #urg-fab{position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:60;width:62px;height:62px;border-radius:50%;border:0;padding:0;font-size:1.9rem;line-height:1;color:#fff;background:linear-gradient(135deg,#FF5A36,#FF7A45);box-shadow:0 6px 18px #FF5A3666;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;transition:transform .15s}
+    #urg-fab[hidden]{display:none}
+    #urg-fab.drag{transform:scale(1.12);box-shadow:0 10px 26px #FF5A3699;transition:none}
+    #urg-fab.snap{transition:left .25s ease,top .25s ease,transform .15s}
+    #urg-fab.live{animation:urgfab 1.6s ease-in-out infinite}
+    @keyframes urgfab{50%{transform:scale(1.06)}}
+    #urg-fab .ring{position:absolute;inset:-9px;border-radius:50%;background:conic-gradient(#FF5A36 0 var(--p,100%),#FFE1D6 var(--p,100%));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);pointer-events:none}
+    #urg-fab .b{position:absolute;top:-6px;right:-4px;background:#E5484D;color:#fff;border-radius:99px;min-width:22px;height:22px;padding:0 5px;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+    body.urg-fab-on #screen-parent-home{padding-bottom:90px}
+    .pg-h{font-weight:800;font-size:.85rem;margin:10px 2px 6px}.pg-h.u{color:#E0451F}.pg-h.n{color:var(--text-muted)}
+    .pending-item.urg{border-left:5px solid #FF5A36;background:#FFF6F2}
+    .urg-tag{display:inline-block;background:#FF5A36;color:#fff;border-radius:99px;padding:1px 8px;font-size:.72rem;font-weight:800;margin-right:4px;vertical-align:1px}
+    .urg-ontime{display:inline-block;background:#E3F5EE;color:#1F7A5C;border-radius:99px;padding:1px 8px;font-size:.72rem;font-weight:700;margin-right:4px}
+    .rh-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+    .rh-row.urg{border-left:4px solid #FF5A36;background:#FFF6F2;border-radius:8px;padding:10px 8px;margin:4px 0}
+    .set-link{margin-top:12px;width:100%;display:flex;align-items:center;gap:10px;padding:14px;border:1.5px solid var(--border);background:#fff;border-radius:14px;font:inherit;font-weight:700;font-size:1rem;color:var(--text);cursor:pointer}
+    .set-link small{display:block;font-weight:400;font-size:.8rem;color:var(--text-muted)}
     .u-card { position:relative; overflow:hidden; background:#fff; border:3px solid #FF5A36; border-radius:20px; padding:14px; margin-bottom:14px; box-shadow:0 6px 18px rgba(255,90,54,.15); }
     .u-card .u-tag { position:absolute; right:-34px; top:12px; background:#FF5A36; color:#fff; font-size:.72rem; font-weight:700; transform:rotate(35deg); padding:3px 38px; }
     .u-row { display:flex; align-items:center; gap:10px; }
@@ -955,18 +972,13 @@
   <div class="section-title fold-h" onclick="foldToggle('kids')">
     <span class="fh-t">👧 สมาชิกเด็ก</span>
     <span class="fold-sum" id="fold-sum-kids"></span>
-    <button class="btn btn-sm" style="background:#fff;border:1.5px solid var(--border);color:var(--text)" onclick="event.stopPropagation();openSummary()">📊 สรุปรายวัน</button>
     <button type="button" class="fold-tg" data-fold-tg="kids" aria-label="พับ/กาง">−</button>
   </div>
   <div id="parent-children-list" class="fold-body" data-fold="kids"></div>
 
-  <div class="section-title fold-h" onclick="foldToggle('urg')">
-    <span class="fh-t">⚡ ภารกิจด่วน</span>
-    <span class="fold-sum" id="fold-sum-urg"></span>
-    <button class="btn btn-sm" style="background:linear-gradient(135deg,#FF5A36,#FF7A45);color:#fff" onclick="event.stopPropagation();showCreateUrgent()">+ สร้าง</button>
-    <button type="button" class="fold-tg" data-fold-tg="urg" aria-label="พับ/กาง">−</button>
-  </div>
-  <div id="parent-urgent" class="fold-body" data-fold="urg"></div>
+  <!-- ภารกิจด่วน: ปุ่มลอย ⚡ (ลากได้) · การ์ดที่กำลังนับเวลาเก็บไว้ใน #parent-urgent (ซ่อน) แล้วโชว์ในหน้ารายละเอียดตอนแตะปุ่ม -->
+  <div id="parent-urgent" hidden></div>
+  <button type="button" id="urg-fab" aria-label="ภารกิจด่วน" hidden>⚡</button>
   <div id="parent-gifts"></div>
 
   <div id="redemption-alert-box" style="display:none;background:#FFF8E6;border:2px solid var(--gold);border-radius:var(--radius);padding:16px;margin-bottom:16px;animation:pulse-border 2s ease-in-out infinite">
@@ -1128,6 +1140,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById('screen-' + id);
   if (el) el.classList.add('active');
+  if (typeof urgFabShow === 'function') urgFabShow();
 }
 
 function childNav(tab) {
@@ -1533,8 +1546,7 @@ function renderParentHome(d) {
   if (d.pending.length) {
     badge.style.display = 'inline-flex';
     badge.textContent = d.pending.length;
-    ph.innerHTML = d.pending.slice(0, 3).map(s => renderPendingItem(s)).join('');
-    if (d.pending.length > 3) ph.innerHTML += `<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-top:8px">+ อีก ${d.pending.length - 3} รายการ</p>`;
+    ph.innerHTML = pendingGroups(d.pending, 3);
   } else {
     badge.style.display = 'none';
     ph.innerHTML = '<div class="empty-state" style="padding:20px"><div class="es-icon">✅</div>ไม่มีรายการรออนุมัติ</div>';
@@ -1588,13 +1600,13 @@ function renderPendingItem(s) {
   const childAvatar = child ? child.avatar : '👤';
   const timeStr = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
   return `
-    <div class="pending-item">
+    <div class="pending-item${urgSub(s) ? ' urg' : ''}">
       <div class="pi-top">
         <span style="font-size:1.3rem">${childAvatar}</span>
         <div style="flex:1">
           <div class="pi-child">${esc(childName)}</div>
-          <div class="pi-mission">${esc(s.mission_title)}</div>
-          <div class="pi-time">${timeStr}</div>
+          <div class="pi-mission">${urgSub(s) ? '<span class="urg-tag">⚡ ด่วน</span>' + esc(String(s.mission_title).replace(/^⚡\s*/, '')) : esc(s.mission_title)}</div>
+          <div class="pi-time">${urgSub(s) ? urgOnTime(urgSub(s)) : ''}${timeStr}</div>
         </div>
       </div>
       <div class="pi-actions">
@@ -1634,22 +1646,35 @@ function reallyReview(subId, status) {
 
 function renderReviewHistory(d) {
   var list = document.getElementById('review-history-list');
-  var items = d.reviewHistory || [];
+  var items = (d.reviewHistory || []).map(function (r) { return Object.assign({ t: r.reviewed_at }, r); });
+  // ⚡ ภารกิจด่วนที่ไม่ได้ส่ง (หมดเวลา / ไว้คราวหน้า / ยกเลิก) → ใส่ในประวัติด้วย
+  (d.urgent || []).forEach(function (g) { g.kids.forEach(function (k) {
+    if (k.status === 'expired' || k.status === 'declined' || k.status === 'cancelled') items.push({ urg: k, g: g, t: k.ended_at || g.created_at });
+  }); });
+  items.sort(function (a, b) { return new Date(b.t) - new Date(a.t); });
   if (items.length === 0) {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div>ยังไม่มีประวัติ</div>';
     return;
   }
   list.innerHTML = items.map(function(r) {
+    if (r.urg) {
+      var k = r.urg, why = k.status === 'declined' ? '😴 ไว้คราวหน้า' : k.status === 'cancelled' ? '🚫 ยกเลิกแล้ว' : (k.seen_at ? '⏰ หมดเวลา' : '⏰ หมดเวลา · ไม่ได้เปิดดู');
+      return '<div class="rh-row urg"><span style="font-size:1.3rem">' + esc(k.child_avatar) + '</span><div style="flex:1;min-width:0">' +
+        '<div style="font-weight:600"><span class="urg-tag">⚡ ด่วน</span>' + esc(k.child_name) + ' — ' + esc(r.g.title) + '</div>' +
+        '<div style="font-size:0.8rem;color:var(--text-muted)">' + why + ' · ' + new Date(r.t).toLocaleString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) + '</div></div>' +
+        (k.status !== 'cancelled' ? '<button class="u-chip" style="width:100%;font-size:.82rem;border-color:#FF8FA3;color:#E5484D;background:#FFF0F3" onclick="showSendGift(\'' + k.child_id + '\',\'comfort\')">🎁 ส่งดาวปลอบใจ</button>' : '') + '</div>';
+    }
+    var us = urgSub(r);
     var timeStr = new Date(r.reviewed_at).toLocaleString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     var statusIcon = r.status === 'approved' ? '✅' : '❌';
     var statusText = r.status === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ';
     var starText = r.status === 'approved' && r.stars_earned ? ' +' + r.stars_earned + '⭐' : '';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">' +
+    return '<div class="rh-row' + (us ? ' urg' : '') + '">' +
       '<span style="font-size:1.3rem">' + r.child_avatar + '</span>' +
-      '<div style="flex:1">' +
-        '<div style="font-weight:600">' + esc(r.child_name) + ' — ' + esc(r.mission_title) + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:600">' + (us ? '<span class="urg-tag">⚡ ด่วน</span>' : '') + esc(r.child_name) + ' — ' + esc(us ? String(r.mission_title).replace(/^⚡\s*/, '') : r.mission_title) + '</div>' +
         '<div style="font-size:0.8rem;color:var(--text-muted)">' +
-          statusIcon + ' ' + statusText + starText +
+          statusIcon + ' ' + statusText + starText + (us && urgOnTime(us) ? ' · ' + urgOnTime(us).replace(/<[^>]+>/g, '').replace('✓ ', '').trim() : '') +
           ' · โดย ' + r.reviewer_avatar + ' ' + esc(r.reviewer_name) +
           ' · ' + timeStr +
         '</div>' +
@@ -1686,7 +1711,27 @@ function renderParentPending(d) {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div>ไม่มีรายการรออนุมัติ</div>';
     return;
   }
-  list.innerHTML = d.pending.map(s => renderPendingItem(s)).join('');
+  list.innerHTML = pendingGroups(d.pending, 999);
+}
+// ⚡ ภารกิจด่วนที่ลูกส่ง → หาแถว Urgent จาก submission_id (ไม่มี = ภารกิจทั่วไป)
+function urgSub(s) {
+  var g = (dashboardData && dashboardData.urgent) || [];
+  for (var i = 0; i < g.length; i++) for (var j = 0; j < g[i].kids.length; j++) if (g[i].kids[j].submission_id && g[i].kids[j].submission_id === s.submission_id) return g[i].kids[j];
+  return /^⚡/.test(s.mission_title || '') ? {} : null;
+}
+function urgOnTime(k) {
+  var a = new Date(k.accepted_at || k.seen_at).getTime(), b = new Date(k.ended_at).getTime();
+  if (!(a && b && b >= a)) return '';
+  return '<span class="urg-ontime">✓ ส่งทันใน ' + Math.max(1, Math.round((b - a) / 60000)) + ' นาที</span> ';
+}
+// รออนุมัติ: ด่วนอยู่บนสุด แล้วตามด้วยภารกิจทั่วไป (ทั่วไปโชว์ไม่เกิน max)
+function pendingGroups(list, max) {
+  var u = list.filter(urgSub), n = list.filter(function (s) { return !urgSub(s); });
+  var h = '';
+  if (u.length) h += '<div class="pg-h u">⚡ ภารกิจด่วน · ' + u.length + '</div>' + u.map(renderPendingItem).join('');
+  if (n.length) h += (u.length ? '<div class="pg-h n">📋 ภารกิจทั่วไป · ' + n.length + '</div>' : '') + n.slice(0, max).map(renderPendingItem).join('');
+  if (n.length > max) h += '<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-top:8px">+ อีก ' + (n.length - max) + ' รายการ</p>';
+  return h;
 }
 
 function renderParentRewards(d) {
@@ -1973,6 +2018,7 @@ function showSettings() {
       <div class="info-row"><span>รหัสครอบครัว (เด็กใช้เข้าระบบ)</span><strong style="letter-spacing:3px">${joinCode}</strong></div>
       <div class="info-row"><span>สมาชิกทั้งหมด</span><span>${d.members.length} คน</span></div>
     </div>
+    <button type="button" class="set-link" onclick="closeModal();openSummary()"><span style="font-size:1.3rem">📊</span><span style="flex:1;text-align:left">สรุปรายวัน<small>ลูกทำอะไรไปบ้างวันนี้</small></span>›</button>
     <div class="divider"></div>
     <div id="theme-slot">${themeCard()}</div>
     <div class="divider"></div>
@@ -2906,7 +2952,7 @@ function urgTick() {
   // ครบเวลาบนจอเด็ก → รอช่วงผ่อนผัน 6 วิ แล้วถามเซิร์ฟเวอร์ (ตัวตัดสินจริง)
   if (ended) setTimeout(function () { if (typeof Live !== 'undefined') Live.request(); }, 6500);
 }
-function urgStartTick() { if (!URG.ticking) URG.ticking = setInterval(urgTick, 1000); urgTick(); }
+function urgStartTick() { if (!URG.ticking) URG.ticking = setInterval(function () { urgTick(); urgFabRing(); }, 1000); urgTick(); }
 
 // ---------------- เด็ก ----------------
 function renderUrgentKid(d) {
@@ -3083,7 +3129,6 @@ function renderUrgentParent(d) {
   var box = document.getElementById('parent-urgent'); if (!box) return;
   urgSync(d.serverNow);
   var g = d.urgent || [];
-  if (!g.length) { box.innerHTML = '<div style="color:var(--text-muted);font-size:.85rem;margin:-4px 0 16px">สั่งภารกิจเร่งด่วนพร้อมนับเวลาถอยหลัง ลูกได้แจ้งเตือนทันที</div>'; return; }
   function card(x) {
     return '<div class="card" style="padding:14px' + (x.active ? ';border:2px solid #FF5A36' : '') + '">' +
       '<div class="u-row"><span class="u-ico" style="font-size:1.7rem">' + esc(x.icon) + '</span><div style="flex:1;min-width:0"><div class="u-title">' + esc(x.title) + '</div>' +
@@ -3096,17 +3141,85 @@ function renderUrgentParent(d) {
       (x.active ? '<button class="u-btn ghost" style="margin-top:8px;padding:9px;font-size:.9rem" onclick="cancelUrgentBatch(this,\'' + x.batch_id + '\')">ยกเลิกภารกิจด่วน</button>' : '') +
       '</div>';
   }
-  var open = g.filter(function (x) { return urgLive(x); }), done = g.filter(function (x) { return !urgLive(x); });
-  var html = open.map(card).join('');
-  if (!open.length && !done.length) html = '';
-  if (done.length) html += '<div class="card urg-done"><div class="fold-h" onclick="foldToggle(\'urgdone\')"><span class="fh-t">✅ จบแล้ว ' + done.length + ' รายการ</span><button type="button" class="fold-tg" data-fold-tg="urgdone" aria-label="พับ/กาง">+</button></div>' +
-    '<div class="fold-body" data-fold="urgdone">' + done.map(card).join('') + '</div></div>';
-  box.innerHTML = html;
-  var us = document.getElementById('fold-sum-urg');
-  if (us) { var run = 0, wait = 0; open.forEach(function (x) { x.kids.forEach(function (k) { if (k.status === 'submitted' && k.review !== 'approved' && k.review !== 'rejected') wait++; else if (k.status === 'pending' || k.status === 'running') run++; }); }); us.textContent = (run ? 'กำลังทำ ' + run : '') + (run && wait ? ' · ' : '') + (wait ? 'รออนุมัติ ' + wait : ''); }
-  foldApply();
+  var open = g.filter(function (x) { return urgLive(x); });
+  box.innerHTML = open.map(card).join('');
+  var det = document.getElementById('urg-detail');
+  if (det) { if (open.length) det.innerHTML = box.innerHTML; else closeModal(); }
+  urgFabUpdate();
   urgStartTick();
 }
+// ---- ปุ่มลอย ⚡ (เฉพาะหน้าหลักผู้ปกครอง) · แตะ = สร้าง / ดูที่กำลังนับเวลา · ลากย้ายได้ จำตำแหน่งในเครื่อง ----
+var URGFAB = { key: 'sb_urgfab' };
+function urgFabEl() {
+  var b = document.getElementById('urg-fab');
+  if (b && !b.__init) { b.__init = true; urgFabDrag(b); window.addEventListener('resize', function () { urgFabPlace(b); }); }
+  return b;
+}
+function urgFabUpdate() {
+  var b = urgFabEl(); if (!b || !dashboardData) return;
+  var g = (dashboardData.urgent || []).filter(urgLive), wait = 0, run = null;
+  g.forEach(function (x) { x.kids.forEach(function (k) {
+    if (k.status === 'submitted' && k.review !== 'approved' && k.review !== 'rejected') wait++;
+    if (k.status === 'running' || k.status === 'pending') { if (!run || (k.deadline_at && (!run.deadline_at || k.deadline_at < run.deadline_at))) run = k; }
+  }); });
+  b.classList.toggle('live', !!run);
+  b.__run = run;
+  b.innerHTML = (run ? '<span class="ring"></span>' : '') + '⚡' + (wait ? '<span class="b">' + wait + '</span>' : '');
+  b.setAttribute('aria-label', run ? 'ภารกิจด่วนกำลังนับเวลา' : 'สร้างภารกิจด่วน');
+  urgFabShow(); urgFabRing();
+}
+function urgFabRing() {
+  var b = document.getElementById('urg-fab'); if (!b || !b.__run) return;
+  var k = b.__run, ring = b.querySelector('.ring'); if (!ring) return;
+  var p = 100;
+  if (k.status === 'running' && k.deadline_at) p = Math.max(0, Math.min(100, (new Date(k.deadline_at).getTime() - urgNow()) / (k.duration_sec * 1000) * 100));
+  ring.style.setProperty('--p', p.toFixed(1) + '%');
+}
+function urgFabShow() {
+  var b = document.getElementById('urg-fab'); if (!b) return;
+  var home = document.getElementById('screen-parent-home');
+  var on = !!(currentMember && currentMember.role !== 'child' && home && home.classList.contains('active'));
+  b.hidden = !on; document.body.classList.toggle('urg-fab-on', on);
+  if (on) urgFabPlace(b);
+}
+function urgFabPlace(b) {
+  var pos = null; try { pos = JSON.parse(localStorage.getItem(URGFAB.key) || 'null'); } catch (e) {}
+  if (!pos) { b.style.left = ''; b.style.top = ''; b.style.right = ''; b.style.bottom = ''; return; }
+  var W = window.innerWidth, H = window.innerHeight, sz = 62, m = 16;
+  var y = Math.max(80, Math.min(H - sz - 90, pos.y * H));
+  b.style.right = 'auto'; b.style.bottom = 'auto';
+  b.style.left = (pos.side === 'l' ? m : W - sz - m) + 'px'; b.style.top = y + 'px';
+}
+function urgFabDrag(b) {
+  var st = null;
+  b.addEventListener('pointerdown', function (e) { var r = b.getBoundingClientRect(); st = { x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false }; try { b.setPointerCapture(e.pointerId); } catch (x) {} });
+  b.addEventListener('pointermove', function (e) {
+    if (!st) return;
+    if (!st.moved && Math.hypot(e.clientX - st.x, e.clientY - st.y) < 8) return;
+    st.moved = true; b.classList.add('drag'); b.classList.remove('snap');
+    var W = window.innerWidth, H = window.innerHeight;
+    b.style.right = 'auto'; b.style.bottom = 'auto';
+    b.style.left = Math.max(4, Math.min(W - 66, e.clientX - st.dx)) + 'px';
+    b.style.top = Math.max(80, Math.min(H - 152, e.clientY - st.dy)) + 'px';
+  });
+  function end(e) {
+    if (!st) return; var s0 = st; st = null; b.classList.remove('drag');
+    if (!s0.moved) { if (e.type === 'pointerup') urgFabTap(); return; }
+    var r = b.getBoundingClientRect();
+    var pos = { side: r.left + r.width / 2 < window.innerWidth / 2 ? 'l' : 'r', y: r.top / window.innerHeight };
+    try { localStorage.setItem(URGFAB.key, JSON.stringify(pos)); } catch (x) {}
+    b.classList.add('snap'); urgFabPlace(b); setTimeout(function () { b.classList.remove('snap'); }, 300);
+  }
+  b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+}
+function urgFabTap() {
+  var box = document.getElementById('parent-urgent');
+  if (!box || !box.innerHTML.trim()) return showCreateUrgent();
+  openModal('<h2>⚡ ภารกิจด่วนตอนนี้</h2><div id="urg-detail">' + box.innerHTML + '</div>' +
+    '<button class="u-btn red" style="margin-top:12px" onclick="closeModal();showCreateUrgent()">⚡ สร้างภารกิจด่วนใหม่</button>');
+  urgTick();
+}
+
 // ภารกิจด่วนที่ยังไม่จบ = มีเด็กสักคนยังไม่เปิดดู / กำลังทำ / ส่งแล้วรออนุมัติ
 function urgLive(x) {
   return x.active || x.kids.some(function (k) { return k.status === 'pending' || k.status === 'running' || (k.status === 'submitted' && k.review !== 'approved' && k.review !== 'rejected'); });
@@ -3353,7 +3466,8 @@ var Live = (function () {
   function busy() {
     if (document.getElementById('gift-stage')) return true;
     var ov = document.getElementById('modal-overlay');
-    if (ov && ov.classList.contains('show')) return true;
+    // หน้ารายละเอียดภารกิจด่วน (แตะปุ่ม ⚡) อัปเดตสดได้ ไม่ต้องรอปิด
+    if (ov && ov.classList.contains('show') && !document.getElementById('urg-detail')) return true;
     var wheel = document.getElementById('screen-child-wheel');
     if (wheel && wheel.classList.contains('active')) return true;
     if (typeof wheelState !== 'undefined' && wheelState.spinning) return true;
