@@ -2019,6 +2019,7 @@ export function createCore(S) {
       updateRow_('Families', 'family_id', familyId, { egg_pity: 0, egg_rare_pity: rare ? 0 : rp });
       appendRow_('Eggs', { egg_id: familyId + '|' + (familyEggs_(familyId).length + 1), family_id: familyId, status: 'warming', warm: 0, goal: EGG_GOAL, tier: rare ? 'rare' : 'normal',
         day: '', day_warm: 0, contrib: '{}', hugs: '{}', found_by: String(childId), found_at: msIso_(nowMs_()), hatched_by: '', hatched_at: '', prize: '', created_at: msIso_(nowMs_()) });
+      if (S.events) S.events.push({ type: 'egg_found', familyId: String(familyId), childId: String(childId), eggId: familyId + '|' + familyEggs_(familyId).length, tier: rare ? 'rare' : 'normal' });
     } else updateRow_('Families', 'family_id', familyId, { egg_pity: pity });
   }
   function hugEgg(memberId) {

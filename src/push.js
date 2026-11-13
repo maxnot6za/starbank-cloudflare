@@ -155,6 +155,14 @@ export async function notifyApp(env, origin, events) {
         tag: 'gift-' + ev.giftId, url: '/#gift', kind: 'gift' }, origin);
       continue;
     }
+    // เจอไข่: แจ้งเด็กคนที่ทำภารกิจจนเจอ (ไม่ได้เปิดแอปก็รู้ทันที)
+    if (ev.type === 'egg_found') {
+      const { results: subs } = await env.DB.prepare('SELECT * FROM PushSubs WHERE member_id = ?').bind(String(ev.childId)).all();
+      if (subs.length) await deliver(env, subs, ev.tier === 'rare'
+        ? { title: '✨ เจอไข่หายาก!', body: 'ข้างในเป็นสัตว์เลี้ยง · แตะเพื่อดูไข่ในห้อง', tag: 'egg-' + ev.eggId, url: '/', kind: 'egg' }
+        : { title: '🥚 เจอไข่ปริศนา!', body: 'หนูทำภารกิจจนเจอไข่ · ช่วยกันกอดไข่แล้วรอฟักนะ', tag: 'egg-' + ev.eggId, url: '/', kind: 'egg' }, origin);
+      continue;
+    }
     const { results: parents } = await env.DB.prepare(
       "SELECT member_id, line_user_id, notify_channel, notify_submission FROM Members WHERE family_id = ? AND role = 'parent'").bind(ev.familyId).all();
     // ค่าเริ่มต้น: ผูก LINE = LINE (แบบเดิม) · ไม่ผูก LINE = แอป

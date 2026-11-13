@@ -4,8 +4,11 @@ const { start, call } = require('./lib/mf.js');
 let fails = 0;
 const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? '' : JSON.stringify(x).slice(0, 300)); if (!c) fails++; };
 (async () => {
-  const { mf, db } = await start({ outbound: async () => new Response('', { status: 201 }) });
+  const pushes = [];
+  const { mf, db } = await start({ outbound: async (req) => { pushes.push(new URL(req.url).pathname); return new Response('', { status: 201 }); } });
   await seedFamily(db);
+  await db.prepare("INSERT INTO PushSubs (endpoint, member_id, family_id, p256dh, auth, device, created_at) VALUES (?,?,?,?,?,?,?)")
+    .bind('https://push.example/kid', C, FAM, 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM', 'tBHItJI5svbpez7KI4CCXg', 'test', new Date().toISOString()).run();
   const approve = async () => { const s = await call(mf, 'submitMission', 'm1', C, FAM); return call(mf, 'reviewSubmission', s.value, 'approved', P2); };
   const egg = async () => db.prepare("SELECT * FROM Eggs WHERE family_id = ? AND status != 'hatched'").bind(FAM).first();
   const day = (n) => new Date(Date.now() + 7 * 3600000 + n * 86400000).toISOString().slice(0, 10);
@@ -14,6 +17,8 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   let n = 0;
   while (!(await egg()) && n < 8) { await approve(); n++; }
   ok(await egg(), 'อนุมัติไม่เกิน 8 ครั้ง → เจอไข่แน่นอน', { n });
+  await new Promise(r => setTimeout(r, 300));
+  ok(pushes.filter(x => x === '/kid').length === 1, 'เจอไข่ → แจ้งเตือนไปที่เครื่องลูก 1 ครั้ง', pushes);
   const e0 = await egg();
   ok(e0.found_by === C && e0.goal === 15 && e0.warm === 0, 'ไข่ใบใหม่: เด็กคนที่ส่งงานเป็นคนเจอ · เป้า 15');
   ok(['normal', 'rare'].includes(e0.tier), 'ไข่มีระดับ normal/rare', e0.tier);
