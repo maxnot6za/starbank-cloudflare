@@ -1851,16 +1851,23 @@ export function createCore(S) {
     return { total: items.reduce(function(a, b) { return a + b.reward; }, 0), items: items,
       until: rows.map(function(q) { return String(q.claimed_at); }).sort().pop() };
   }
-  // เป้าหมายถัดไป: ของที่เด็กกด "อยากได้" (ยังไม่มี) · ไม่มี = ของที่ซื้อได้ราคาถูกสุดที่ยังไม่มี
+  // เป้าหมายถัดไป: ของที่กด "อยากได้" ไว้ (ลูก = ของตัวเอง · ผู้ปกครอง = ของใครก็ได้ในบ้าน) ราคาถูกสุด · ยังไม่มี = { none } ชวนไปกด
   function purpleGoal_(member, have) {
     var fid = member.family_id;
     var buyable = SHOP_ITEMS.filter(function(it) { return !it.free && !it.egg && it.price > 0 && !owns_(fid, it); });
     if (!buyable.length) return null;
-    var wishes = getAllRows_('Wishes').filter(function(w) { return String(w.family_id) === String(fid) && (member.role !== 'child' || String(w.child_id) === String(member.member_id)); });
+    var wishes = getAllRows_('Wishes').filter(function(w) {
+      if (String(w.family_id) !== String(fid)) return false;
+      if (member.role !== 'child') return true;
+      var x = getMember_(w.child_id); return String(w.child_id) === String(member.member_id) || (x && x.role === 'parent');   // ลูกเห็นของที่ตัวเองหรือพ่อแม่ตั้งไว้
+    });
     var wished = buyable.filter(function(it) { return wishes.some(function(w) { return w.item_id === it.id; }); });
-    var pick = (wished.length ? wished : buyable).map(function(it) { return { it: it, pay: priceFor_(fid, it) }; }).sort(function(a, b) { return a.pay - b.pay; })[0];
+    if (!wished.length) return { none: true, have: have };   // ยังไม่มีใครเลือกของที่อยากได้ → ชวนไปกด "อยากได้"
+    var pick = wished.map(function(it) { return { it: it, pay: priceFor_(fid, it) }; }).sort(function(a, b) { return a.pay - b.pay; })[0];
     var it = pick.it;
-    return { id: it.id, name: it.name, kind: it.kind, sprite: it.sprite || '', art: it.art || '', price: pick.pay, have: have, left: Math.max(0, pick.pay - have), wished: !!wished.length };
+    var by = wishes.filter(function(w) { return w.item_id === it.id; }).map(function(w) { var x = getMember_(w.child_id); return x ? x.role : ''; });
+    return { id: it.id, name: it.name, kind: it.kind, sprite: it.sprite || '', art: it.art || '', price: pick.pay, have: have, left: Math.max(0, pick.pay - have), wished: true,
+      byKid: by.indexOf('child') >= 0 };
   }
   function purpleSeen(memberId, until) {
     var m = getMember_(memberId);
@@ -2227,7 +2234,7 @@ export function createCore(S) {
   // เด็กกด "อยากได้" (กดซ้ำ = ยกเลิก) → แจ้งผู้ปกครอง
   function wishItem(memberId, itemId) {
     var m = getMember_(memberId);
-    if (!m || m.role !== 'child') throw new Error('เฉพาะเด็กเท่านั้น');
+    if (!m) throw new Error('ไม่พบสมาชิก');
     var item = shopItem_(itemId);
     if (!item) throw new Error('ไม่พบสินค้านี้');
     if (item.egg) throw new Error('ของชิ้นนี้ได้จากไข่เท่านั้น');
@@ -2235,7 +2242,7 @@ export function createCore(S) {
     var mine = getAllRows_('Wishes').find(function(w) { return String(w.child_id) === String(m.member_id) && w.item_id === item.id; });
     if (mine) { S.store.remove('Wishes', 'wish_id', mine.wish_id); return { wished: false, shop: getShop(memberId) }; }
     appendRow_('Wishes', { wish_id: genId_(), family_id: m.family_id, child_id: m.member_id, item_id: item.id, created_at: msIso_(nowMs_()) });
-    if (S.events) S.events.push({ type: 'shop_wish', familyId: String(m.family_id), childName: m.name, itemName: item.name });
+    if (m.role === 'child' && S.events) S.events.push({ type: 'shop_wish', familyId: String(m.family_id), childName: m.name, itemName: item.name });
     return { wished: true, shop: getShop(memberId) };
   }
 

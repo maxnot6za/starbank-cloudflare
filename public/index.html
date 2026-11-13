@@ -3781,10 +3781,16 @@ function ppCheer(owner) {
 }
 function ppGoalHtml(g, fromHave) {
   if (!g) return '';
+  if (g.none) {   // ยังไม่มีของที่อยากได้ → ชวนไปเลือก
+    var kidNone = currentMember.role === 'child';
+    return '<div class="pp-goal"><div class="pic">🎯</div><div class="gt"><b>' + (kidNone ? 'อยากได้อะไร? ไปเลือกเลย!' : 'ยังไม่มีเป้าหมาย') + '</b><div>' +
+      (kidNone ? 'กด 💜 อยากได้ ในร้านค้า แล้วมาดูว่าอีกกี่ดวงจะได้' : 'ให้ลูกกด 💜 อยากได้ หรือกดตั้งเองในร้านค้า') + '</div></div>' +
+      '<button class="dq-claim" style="animation:none" onclick="ppGoShop()">ไปร้าน</button></div>';
+  }
   var pct = function (h) { return Math.min(100, h / g.price * 100); };
   var pic = g.art ? '<img src="' + decorUrl(g.art) + '" alt="">' : '<span data-pp-sprite="' + esc(g.sprite) + '">' + (g.kind === 'pet' ? '🐾' : '🧸') + '</span>';
   var txt = g.left ? 'อีก <b>' + g.left + '</b> ดวงก็ได้แล้ว!' : (currentMember.role === 'child' ? '💜 <b>พอซื้อแล้ว!</b> บอกพ่อแม่เลย' : '💜 <b>พอซื้อแล้ว!</b>');
-  return '<div class="pp-goal"><div class="pic">' + pic + '</div><div class="gt"><b>' + esc(g.name) + '</b>' + (g.wished ? (currentMember.role === 'child' ? ' ที่หนูอยากได้ 💗' : ' · ลูกอยากได้ 💗') : '') +
+  return '<div class="pp-goal"><div class="pic">' + pic + '</div><div class="gt"><b>' + esc(g.name) + '</b>' + (currentMember.role === 'child' ? (g.byKid ? ' ที่หนูอยากได้ 💗' : ' · เป้าหมายของบ้าน 🎯') : (g.byKid ? ' · ลูกอยากได้ 💗' : ' · เป้าหมายของบ้าน 🎯')) +
     '<div>' + txt + '</div><div class="pp-gb"><i data-to="' + pct(g.have) + '" style="width:' + pct(fromHave == null ? g.have : fromHave) + '%"></i></div></div>' +
     (!g.left && currentMember.role === 'parent' ? '<button class="dq-claim" style="animation:none" onclick="ppGoShop()">ไปร้าน</button>' : '') + '</div>';
 }
@@ -3928,7 +3934,7 @@ function openShopItem(id) {
     actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button><button class="dq-btn p" style="flex:1.6" onclick="shopAssign(this,\'' + it.id + '\')">บันทึก</button>';
   } else {
     actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') +
-      ' id="shop-buy" onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + pay0 + ' ดาวม่วง</button>';
+      ' id="shop-buy" onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + pay0 + ' ดาวม่วง</button>' + '</div><div style="text-align:center;margin-top:8px"><button type="button" class="u-chip' + (it.iWish ? ' on' : '') + '" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '🎯 เป็นเป้าหมายอยู่ · ยกเลิก' : '🎯 ตั้งเป็นเป้าหมายของบ้าน') + '</button>';
   }
   openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2><div class="shop-big" id="shop-big"></div>' +
     '<div style="font-size:.85rem;color:var(--text-muted)">' + (it.type === 'kid' ? 'ตัวละครสำหรับเด็ก' : 'ตัวละครสำหรับผู้ปกครอง') + ' · ซื้อครั้งเดียวใช้ได้ตลอด</div>' +
@@ -3955,7 +3961,7 @@ function openStageItem(it) {
   if (!d.canBuy) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.owned ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '💔 ยกเลิกอยากได้' : '💜 อยากได้!') + '</button>');
   else if (it.owned && it.kind === 'pet') actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button><button class="dq-btn p" style="flex:1.6" onclick="petToggle(this,\'' + it.id + '\')">' + (it.inUse ? 'พาออกจากห้อง' : 'พาเข้าห้อง') + '</button>';
   else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' || it.kind === 'wall' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\',\'' + it.kind + '\')">ใช้' + (it.kind === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปจัดห้อง</button>');
-  else actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') + ' id="shop-buy" onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + pay0 + ' ดาวม่วง</button>';
+  else actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') + ' id="shop-buy" onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + pay0 + ' ดาวม่วง</button>' + '</div><div style="text-align:center;margin-top:8px"><button type="button" class="u-chip' + (it.iWish ? ' on' : '') + '" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '🎯 เป็นเป้าหมายอยู่ · ยกเลิก' : '🎯 ตั้งเป็นเป้าหมายของบ้าน') + '</button>';
   openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2>' + shopArt(it, true) +
     '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : it.kind === 'wall' ? 'ผนังหลังตัวละคร' : it.kind === 'pet' ? 'สัตว์เลี้ยงของทั้งบ้าน เดินเล่นในห้อง' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
     (it.owned || cpHtml ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') + cpHtml +
@@ -4170,7 +4176,7 @@ function shopAssign(btn, id) {
 }
 function shopWish(btn, id) {
   btn.disabled = true;
-  google.script.run.withSuccessHandler(function (res) { closeModal(); SHOP.data = res.shop; renderShop(); toast(res.wished ? '💜 บอกพ่อแม่แล้วว่าอยากได้!' : 'ยกเลิกแล้ว'); })
+  google.script.run.withSuccessHandler(function (res) { closeModal(); SHOP.data = res.shop; renderShop(); toast(res.wished ? (currentMember.role === 'child' ? '💜 บอกพ่อแม่แล้วว่าอยากได้!' : '🎯 ตั้งเป็นเป้าหมายของบ้านแล้ว') : 'ยกเลิกแล้ว'); Live.request(); })
     .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); })
     .wishItem(currentMember.memberId, id);
 }
