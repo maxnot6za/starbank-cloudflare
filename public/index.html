@@ -498,6 +498,7 @@
     #urg-fab.img{width:70px;height:76px;border-radius:0;background:center/contain no-repeat;box-shadow:none;font-size:0;filter:drop-shadow(0 6px 8px rgba(224,69,31,.35))}
     #urg-fab.img .ring{inset:-3px -9px -9px -9px}
     #urg-fab.img.drag{filter:drop-shadow(0 10px 14px rgba(224,69,31,.5))}
+    .wn-date{font-size:.75rem;font-weight:800;color:var(--text-muted);margin:10px 2px 2px;letter-spacing:.02em}
     #urg-fab .b{position:absolute;top:-6px;right:-4px;background:#E5484D;color:#fff;border-radius:99px;min-width:22px;height:22px;padding:0 5px;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
     .pg-h{font-weight:800;font-size:.85rem;margin:10px 2px 6px}.pg-h.u{color:#E0451F}.pg-h.n{color:var(--text-muted)}
     .pending-item.urg{border-left:5px solid #FF5A36;background:#FFF6F2}
@@ -4015,13 +4016,19 @@ var WN = { shown: 0 };
 function maybeWhatsNew(d) {
   if (!d || currentMember.role !== 'parent' || d.newsSeen == null) return;
   var top = WHATS_NEW[0]; if (!top || d.newsSeen >= top.v || WN.shown === top.v) return;
+  // รวมทุกรุ่นที่ยังไม่เคยเห็น (ใหม่สุดอยู่บน) · ไม่เกิน 6 ข้อ ตัดข้อเก่าสุดออก
+  var left = 6, groups = WHATS_NEW.filter(function (g) { return g.v > d.newsSeen; }).map(function (g) {
+    var it = g.items.slice(0, Math.max(0, left)); left -= it.length; return { date: g.date, items: it };
+  }).filter(function (g) { return g.items.length; });
   var ov = document.getElementById('modal-overlay');
   if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || (typeof TREE !== 'undefined' && TREE.open) || (typeof EGG !== 'undefined' && EGG.open)) {
     setTimeout(function () { if (dashboardData) maybeWhatsNew(dashboardData); }, 1500); return;
   }
   WN.shown = top.v;
-  openModal('<div class="wn-hd"><div class="sp">✨</div><h2>มีอะไรใหม่</h2><small>อัปเดต ' + top.date + '</small></div><div class="wn-list">' +
-    top.items.map(function (x) { return '<div class="wn-row"><div class="ic">' + x[0] + '</div><div><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span></div></div>'; }).join('') +
+  var row = function (x) { return '<div class="wn-row"><div class="ic">' + x[0] + '</div><div><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span></div></div>'; };
+  var multi = groups.length > 1;
+  openModal('<div class="wn-hd"><div class="sp">✨</div><h2>มีอะไรใหม่</h2><small>' + (multi ? 'ตั้งแต่ครั้งก่อนที่เข้ามา' : 'อัปเดต ' + top.date) + '</small></div><div class="wn-list">' +
+    groups.map(function (g, i) { return (multi ? '<div class="wn-date">' + (i ? '' : 'ล่าสุด · ') + esc(g.date) + '</div>' : '') + g.items.map(row).join(''); }).join('') +
     '</div><div style="display:flex;margin-top:16px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div>');
   google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).newsSeen(currentMember.memberId, top.v);
   d.newsSeen = top.v;

@@ -8,7 +8,7 @@ let fails = 0;
 const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? '' : JSON.stringify(x).slice(0, 300)); if (!c) fails++; };
 (async () => {
   const { mf, db } = await start({ port: 0 }); await seedFamily(db);
-  await db.prepare('UPDATE Members SET news_seen = NULL').run();
+  await db.prepare('UPDATE Members SET news_seen = 1').run();
   const today = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
   await call(mf, 'getChildDashboard', C);
   await db.prepare('UPDATE Members SET quest_seen = ?, tree_seen = ?, purple_seen = ?').bind(today, '9999', new Date().toISOString()).run();
@@ -18,6 +18,9 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   let dad = await open(P1);
   await dad.waitForSelector('.wn-list', { timeout: 15000 }); await dad.waitForTimeout(700); await dad.screenshot({ path: OUT + 'n1-whats-new.png' });
   ok(/เลื่อนไม่สุด/.test(await dad.textContent('.wn-list')), 'ผู้ปกครองเห็น "มีอะไรใหม่"');
+  const wn = await dad.textContent('.wn-list');
+  ok(/สรุปรายวัน/.test(wn) && !/ไข่หายาก/.test(wn) && await dad.locator('.wn-date').count() >= 2, 'เห็นแค่ v1 → รวม v3+v2 ที่ยังไม่เห็นในป๊อปอัปเดียว ไม่มี v1');
+  ok(await dad.locator('.wn-row').count() <= 6, 'ไม่เกิน 6 ข้อ');
   await dad.click('#modal-content .dq-btn.g'); await dad.waitForTimeout(800);
   ok((await db.prepare('SELECT news_seen FROM Members WHERE member_id = ?').bind(P1).first()).news_seen >= 1, 'จำว่าเห็นแล้ว');
   dad = await open(P1); await dad.waitForTimeout(3500);
