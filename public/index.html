@@ -554,6 +554,28 @@
     .dq-pop h2 { margin:6px 0 2px !important; }
     .dq-pop .sub { color:var(--text-muted); font-size:.85rem; margin-bottom:12px; }
     .dq-pop .dq-card { text-align:left; background:#FAF7FF; border:2px solid #E4D8FF; box-shadow:none; }
+    /* รับดาวม่วง: ดาวลอยเข้ากระเป๋า · ตัวเลขนับขึ้น · แถบบอกที่มา+เป้าหมาย · ป๊อปอัปข่าว (คนอื่นรับให้) */
+    .pp-fly svg, .pp-jar svg { width:1em; height:1em; display:block; }
+    .pp-fly { position:fixed; z-index:400; font-size:26px; pointer-events:none; filter:drop-shadow(0 2px 2px rgba(91,52,201,.3)); }
+    .dq-wallet { display:inline-block; transition:transform .15s; }
+    .dq-wallet.pop { transform:scale(1.35); }
+    #pp-banner { position:fixed; left:12px; right:12px; top:-120px; z-index:390; background:#fff; border-radius:16px; padding:10px 14px; box-shadow:0 6px 18px rgba(91,52,201,.25);
+      transition:top .45s cubic-bezier(.3,1.4,.5,1); font-size:.86rem; display:flex; gap:10px; align-items:center; max-width:480px; margin:0 auto; }
+    #pp-banner.on { top:calc(10px + env(safe-area-inset-top, 0px)); }
+    #pp-banner b { color:#5B34C9; }
+    .pp-goal { display:flex; gap:10px; align-items:center; text-align:left; background:#FBF8FF; border-radius:14px; padding:10px; margin-top:10px; }
+    .pp-goal .pic { width:46px; height:46px; border-radius:12px; background:#F3EDFF; display:grid; place-items:center; font-size:26px; overflow:hidden; flex:none; }
+    .pp-goal .pic img { max-width:40px; max-height:40px; }
+    .pp-goal .gt { flex:1; font-size:.8rem; min-width:0; }
+    .pp-gb { height:9px; border-radius:9px; background:#EFE7FF; overflow:hidden; margin-top:5px; }
+    .pp-gb i { display:block; height:100%; background:linear-gradient(90deg,#B98CFF,#8B5CF6); transition:width 1s cubic-bezier(.3,1.4,.5,1); }
+    .pp-news { text-align:center; }
+    .pp-news .big { font-size:2.1rem; font-weight:900; color:#5B34C9; margin:4px 0; }
+    .pp-news .who { min-height:70px; position:relative; display:flex; justify-content:center; align-items:flex-end; }
+    .pp-jar { position:relative; height:60px; }
+    .pp-jar span { position:absolute; left:50%; top:30px; font-size:26px; animation:ppJar 1.1s ease-out both; }
+    @keyframes ppJar { 0%{transform:translate(-50%,30px) scale(.3);opacity:0} 60%{opacity:1} 100%{transform:translate(calc(-50% + var(--x)),var(--y)) scale(1);opacity:1} }
+    @media (prefers-reduced-motion: reduce) { .pp-jar span { animation:none; } #pp-banner { transition:none; } }
     .dq-btn { flex:1; border:0; border-radius:999px; padding:12px; font:inherit; font-weight:700; font-size:1rem; cursor:pointer; }
     .dq-btn.p { background:var(--purple); color:#fff; } .dq-btn.g { background:#E2F5EE; color:var(--text); }
     .shop-top { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
@@ -3408,13 +3430,13 @@ function renderDaily(d) {
   var isKid = currentMember && currentMember.role === 'child';
   var el = document.getElementById(isKid ? 'child-daily' : 'parent-daily');
   if (!el) return;
-  var head = '<h3>🌞 ภารกิจประจำวัน <small>' + PSTAR + ' ' + dl.wallet.purple + ' ของครอบครัว</small></h3>';
+  var head = '<h3>🌞 ภารกิจประจำวัน <small>' + PSTAR + ' <span class="dq-wallet">' + dl.wallet.purple + '</span> ของครอบครัว</small></h3>';
   var html;
   if (isKid) {
     html = '<div class="dq-card">' + head + (dl.mine.length ? dl.mine.map(function (q) { return dqRow(q, true); }).join('') : '<div class="dq-t" style="color:var(--text-muted)">วันนี้ยังไม่มีภารกิจ</div>') + '</div>';
   } else {
     var all = (dl.parents ? [dl.parents] : []).concat(dl.kids), nd = all.filter(function (q) { return q.status !== 'active'; }).length;
-    head = '<h3>👨‍👩‍👧 ภารกิจร่วมผู้ปกครอง <small>' + PSTAR + ' ' + dl.wallet.purple + ' ของครอบครัว</small></h3>';
+    head = '<h3>👨‍👩‍👧 ภารกิจร่วมผู้ปกครอง <small>' + PSTAR + ' <span class="dq-wallet">' + dl.wallet.purple + '</span> ของครอบครัว</small></h3>';
     html = '<div class="section-title fold-h" onclick="foldToggle(\'daily\')"><span class="fh-t">🌞 ภารกิจประจำวัน</span><span class="fold-sum">' + (all.length ? nd + '/' + all.length + ' เสร็จ' : '') + '</span><button type="button" class="fold-tg" data-fold-tg="daily" aria-label="พับ/กาง">+</button></div><div class="fold-body" data-fold="daily">' +
       '<div class="dq-card">' + head + (dl.parents ? dqRow(dl.parents, true) : '') +
       (dl.parents ? '<div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">ภารกิจร่วมของผู้ปกครอง ใครทำก็นับ</div>' : '') + '</div>';
@@ -3428,6 +3450,7 @@ function renderDaily(d) {
   setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 700);
   stripUpdate(d.avatars || [], d.stage, d.egg);
   setTimeout(function () { if (dashboardData) maybeEggEvent(dashboardData); }, 900);
+  setTimeout(function () { if (dashboardData) maybePurpleNews(dashboardData); }, 1100);
 }
 
 // popup วันละครั้ง (เซิร์ฟเวอร์จำว่าเห็นแล้ว → เครื่องอื่นไม่เด้งซ้ำ)
@@ -3700,11 +3723,123 @@ function maybeQuestPopup(d) {
 
 function claimQuestNow(btn, id) {
   btn.disabled = true;
-  var r = btn.getBoundingClientRect();
+  var r = btn.getBoundingClientRect(), before = dashboardData && dashboardData.daily ? dashboardData.daily.wallet.purple : 0;
+  var q = dashboardData && dashboardData.daily ? [dashboardData.daily.parents].concat(dashboardData.daily.kids || [], dashboardData.daily.mine || []).filter(function (x) { return x && x.quest_id === id; })[0] : null;
   google.script.run.withSuccessHandler(function (res) {
-    if (!res.already) { confetti(r.left + r.width / 2, r.top); toast('💜 +' + res.reward + ' ดาวม่วง เข้ากระเป๋าครอบครัวแล้ว!'); }
-    Live.request();
+    if (res.already) { Live.request(); return; }
+    btn.textContent = 'รับแล้ว ✓';
+    ppCheer(q && q.owner !== 'parents' ? q.owner : (currentMember.role === 'parent' ? 'parents' : currentMember.memberId));
+    ppFly(r, res.reward, before, function () {
+      var who = res.owner === 'parents' ? 'พ่อแม่' : (currentMember.role === 'child' ? 'หนู' : res.owner);
+      ppBanner('<b>+' + res.reward + ' ดาวม่วง</b> จากที่' + esc(who) + esc(res.title || 'ทำภารกิจครบ') + '!', res.goal, res.reward);
+      Live.request();
+    });
   }).withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'รับไม่สำเร็จ'); }).claimQuest(currentMember.memberId, id);
+}
+// ---------- เอฟเฟครับดาวม่วง ----------
+var PP = { ac: null };
+function ppTick(i) {
+  try { PP.ac = PP.ac || new (window.AudioContext || window.webkitAudioContext)(); var ac = PP.ac, o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = 'triangle'; o.frequency.value = 880 * Math.pow(1.12, i); g.gain.setValueAtTime(.12, t); g.gain.exponentialRampToValueAtTime(.001, t + .18);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + .2); } catch (e) {}
+}
+// ปลายทาง = ตัวเลขดาวม่วงที่มองเห็น (ถ้าหัวข้อพับอยู่ ใช้หัวข้อแทน)
+function ppTarget() {
+  var w = Array.prototype.filter.call(document.querySelectorAll('.dq-wallet'), function (e) { return e.offsetParent; })[0];
+  return w || document.querySelector('.fold-h .fh-t') || null;
+}
+function ppFly(from, n, before, done) {
+  var tgt = ppTarget(), k = Math.max(1, Math.min(5, n)), val = before, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var nums = document.querySelectorAll('.dq-wallet');
+  var bump = function (v) { nums.forEach(function (e) { e.textContent = v; e.classList.add('pop'); setTimeout(function () { e.classList.remove('pop'); }, 140); }); };
+  if (!tgt || reduce) { bump(before + n); done(); return; }
+  var to = tgt.getBoundingClientRect();
+  for (var i = 0; i < k; i++) (function (i) {
+    setTimeout(function () {
+      var s = document.createElement('span'); s.className = 'pp-fly'; s.innerHTML = PSTAR; document.body.appendChild(s);
+      var x0 = from.left + from.width / 2 - 11, y0 = from.top - 6, x1 = to.left + to.width / 2 - 11, y1 = to.top - 4, cx = (x0 + x1) / 2 + (Math.random() * 80 - 40), cy = Math.min(y0, y1) - 70, t0 = performance.now();
+      (function f(t) {
+        var p = Math.min(1, (t - t0) / 650), q = 1 - p;
+        s.style.left = (q * q * x0 + 2 * q * p * cx + p * p * x1) + 'px'; s.style.top = (q * q * y0 + 2 * q * p * cy + p * p * y1) + 'px'; s.style.transform = 'scale(' + (1 - .4 * p) + ')';
+        if (p < 1) return requestAnimationFrame(f);
+        s.remove(); val += (i === k - 1) ? n - (k - 1) : 1; bump(val); ppTick(i);
+        try { if (navigator.vibrate) navigator.vibrate(i === k - 1 ? 30 : 8); } catch (e) {}
+        if (i === k - 1) done();
+      })(t0);
+    }, i * 150);
+  })(i);
+}
+// ตัวละครของเจ้าของภารกิจกระโดดดีใจในห้อง (owner = member_id · 'parents' = ตัวละครผู้ปกครองทุกตัว)
+function ppCheer(owner) {
+  try {
+    var sc = STRIP.scene; if (!sc || !dashboardData) return;
+    (dashboardData.avatars || []).filter(function (a) { return owner === 'parents' ? a.role === 'parent' : String(a.member_id) === String(owner); }).forEach(function (a) {
+      var A = sc.actors[a.sprite]; if (!A || !A.m.anims.cheer || sc.busy[a.sprite]) return;
+      sc.busy[a.sprite] = true; A.stop(); A.play('cheer').then(function () { sc.busy[a.sprite] = false; if (sc.running) A.life(); });
+    });
+  } catch (e) {}
+}
+function ppGoalHtml(g, fromHave) {
+  if (!g) return '';
+  var pct = function (h) { return Math.min(100, h / g.price * 100); };
+  var pic = g.art ? '<img src="' + decorUrl(g.art) + '" alt="">' : '<span data-pp-sprite="' + esc(g.sprite) + '">' + (g.kind === 'pet' ? '🐾' : '🧸') + '</span>';
+  var txt = g.left ? 'อีก <b>' + g.left + '</b> ดวงก็ได้แล้ว!' : (currentMember.role === 'child' ? '💜 <b>พอซื้อแล้ว!</b> บอกพ่อแม่เลย' : '💜 <b>พอซื้อแล้ว!</b>');
+  return '<div class="pp-goal"><div class="pic">' + pic + '</div><div class="gt"><b>' + esc(g.name) + '</b>' + (g.wished ? (currentMember.role === 'child' ? ' ที่หนูอยากได้ 💗' : ' · ลูกอยากได้ 💗') : '') +
+    '<div>' + txt + '</div><div class="pp-gb"><i data-to="' + pct(g.have) + '" style="width:' + pct(fromHave == null ? g.have : fromHave) + '%"></i></div></div>' +
+    (!g.left && currentMember.role === 'parent' ? '<button class="dq-claim" style="animation:none" onclick="ppGoShop()">ไปร้าน</button>' : '') + '</div>';
+}
+function ppSprites(root) {
+  if (!root || !spriteReady()) return;
+  root.querySelectorAll('[data-pp-sprite]').forEach(function (el) {
+    var id = el.getAttribute('data-pp-sprite'); if (!id) return;
+    spriteManifest(id).then(function (m) {
+      var sh = m.sheets[m.walk || 'walk'] || m.sheets[Object.keys(m.sheets)[0]]; if (!sh) return;
+      el.textContent = ''; el.style.cssText = 'display:block;width:44px;height:44px;background:url(/sprites/characters/' + id + '/' + sh.file + ') 0 50%/' + (sh.frames * 100) + '% auto no-repeat';
+    });
+  });
+}
+function ppGrow(root) { setTimeout(function () { (root || document).querySelectorAll('.pp-gb i[data-to]').forEach(function (i) { i.style.width = i.getAttribute('data-to') + '%'; }); }, 80); }
+function ppGoShop() { var b = document.getElementById('pp-banner'); if (b) b.classList.remove('on'); closeModal(); goShop(); }
+function ppBanner(html, goal, gained) {
+  var b = document.getElementById('pp-banner');
+  if (!b) { b = document.createElement('div'); b.id = 'pp-banner'; b.onclick = function () { b.classList.remove('on'); }; document.body.appendChild(b); }
+  b.innerHTML = '<span style="width:30px;flex:none">' + PSTAR + '</span><div style="flex:1;min-width:0">' + html + (goal ? ppGoalHtml(goal, Math.max(0, goal.have - (gained || 0))) : '') + '</div>';
+  ppSprites(b); ppGrow(b); clearTimeout(PP.t); b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+  PP.t = setTimeout(function () { b.classList.remove('on'); }, goal ? 4200 : 2600);
+}
+// ข่าวดาวม่วงที่คนอื่นรับให้ / ระบบเก็บให้ ตอนเราไม่ได้อยู่ → ขึ้นครั้งเดียว · รอหน้าต่างอื่นปิดก่อน
+function maybePurpleNews(d) {
+  var nw = d && d.daily && d.daily.news; if (!nw || PP.shown === nw.until) return;
+  var ov = document.getElementById('modal-overlay');
+  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || (typeof TREE !== 'undefined' && TREE.open) || (typeof EGG !== 'undefined' && EGG.open)) {
+    setTimeout(function () { if (dashboardData) maybePurpleNews(dashboardData); }, 1500); return;
+  }
+  PP.shown = nw.until;
+  var kid = currentMember.role === 'child', g = d.daily.goal, it = nw.items;
+  var byTxt = function (x) { return x.by === 'auto' ? 'ระบบเก็บให้อัตโนมัติ' : (x.byRole === 'parent' ? '👨 ' + esc(x.by) + 'รับดาวให้แล้ว' : esc(x.by) + ' กดรับแล้ว'); };
+  var main = kid
+    ? (it.length === 1 ? 'จากภารกิจของหนู <b>"' + esc(it[0].title) + '"</b> เก่งมาก!' : 'จาก ' + it.length + ' ภารกิจของหนู เก่งมาก!')
+    : 'ตั้งแต่เข้าแอปครั้งก่อน';
+  var sub = kid ? byTxt(it[it.length - 1]) + ' · เข้ากระเป๋าครอบครัว'
+    : it.map(function (x) { return esc(x.owner === 'parents' ? 'พ่อแม่' : x.owner) + ' +' + x.reward; }).join(' · ');
+  var jar = ''; for (var i = 0; i < Math.min(5, nw.total); i++) jar += '<span style="--x:' + ((i - 2) * 26) + 'px;--y:' + (i % 2 ? 0 : -14) + 'px;animation-delay:' + (.2 + i * .15) + 's">' + PSTAR + '</span>';
+  var me = (d.avatars || []).filter(function (a) { return String(a.member_id) === String(currentMember.memberId); })[0];
+  openModal('<div class="pp-news"><div class="who" id="pp-who">' + (me ? '' : '<span style="font-size:44px">' + (kid ? '🧒' : '🎉') + '</span>') + '</div>' +
+    '<div class="big">+' + nw.total + ' <span style="display:inline-block;width:.9em;vertical-align:-.1em">' + PSTAR + '</span></div><div>' + main + '</div><div style="font-size:.8rem;color:var(--text-muted);margin-top:4px">' + sub + '</div>' +
+    '<div class="pp-jar">' + jar + '</div>' + ppGoalHtml(g, Math.max(0, g ? g.have - nw.total : 0)) +
+    '<div style="display:flex;gap:8px;margin-top:14px"><button class="dq-btn p" onclick="closeModal();ppNewsDone()">เย้! 💜</button></div></div>');
+  ppSprites(document.getElementById('modal-content')); ppGrow(document.getElementById('modal-content'));
+  for (var j = 0; j < Math.min(5, nw.total); j++) (function (j) { setTimeout(function () { ppTick(j); }, 350 + j * 150); })(j);
+  if (me && spriteReady()) spriteManifest(me.sprite).then(function (m) {
+    var w = document.getElementById('pp-who'); if (!w) return;
+    var a = SpriteActor.create(w, m, { size: 44, basePath: '/sprites/characters/' + me.sprite + '/', x: w.clientWidth / 2 });
+    if (m.anims.cheer) a.play('cheer');
+  });
+  google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).purpleSeen(currentMember.memberId, nw.until);
+  if (dashboardData && dashboardData.daily) dashboardData.daily.news = null;
+}
+function ppNewsDone() {
+  var nums = document.querySelectorAll('.dq-wallet'); nums.forEach(function (e) { e.classList.add('pop'); setTimeout(function () { e.classList.remove('pop'); }, 160); });
 }
 
 // ---------- โหลดตัวละคร ----------

@@ -13,7 +13,7 @@ export const PUBLIC_API = [
   'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
   'sendGift', 'cancelGift', 'openGift',
-  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
+  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'purpleSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
 ];
 
 export function createCore(S) {
@@ -1830,7 +1830,44 @@ export function createCore(S) {
     var kids = qs.filter(function(q) { return q.owner !== 'parents'; }).map(questView_);
     var mine = member.role === 'child' ? kids.filter(function(q) { return String(q.owner) === String(member.member_id); }) : (parents ? [parents] : []);
     return { date: today, seen: String(member.quest_seen || '') === today, mine: mine, parents: parents, kids: kids,
-      wallet: { purple: Number(fam.purple || 0), gold: Number(fam.gold || 0) } };
+      wallet: { purple: Number(fam.purple || 0), gold: Number(fam.gold || 0) },
+      news: purpleNews_(member), goal: purpleGoal_(member, Number(fam.purple || 0)) };
+  }
+  // ดาวม่วงที่เข้ากระเป๋าโดยที่คนนี้ไม่ได้กดเอง (คนอื่นรับให้ / ระบบเก็บให้) และยังไม่เคยเห็น
+  // เด็ก: เฉพาะภารกิจของตัวเอง · ผู้ปกครอง: ทุกภารกิจ · ยังไม่เคยตั้งค่า = ดูย้อน 24 ชม.
+  function purpleNews_(member) {
+    var seen = String(member.purple_seen || '') || msIso_(nowMs_() - 86400000), kid = member.role === 'child';
+    var rows = familyQuests_(member.family_id).filter(function(q) {
+      return q.status === 'claimed' && String(q.claimed_at || '') > seen && String(q.claimed_by) !== String(member.member_id) &&
+        (!kid || String(q.owner) === String(member.member_id));
+    });
+    if (!rows.length) return null;
+    var name = function(id) { var x = getMember_(id); return x ? x.name : ''; };
+    var items = rows.map(function(q) {
+      var v = questView_(q);
+      return { reward: v.reward, title: v.title, icon: v.icon, owner: q.owner === 'parents' ? 'parents' : (v.child ? v.child.name : ''),
+        ownerId: q.owner, by: q.claimed_by === 'auto' ? 'auto' : name(q.claimed_by), byRole: q.claimed_by === 'auto' ? '' : ((getMember_(q.claimed_by) || {}).role || '') };
+    });
+    return { total: items.reduce(function(a, b) { return a + b.reward; }, 0), items: items,
+      until: rows.map(function(q) { return String(q.claimed_at); }).sort().pop() };
+  }
+  // เป้าหมายถัดไป: ของที่เด็กกด "อยากได้" (ยังไม่มี) · ไม่มี = ของที่ซื้อได้ราคาถูกสุดที่ยังไม่มี
+  function purpleGoal_(member, have) {
+    var fid = member.family_id;
+    var buyable = SHOP_ITEMS.filter(function(it) { return !it.free && !it.egg && it.price > 0 && !owns_(fid, it); });
+    if (!buyable.length) return null;
+    var wishes = getAllRows_('Wishes').filter(function(w) { return String(w.family_id) === String(fid) && (member.role !== 'child' || String(w.child_id) === String(member.member_id)); });
+    var wished = buyable.filter(function(it) { return wishes.some(function(w) { return w.item_id === it.id; }); });
+    var pick = (wished.length ? wished : buyable).map(function(it) { return { it: it, pay: priceFor_(fid, it) }; }).sort(function(a, b) { return a.pay - b.pay; })[0];
+    var it = pick.it;
+    return { id: it.id, name: it.name, kind: it.kind, sprite: it.sprite || '', art: it.art || '', price: pick.pay, have: have, left: Math.max(0, pick.pay - have), wished: !!wished.length };
+  }
+  function purpleSeen(memberId, until) {
+    var m = getMember_(memberId);
+    if (!m) throw new Error('ไม่พบสมาชิก');
+    var u = String(until || '').slice(0, 40);
+    if (u && u > String(m.purple_seen || '')) updateRow_('Members', 'member_id', m.member_id, { purple_seen: u });
+    return { seen: u };
   }
 
   // ธีมของครอบครัว · ต้องตรงกับ public/themes/index.json (test/theme.test.js ตรวจให้)
@@ -1870,7 +1907,8 @@ export function createCore(S) {
     if (q.status === 'claimed') return { already: true, wallet: dailyFor_(m).wallet };
     if (q.status !== 'done') throw new Error('ยังทำภารกิจไม่ครบ');
     claimQuestRow_(q, String(m.member_id));
-    return { reward: Number(q.reward), wallet: dailyFor_(m).wallet };
+    var dl = dailyFor_(m), v = questView_(q);
+    return { reward: Number(q.reward), wallet: dl.wallet, goal: dl.goal, owner: q.owner === 'parents' ? 'parents' : (v.child ? v.child.name : ''), title: v.title };
   }
 
   // ---------- ร้านค้า ----------
@@ -2202,7 +2240,7 @@ export function createCore(S) {
   }
 
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
-    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, saveRoom, setPets, hugEgg, hatchEgg, eggSeen };
+    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }
