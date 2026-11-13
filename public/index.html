@@ -495,6 +495,9 @@
     #urg-fab.live{animation:urgfab 1.6s ease-in-out infinite}
     @keyframes urgfab{50%{transform:scale(1.06)}}
     #urg-fab .ring{position:absolute;inset:-9px;border-radius:50%;background:conic-gradient(#FF5A36 0 var(--p,100%),#FFE1D6 var(--p,100%));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);pointer-events:none}
+    #urg-fab.img{width:70px;height:76px;border-radius:0;background:center/contain no-repeat;box-shadow:none;font-size:0;filter:drop-shadow(0 6px 8px rgba(224,69,31,.35))}
+    #urg-fab.img .ring{inset:-3px -9px -9px -9px}
+    #urg-fab.img.drag{filter:drop-shadow(0 10px 14px rgba(224,69,31,.5))}
     #urg-fab .b{position:absolute;top:-6px;right:-4px;background:#E5484D;color:#fff;border-radius:99px;min-width:22px;height:22px;padding:0 5px;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
     body.urg-fab-on #screen-parent-home{padding-bottom:90px}
     .pg-h{font-weight:800;font-size:.85rem;margin:10px 2px 6px}.pg-h.u{color:#E0451F}.pg-h.n{color:var(--text-muted)}
@@ -2747,7 +2750,7 @@ var THEME_DEFAULT = {
   mascot: { go: 'mascot/dao-go.webp', sleep: 'mascot/dao-sleep.webp', timeout: 'mascot/dao-timeout.webp', yay: 'mascot/dao-yay.webp' },
   words: { icon: '🎄', board: 'ต้นคริสต์มาส', item: 'ลูกบอล', unit: 'ลูก', add: 'แขวน', full: 'ต้นไม้ครบ 5 ลูก ดาวสว่างแล้ว!',
     celebrateTag: '🎄 ภารกิจต้นคริสต์มาส', celebrateTitle: 'ครบ 5 วันแล้ว! 🎉', celebrateText: 'ต้นไม้ของหนูสว่างไสวเลย เก่งมาก!' },
-  progress: { type: 'builtin-xmas-tree' }, celebrate: { type: 'builtin-xmas-tree', dir: 'celebrate/' }
+  progress: { type: 'builtin-xmas-tree' }, celebrate: { type: 'builtin-xmas-tree', dir: 'celebrate/' }, urgentBtn: 'urgent-btn.webp'
 };
 var THEME = THEME_DEFAULT, THEME_KEY = 'starbank_theme', THEME_LOADING = '';
 function themeUrl(f) { return '/themes/' + THEME.id + '/' + f; }
@@ -2776,6 +2779,7 @@ function themeApply(t) {
   themeEffect(t.effect);
   themeMascot();
   TREE.img = null;
+  if (typeof urgFabUpdate === 'function') urgFabUpdate();
   if (bgAudio) { bgAudio.pause(); bgAudio.src = themeUrl(t.music); if (musicOn) { var p = bgAudio.play(); if (p && p.catch) p.catch(function () {}); } }
 }
 function rerenderDashboard() {
@@ -3158,7 +3162,8 @@ function urgFabEl() {
 }
 function urgFabUpdate() {
   var b = urgFabEl(); if (!b || !dashboardData) return;
-  var g = (dashboardData.urgent || []).filter(urgLive), wait = 0, run = null;
+  if (!currentMember || currentMember.role === 'child' || !Array.isArray(dashboardData.urgent)) { urgFabShow(); return; }
+  var g = dashboardData.urgent.filter(urgLive), wait = 0, run = null;
   g.forEach(function (x) { x.kids.forEach(function (k) {
     if (k.status === 'submitted' && k.review !== 'approved' && k.review !== 'rejected') wait++;
     if (k.status === 'running' || k.status === 'pending') { if (!run || (k.deadline_at && (!run.deadline_at || k.deadline_at < run.deadline_at))) run = k; }
@@ -3166,6 +3171,9 @@ function urgFabUpdate() {
   b.classList.toggle('live', !!run);
   b.__run = run;
   b.innerHTML = (run ? '<span class="ring"></span>' : '') + '⚡' + (wait ? '<span class="b">' + wait + '</span>' : '');
+  // ภาพปุ่มตามธีม (theme.json → urgentBtn) · ธีมไหนไม่มี = วงกลมส้ม + ⚡
+  var art = THEME && THEME.urgentBtn;
+  b.classList.toggle('img', !!art); b.style.backgroundImage = art ? 'url(' + themeUrl(art) + ')' : '';
   b.setAttribute('aria-label', run ? 'ภารกิจด่วนกำลังนับเวลา' : 'สร้างภารกิจด่วน');
   urgFabShow(); urgFabRing();
 }
@@ -3186,7 +3194,7 @@ function urgFabShow() {
 function urgFabPlace(b) {
   var pos = null; try { pos = JSON.parse(localStorage.getItem(URGFAB.key) || 'null'); } catch (e) {}
   if (!pos) { b.style.left = ''; b.style.top = ''; b.style.right = ''; b.style.bottom = ''; return; }
-  var W = window.innerWidth, sz = 62, m = 16;
+  var W = window.innerWidth, sz = b.offsetWidth || 62, m = 16;
   var y = Math.max(80, Math.min(urgFabFloor(), pos.y * window.innerHeight));
   b.style.right = 'auto'; b.style.bottom = 'auto';
   b.style.left = (pos.side === 'l' ? m : W - sz - m) + 'px'; b.style.top = y + 'px';
@@ -3195,7 +3203,8 @@ function urgFabPlace(b) {
 function urgFabFloor() {
   var strip = document.getElementById('avatar-strip'), nav = document.getElementById('nav-parent');
   var top = strip && strip.classList.contains('on') ? strip.getBoundingClientRect().top : (nav ? nav.getBoundingClientRect().top : window.innerHeight - 70);
-  return top - 62 - 14;
+  var b = document.getElementById('urg-fab');
+  return top - ((b && b.offsetHeight) || 62) - 14;
 }
 function urgFabDrag(b) {
   var st = null;
@@ -3206,7 +3215,7 @@ function urgFabDrag(b) {
     st.moved = true; b.classList.add('drag'); b.classList.remove('snap');
     var W = window.innerWidth, H = window.innerHeight;
     b.style.right = 'auto'; b.style.bottom = 'auto';
-    b.style.left = Math.max(4, Math.min(W - 66, e.clientX - st.dx)) + 'px';
+    b.style.left = Math.max(4, Math.min(W - b.offsetWidth - 4, e.clientX - st.dx)) + 'px';
     b.style.top = Math.max(80, Math.min(urgFabFloor(), e.clientY - st.dy)) + 'px';
   });
   function end(e) {

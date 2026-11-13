@@ -6,6 +6,7 @@
   "bg": "bg.jpg",
   "music": "music.mp3",
   "effect": { "type": "fall", "chars": ["❄", "❅", "❆", "✦"], "color": "#9CCFE0", "count": 25 },
+  "urgentBtn": "urgent-btn.webp",
   "mascot": { "go": "mascot/dao-go.webp", "sleep": "mascot/dao-sleep.webp", "timeout": "mascot/dao-timeout.webp", "yay": "mascot/dao-yay.webp" },
   "words": {
     "icon": "🎄",

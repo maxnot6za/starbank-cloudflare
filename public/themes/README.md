@@ -36,6 +36,7 @@ themes/
 | มาสคอตน้องดาว | 4 ท่า | ท่าเดียวกับชุดเดิม: ไป!(go) · หลับ/ไม่เป็นไร(sleep) · หมดเวลา(timeout) · ดีใจ(yay) · พื้นโปร่งใสหรือพื้นสีเรียบ · ใส่ของประจำธีม (เช่นหมวก) |
 | เกม 5 วัน | 6 รูป | สภาพ 0/5, 1/5, 2/5, 3/5, 4/5, 5/5 (เต็ม) · มุมกล้อง ขนาด ตำแหน่งเหมือนกันทุกรูป · พื้นสีเรียบ |
 | ป๊อปอัปฉลอง | 4–8 เฟรม | ช่วงที่ของชิ้นสุดท้ายถูกเติมจนเต็มและฉลอง · ขนาด/ตำแหน่งเหมือนกันทุกเฟรม · ทำในภาพเดียวแถวเดียวได้ (Claude ตัดให้) |
+| ปุ่มภารกิจด่วน ⚡ | 1 | ปุ่มกลมส้ม สายฟ้าเหลืองตรงกลาง + ของประจำธีม · ขอบขาวสติกเกอร์ · พื้น magenta `#FF00FF` 1024×1024 · prompt ด้านล่าง · **อย่าลืมเตือน KC** |
 | (ไม่บังคับ) แบบมีน้องไดโน | 2–4 เฟรม | ท่าลูกไดโนทำกิริยากับของในธีม · ไม่มีก็ได้ จะใช้แบบไม่มีตัวละครแทน |
 
 ใช้ส่วนสไตล์ + พื้นสีเรียบ `#EEF8F4` จาก `sprites/PROMPTS.md` เวลาเจน
@@ -45,7 +46,24 @@ themes/
 2. เขียน `theme.json` (ดูชนิดด้านล่าง) · เพิ่มใน `index.json` และ `THEMES` ใน `src/core.js`
 3. `node test/theme.test.js` (ตรวจไฟล์ครบ) → ถ่ายภาพหน้าจอให้ KC ดูก่อน push · ไม่ต้องมี migration
 
+### prompt ปุ่มภารกิจด่วน (เติมของประจำธีมท้าย prompt)
+```
+A single cute 3D app button icon, perfectly round, centered, front view.
+A glossy orange-to-coral sphere badge (soft gradient #FF7A45 to #FF5A36) with a chunky,
+rounded golden-yellow lightning bolt in the middle, slightly tilted, with a tiny sparkle.
+Soft clay / toy-like 3D style, smooth glossy highlight on the top-left, gentle inner shadow,
+pastel and friendly, made for a children's family reward app.
+Thick clean white sticker outline around the whole badge.
+No text, no letters, no hands, no face, no extra objects.
+Plain flat solid magenta background (#FF00FF), no shadow on the ground, no gradient background.
+Square 1024x1024, the badge fills about 80% of the frame.
+<theme> edition: <ของประจำธีม เช่น หมวก/ใบไม้/หยดน้ำ วางบนขอบบนของปุ่ม>. Keep the bolt clearly readable.
+```
+ตัด magenta → โปร่งใส (chroma key + ลบขอบชมพู) · crop · ย่อกว้าง 192px → `urgent-btn.webp` · ใส่ `"urgentBtn"` ใน theme.json
+(ไม่มีไฟล์ = ปุ่มวงกลมส้ม + ⚡ ธรรมดา) · ถ้าของประจำธีมยื่นเหนือวงกลมมาก ปรับ `#urg-fab.img .ring` ให้วงแหวนตรงกับวงกลม
+
 ### ชนิดใน theme.json
+- `urgentBtn`: ภาพปุ่มลอยภารกิจด่วน (เช่น `"urgent-btn.webp"`)
 - `effect`: `{ "type": "fall", "chars": [...], "color": "#hex", "count": 25 }` หรือ `{ "type": "none" }`
 - `progress`: `{ "type": "images", "frames": ["p0.webp", …, "p5.webp"] }` (คริสต์มาส = `builtin-xmas-tree` วาด SVG ในโค้ด)
 - `celebrate`: `{ "type": "frames", "frames": ["c1.webp", …], "ms": 500 }` เล่นทีละเฟรมแบบเฟดแล้วค้างเฟรมสุดท้าย
