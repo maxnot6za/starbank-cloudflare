@@ -631,6 +631,17 @@
     #avatar-strip .strip-egg .ed { position:absolute; top:-4px; right:-4px; width:12px; height:12px; border-radius:50%; background:#E84545; border:2px solid #fff; }
     #avatar-strip .strip-sign { position:absolute; left:50%; top:8px; transform:translateX(-50%); z-index:6; pointer-events:auto; background:#fffe; border:0; border-radius:99px; padding:4px 12px; font:inherit; font-size:.72rem; font-weight:600; color:var(--mint-dark,#1F6F5C); box-shadow:0 1px 4px rgba(0,0,0,.15); white-space:nowrap; cursor:pointer; }
     .egg-hb { height:12px; border-radius:9px; background:#FFE6EC; overflow:hidden; margin:8px 0 4px; } .egg-hb i { display:block; height:100%; background:linear-gradient(90deg,#FF8E8E,#FF5A7A); }
+    /* เอฟเฟคกอดไข่: ยุบ-เด้ง + หัวใจพุ่งรอบไข่ + "+1" ลอย + แถบอุ่นเด้ง */
+    .eh-wrap { position:relative; transform-origin:50% 90%; }
+    .eh-wrap.squish { animation:ehSq .6s ease-out; }
+    @keyframes ehSq { 0%{transform:scale(1)} 25%{transform:scale(1.18,.82)} 50%{transform:scale(.9,1.12)} 75%{transform:scale(1.05,.96)} 100%{transform:scale(1)} }
+    .eh-fx { position:absolute; left:50%; top:45%; pointer-events:none; z-index:3; }
+    .eh-heart { position:absolute; font-size:20px; animation:ehH 1.2s ease-out forwards; }
+    @keyframes ehH { 0%{transform:translate(0,0) scale(.3);opacity:0} 15%{opacity:1} 100%{transform:translate(var(--x),var(--y)) scale(1.2) rotate(var(--r));opacity:0} }
+    .eh-plus { position:absolute; left:-14px; top:-10px; font-weight:900; font-size:22px; color:#FF5A7A; text-shadow:0 2px 0 #fff; animation:ehP 1.1s ease-out forwards; }
+    @keyframes ehP { 0%{transform:translateY(0) scale(.5);opacity:0} 25%{transform:translateY(-14px) scale(1.2);opacity:1} 100%{transform:translateY(-46px) scale(1);opacity:0} }
+    .egg-hb i { transition:width .6s cubic-bezier(.3,1.5,.5,1); }
+    .egg-hb.glow { box-shadow:0 0 0 3px #FFC2D0; }
     .egg-who { display:flex; flex-wrap:wrap; justify-content:center; gap:4px 12px; font-size:.82rem; color:var(--text-muted); margin:6px 0 10px; }
     .egg-pool { display:flex; flex-wrap:wrap; justify-content:center; gap:4px; margin-top:8px; } .egg-pool img { height:26px; } .egg-pool img.no, .egg-pool span.no { filter:brightness(0) opacity(.2); }
     .egg-tier { display:inline-block; background:linear-gradient(90deg,#B98CFF,#FFC24B); color:#fff; font-weight:700; font-size:.75rem; border-radius:99px; padding:2px 10px; text-shadow:0 1px 1px rgba(0,0,0,.2); }
@@ -3451,8 +3462,8 @@ function openEgg() {
   var e = dashboardData && dashboardData.egg, c = e && e.current; if (!c) return;
   var ready = c.status === 'ready', kid = e.canHatch;
   var rare = c.tier === 'rare';
-  openModal('<div style="text-align:center"><h2>' + (rare ? '✨ ไข่หายาก' : '🥚 ไข่ปริศนา') + 'ของบ้านเรา</h2>' + (rare ? '<span class="egg-tier">RARE · ลุ้นสัตว์เลี้ยง</span>' : '') + '<div style="width:86px;margin:6px auto">' + eggSVG(eggStage(c), ready, c.tier) + '</div>' +
-    '<div class="egg-hb"><i style="width:' + Math.min(100, c.warm / c.goal * 100) + '%"></i></div>' +
+  openModal('<div style="text-align:center"><h2>' + (rare ? '✨ ไข่หายาก' : '🥚 ไข่ปริศนา') + 'ของบ้านเรา</h2>' + (rare ? '<span class="egg-tier">RARE · ลุ้นสัตว์เลี้ยง</span>' : '') + '<div class="eh-wrap" id="eh-egg" style="width:86px;margin:6px auto">' + eggSVG(eggStage(c), ready, c.tier) + '<div class="eh-fx" id="eh-fx"></div></div>' +
+    '<div class="egg-hb" id="eh-bar"><i style="width:' + Math.min(100, c.warm / c.goal * 100) + '%"></i></div>' +
     '<div>' + (ready ? '<b style="color:var(--danger)">ไข่พร้อมฟักแล้ว!</b> ' + (kid ? 'แตะ "ฟักเลย" ได้เลย' : 'ให้ลูกเป็นคนฟักนะ') : 'ความอบอุ่น <b>' + c.warm + ' / ' + c.goal + '</b> ❤️ · วันนี้ได้อีก ' + c.todayLeft) + '</div>' +
     '<div class="egg-who">' + c.contrib.map(function (x) { return esc(x.name) + ' ' + x.n; }).join('<span>·</span>') + '</div>' +
     (ready ? '' : '<div style="font-size:.76rem;color:var(--text-muted)">ภารกิจลูกที่อนุมัติ +1 · กอดไข่คนละครั้งต่อวัน +1 · ทั้งบ้านได้วันละไม่เกิน ' + c.dayCap + '</div>') +
@@ -3464,9 +3475,31 @@ function openEgg() {
 function eggHug(btn) {
   btn.disabled = true;
   google.script.run.withSuccessHandler(function (res) {
-    dashboardData.egg = res.egg; toast(res.added ? '💗 +1 ความอบอุ่น' : 'วันนี้ไข่อุ่นเต็มที่แล้ว พรุ่งนี้มาใหม่นะ');
+    var before = dashboardData.egg && dashboardData.egg.current ? dashboardData.egg.current.warm : 0;
+    dashboardData.egg = res.egg;
     STRIP.key = ''; stripUpdate(dashboardData.avatars || [], dashboardData.stage, dashboardData.egg); openEgg(); Live.request();
+    if (res.added) eggHugFx(before); else toast('วันนี้ไข่อุ่นเต็มที่แล้ว พรุ่งนี้มาใหม่นะ');
   }).withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); }).hugEgg(currentMember.memberId);
+}
+// เอฟเฟคกอดไข่ (แบบ A): เสียงปุ๊ก · ไข่ยุบ-เด้ง · หัวใจ 8 ดวงพุ่งรอบไข่ · "+1" · แถบความอุ่นค่อย ๆ เพิ่มจากค่าเดิม
+function eggHugFx(before) {
+  var w = document.getElementById('eh-egg'), fx = document.getElementById('eh-fx'), bar = document.getElementById('eh-bar'), c = dashboardData.egg.current;
+  if (!w || !fx || !c) return;
+  try { var ac = new (window.AudioContext || window.webkitAudioContext)(), o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.setValueAtTime(520, ac.currentTime); o.frequency.exponentialRampToValueAtTime(880, ac.currentTime + .12);
+    g.gain.setValueAtTime(.15, ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + .25);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + .3); } catch (e) {}
+  if (bar) { var bi = bar.querySelector('i'); bi.style.width = Math.min(100, before / c.goal * 100) + '%'; void bi.offsetWidth;
+    setTimeout(function () { bi.style.width = Math.min(100, c.warm / c.goal * 100) + '%'; bar.classList.add('glow'); setTimeout(function () { bar.classList.remove('glow'); }, 600); }, 250); }
+  w.classList.remove('squish'); void w.offsetWidth; w.classList.add('squish');
+  for (var i = 0; i < 8; i++) {
+    var h = document.createElement('span'), a = Math.random() * Math.PI * 2;
+    h.className = 'eh-heart'; h.textContent = ['💗', '💖', '❤️', '💕'][i % 4];
+    h.style.setProperty('--x', Math.cos(a) * 70 + 'px'); h.style.setProperty('--y', (Math.sin(a) * 60 - 20) + 'px'); h.style.setProperty('--r', (Math.random() * 60 - 30) + 'deg');
+    h.style.animationDelay = (i * .03) + 's'; fx.appendChild(h);
+  }
+  var p = document.createElement('span'); p.className = 'eh-plus'; p.textContent = '+1'; fx.appendChild(p);
+  setTimeout(function () { if (fx.isConnected) fx.innerHTML = ''; }, 1600);
 }
 // ป๊อปอัปเต็มจอ: mode = 'hatch' (ลูกแตะ 3 ครั้ง) · 'found' (เจอไข่) · 'show' (คนอื่นฟักแล้ว)
 var EGG = { taps: 0, busy: false, res: null, open: false };
