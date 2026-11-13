@@ -364,4 +364,4 @@ FROM Presence GROUP BY hour_th ORDER BY hour_th;
 6. ทำ UI ใน index.html (ระวังการ escape quote ใน string ที่สร้าง HTML)
 7. เขียนเทสต์ใน `test/` แล้วรัน `node run.js` ให้ผ่าน
 8. Apply migration บน production → push → ตรวจ `/version` → ตรวจยอดดาวครอบครัวจริงว่าไม่เปลี่ยน
-9. อัปเดตไฟล์นี้ (HANDOFF.md)
+9. อัปเดตไฟล์นี้ (HANDOFF.md) · ตัดภาพ: ชีตมีกรอบ/ตัวหนังสือ → `sprites/clean_sheet.py` · ตัวชิดกัน → `sprites/seg_touching.py` · ท่าเดินมุมข้างตัวใหญ่เกิน → `cut.py --zoom 0.8`
