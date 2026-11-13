@@ -117,9 +117,11 @@
     function next() {
       if (self.token !== t) return Promise.reject('stop');
       if (i >= steps.length) {
-        if (!(a.loop || forMs) || (forMs && performance.now() >= end)) { self.say(''); return Promise.resolve(); }
+        if (!(a.loop || forMs) || (forMs && performance.now() >= end)) { self.say(''); if (a.lift) { self._bob = 0; self._frame(a.sheet, self._f); setTimeout(function () { self.spr.style.transition = ''; }, 200); } return Promise.resolve(); }
         i = 0;
       }
+      // lift: ยกตัวขึ้นจากพื้นทีละก้าว (ค่าติดลบ = ลอยขึ้น) เช่น กระพือปีกบิน · ไม่ต้องวาดตัวลอยในภาพ
+      if (a.lift) { self._bob = (a.lift[i] || 0) * self.scale * 2; self.spr.style.transition = 'transform .18s ease-out'; }
       var s = steps[i++];
       self._f = s.f; self._frame(a.sheet, s.f);
       if (s.say !== undefined) self.say(s.say); else if (a.steps) self.say('');
