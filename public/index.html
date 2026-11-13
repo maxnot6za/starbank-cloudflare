@@ -487,8 +487,9 @@
     .g-after { opacity:0; pointer-events:none; transition:opacity .4s 1.6s; margin-top:12px; width:min(320px,85%); }
     .g-wrap.open ~ .g-after { opacity:1; pointer-events:auto; }
     /* ===== ภารกิจด่วน ===== */
-    #urg-fab{position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:60;width:62px;height:62px;border-radius:50%;border:0;padding:0;font-size:1.9rem;line-height:1;color:#fff;background:linear-gradient(135deg,#FF5A36,#FF7A45);box-shadow:0 6px 18px #FF5A3666;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;transition:transform .15s}
+    #urg-fab{position:fixed;right:16px;bottom:calc(var(--nav-h) + 14px);z-index:95;width:62px;height:62px;border-radius:50%;border:0;padding:0;font-size:1.9rem;line-height:1;color:#fff;background:linear-gradient(135deg,#FF5A36,#FF7A45);box-shadow:0 6px 18px #FF5A3666;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;transition:transform .15s}
     #urg-fab[hidden]{display:none}
+    body.has-strip #urg-fab{bottom:calc(var(--nav-h) + var(--strip-h) + 14px)}
     #urg-fab.drag{transform:scale(1.12);box-shadow:0 10px 26px #FF5A3699;transition:none}
     #urg-fab.snap{transition:left .25s ease,top .25s ease,transform .15s}
     #urg-fab.live{animation:urgfab 1.6s ease-in-out infinite}
@@ -3185,10 +3186,16 @@ function urgFabShow() {
 function urgFabPlace(b) {
   var pos = null; try { pos = JSON.parse(localStorage.getItem(URGFAB.key) || 'null'); } catch (e) {}
   if (!pos) { b.style.left = ''; b.style.top = ''; b.style.right = ''; b.style.bottom = ''; return; }
-  var W = window.innerWidth, H = window.innerHeight, sz = 62, m = 16;
-  var y = Math.max(80, Math.min(H - sz - 90, pos.y * H));
+  var W = window.innerWidth, sz = 62, m = 16;
+  var y = Math.max(80, Math.min(urgFabFloor(), pos.y * window.innerHeight));
   b.style.right = 'auto'; b.style.bottom = 'auto';
   b.style.left = (pos.side === 'l' ? m : W - sz - m) + 'px'; b.style.top = y + 'px';
+}
+// ตำแหน่งต่ำสุดของปุ่ม = เหนือแถบห้อง (ถ้ามี) ไม่งั้นเหนือเมนูล่าง
+function urgFabFloor() {
+  var strip = document.getElementById('avatar-strip'), nav = document.getElementById('nav-parent');
+  var top = strip && strip.classList.contains('on') ? strip.getBoundingClientRect().top : (nav ? nav.getBoundingClientRect().top : window.innerHeight - 70);
+  return top - 62 - 14;
 }
 function urgFabDrag(b) {
   var st = null;
@@ -3200,7 +3207,7 @@ function urgFabDrag(b) {
     var W = window.innerWidth, H = window.innerHeight;
     b.style.right = 'auto'; b.style.bottom = 'auto';
     b.style.left = Math.max(4, Math.min(W - 66, e.clientX - st.dx)) + 'px';
-    b.style.top = Math.max(80, Math.min(H - 152, e.clientY - st.dy)) + 'px';
+    b.style.top = Math.max(80, Math.min(urgFabFloor(), e.clientY - st.dy)) + 'px';
   });
   function end(e) {
     if (!st) return; var s0 = st; st = null; b.classList.remove('drag');
@@ -4391,7 +4398,7 @@ function stripUpdate(avatars, stage, egg) {
     setTimeout(function () { STRIP.key = ''; stripUpdate(avatars, stage, egg); }, 800);   // สคริปต์ตัวละครยังโหลดไม่เสร็จ
     return;
   }
-  el.classList.add('on'); document.body.classList.add('has-strip');
+  el.classList.add('on'); document.body.classList.add('has-strip'); if (typeof urgFabShow === 'function') urgFabShow();
   // ผนัง + พื้น + ของตกแต่ง (หลังตัวละคร) · ไข่ · ป้ายชวนซื้อตัวละคร (ห้องยังไม่มีใครเดิน)
   el.innerHTML = stageBase(stage) + decorHtml(decor, el.clientHeight || 96, 16) +
     (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + '" onclick="eggStripTap(this)" role="button" aria-label="ไข่ปริศนา">' +
