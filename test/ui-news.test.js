@@ -1,0 +1,30 @@
+// ป๊อปอัป "มีอะไรใหม่": ผู้ปกครองเห็นครั้งเดียว · เด็กไม่เห็น
+const { chromium } = require('playwright');
+const { seedFamily, P1, C } = require('./lib/fixture.js');
+const { start, call, sessionFor } = require('./lib/mf.js');
+const routes = require(process.env.SB_ROUTES || './lib/routes.js');
+const OUT = require('os').tmpdir() + '/starbank-shots/'; require('fs').mkdirSync(OUT, { recursive: true });
+let fails = 0;
+const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? '' : JSON.stringify(x).slice(0, 300)); if (!c) fails++; };
+(async () => {
+  const { mf, db } = await start({ port: 0 }); await seedFamily(db);
+  await db.prepare('UPDATE Members SET news_seen = NULL').run();
+  const today = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+  await call(mf, 'getChildDashboard', C);
+  await db.prepare('UPDATE Members SET quest_seen = ?, tree_seen = ?, purple_seen = ?').bind(today, '9999', new Date().toISOString()).run();
+  const base = String(await mf.ready).replace(/\/$/, ''); const browser = await chromium.launch(), errors = [];
+  const open = async (id) => { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+    await ctx.addCookies([{ name: 'sb_s', value: await sessionFor(db, id), url: base }]); const p = await ctx.newPage(); await routes(p); p.on('pageerror', e => errors.push(e.message)); await p.goto(base + '/'); return p; };
+  let dad = await open(P1);
+  await dad.waitForSelector('.wn-list', { timeout: 15000 }); await dad.waitForTimeout(700); await dad.screenshot({ path: OUT + 'n1-whats-new.png' });
+  ok(/ไข่หายาก/.test(await dad.textContent('.wn-list')), 'ผู้ปกครองเห็น "มีอะไรใหม่"');
+  await dad.click('#modal-content .dq-btn.g'); await dad.waitForTimeout(800);
+  ok((await db.prepare('SELECT news_seen FROM Members WHERE member_id = ?').bind(P1).first()).news_seen >= 1, 'จำว่าเห็นแล้ว');
+  dad = await open(P1); await dad.waitForTimeout(3500);
+  ok(!(await dad.isVisible('.wn-list')), 'เปิดใหม่ไม่ขึ้นซ้ำ');
+  const kid = await open(C); await kid.waitForTimeout(3500);
+  ok(!(await kid.isVisible('.wn-list')), 'เด็กไม่เห็น');
+  ok(!errors.length, 'ไม่มี JS error', errors);
+  await browser.close(); await mf.dispose();
+  console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด'); process.exit(fails ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });

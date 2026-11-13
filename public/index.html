@@ -574,6 +574,12 @@
     .pp-bar .pic img { max-width:26px; max-height:26px; }
     .pp-bar .gt { flex:1; min-width:0; } .pp-bar .gt b { color:#5B34C9; }
     .pp-bar .pp-gb { height:6px; margin-top:3px; }
+    .wn-hd { text-align:center; } .wn-hd .sp { font-size:2.2rem; } .wn-hd h2 { margin:2px 0; } .wn-hd small { color:var(--text-muted); font-size:.78rem; }
+    .wn-list { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+    .wn-row { display:flex; gap:12px; align-items:center; background:#F6FBF9; border-radius:16px; padding:10px 12px; text-align:left; animation:wnIn .4s both; }
+    .wn-row:nth-child(2) { animation-delay:.1s } .wn-row:nth-child(3) { animation-delay:.2s }
+    @keyframes wnIn { from { transform:translateY(14px); opacity:0 } }
+    .wn-row .ic { font-size:1.8rem; width:40px; text-align:center; flex:none; } .wn-row b { display:block; } .wn-row span { font-size:.82rem; color:var(--text-muted); }
     .pp-news { text-align:center; }
     .pp-news .big { font-size:2.1rem; font-weight:900; color:#5B34C9; margin:4px 0; }
     .pp-news .who { min-height:70px; position:relative; display:flex; justify-content:center; align-items:flex-end; }
@@ -3457,6 +3463,7 @@ function renderDaily(d) {
   stripUpdate(d.avatars || [], d.stage, d.egg);
   setTimeout(function () { if (dashboardData) maybeEggEvent(dashboardData); }, 900);
   setTimeout(function () { if (dashboardData) maybePurpleNews(dashboardData); }, 1100);
+  setTimeout(function () { if (dashboardData) maybeWhatsNew(dashboardData); }, 1300);
 }
 
 // popup วันละครั้ง (เซิร์ฟเวอร์จำว่าเห็นแล้ว → เครื่องอื่นไม่เด้งซ้ำ)
@@ -3838,6 +3845,29 @@ function ppBanner(html, goal, gained) {
   b.innerHTML = '<span style="width:30px;flex:none">' + PSTAR + '</span><div style="flex:1;min-width:0">' + html + (goal ? ppGoalHtml(goal, Math.max(0, goal.have - (gained || 0))) : '') + '</div>';
   ppSprites(b); ppGrow(b); clearTimeout(PP.t); b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
   PP.t = setTimeout(function () { b.classList.remove('on'); }, goal ? 4200 : 2600);
+}
+// ---------- มีอะไรใหม่ (ผู้ปกครอง · ขึ้นครั้งเดียวต่อรุ่น) ----------
+// เพิ่มรุ่นใหม่ไว้บนสุด (v เพิ่มทีละ 1) · ไม่เกิน 3 ข้อ · ข้อละบรรทัด (บอกประโยชน์ ไม่บอกวิธีทำงาน) · โชว์เฉพาะรุ่นล่าสุด · ถามผู้ใช้ก่อน deploy ทุกครั้งว่าจะแจ้งไหม
+var WHATS_NEW = [
+  { v: 1, date: '13 พ.ย.', items: [
+    ['🥚', 'ไข่หายาก', 'ฟักแล้วได้สัตว์เลี้ยงมาเดินในห้อง'],
+    ['💜', 'ลูกเลือกของที่อยากได้', 'เห็นเลยว่าอีกกี่ดาวจะได้'],
+    ['🐻', 'ครอบครัวหมี', 'ตัวละครชุดใหม่ในร้านค้า']] }
+];
+var WN = { shown: 0 };
+function maybeWhatsNew(d) {
+  if (!d || currentMember.role !== 'parent' || d.newsSeen == null) return;
+  var top = WHATS_NEW[0]; if (!top || d.newsSeen >= top.v || WN.shown === top.v) return;
+  var ov = document.getElementById('modal-overlay');
+  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || (typeof TREE !== 'undefined' && TREE.open) || (typeof EGG !== 'undefined' && EGG.open)) {
+    setTimeout(function () { if (dashboardData) maybeWhatsNew(dashboardData); }, 1500); return;
+  }
+  WN.shown = top.v;
+  openModal('<div class="wn-hd"><div class="sp">✨</div><h2>มีอะไรใหม่</h2><small>อัปเดต ' + top.date + '</small></div><div class="wn-list">' +
+    top.items.map(function (x) { return '<div class="wn-row"><div class="ic">' + x[0] + '</div><div><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span></div></div>'; }).join('') +
+    '</div><div style="display:flex;margin-top:16px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div>');
+  google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).newsSeen(currentMember.memberId, top.v);
+  d.newsSeen = top.v;
 }
 // ข่าวดาวม่วงที่คนอื่นรับให้ / ระบบเก็บให้ ตอนเราไม่ได้อยู่ → ขึ้นครั้งเดียว · รอหน้าต่างอื่นปิดก่อน
 function maybePurpleNews(d) {

@@ -13,7 +13,7 @@ export const PUBLIC_API = [
   'toggleSubmissionNotify', 'getDailySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
   'sendGift', 'cancelGift', 'openGift',
-  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'purpleSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
+  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'purpleSeen', 'newsSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
 ];
 
 export function createCore(S) {
@@ -897,7 +897,8 @@ export function createCore(S) {
       reviewHistory: getReviewHistory_(familyId),
       redemptionHistory: getRedemptionHistory_(familyId),
       wheel: wheel, urgent: urgent, gifts: parentGifts_(familyId), serverNow: new Date(nowMs_()).toISOString(),
-      daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member)
+      daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member),
+      newsSeen: member.news_seen == null || member.news_seen === '' ? -1 : Number(member.news_seen)
     };
   }
 
@@ -1883,6 +1884,14 @@ export function createCore(S) {
     var p = String(member.goal_got).split('|'), it = shopItem_(p[0]), by = getMember_(p[2]);
     return it ? { id: it.id, name: it.name, kind: it.kind, sprite: it.sprite || '', art: it.art || '', by: by ? by.name : '' } : null;
   }
+  // ปิดป๊อปอัป "มีอะไรใหม่" → จำเลขรุ่น (ไม่ย้อนกลับ)
+  function newsSeen(memberId, ver) {
+    var m = getMember_(memberId);
+    if (!m) throw new Error('ไม่พบสมาชิก');
+    var v = Number(ver) || 0;
+    if (v > Number(m.news_seen || 0)) updateRow_('Members', 'member_id', m.member_id, { news_seen: v });
+    return { seen: v };
+  }
   function purpleSeen(memberId, until, gotSeen) {
     var m = getMember_(memberId);
     if (!m) throw new Error('ไม่พบสมาชิก');
@@ -2270,7 +2279,7 @@ export function createCore(S) {
   }
 
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
-    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen };
+    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen, newsSeen };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }

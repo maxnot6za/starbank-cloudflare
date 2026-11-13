@@ -43,6 +43,8 @@ async function seedFamily(db) {
       await db.prepare(`INSERT INTO ${table} (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`).bind(...cols.map(c => row[c])).run();
     }
   }
+  // ป๊อปอัป "มีอะไรใหม่" ไม่ให้บังเทสต์อื่น (ui-news.test.js ล้างค่านี้เอง)
+  await db.prepare('UPDATE Members SET news_seen = 9999').run();
 }
 
 module.exports = { seedFamily, FAM, FAM2, P1, P2, P3, C, START_BALANCE };

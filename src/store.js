@@ -5,7 +5,7 @@
 
 export const TABLES = {
   Families:    { pk: 'family_id', cols: ['family_id','family_name','join_code','created_at','wheel_enabled','wheel_started_at','wheel_prizes','purple','gold','theme','stage','egg_pity','egg_rare_pity'], bools: ['wheel_enabled'] },
-  Members:     { pk: 'member_id', cols: ['member_id','family_id','name','role','avatar','line_user_id','web_token','created_at','notify_submission','quest_seen','tree_seen','egg_seen','purple_seen','goal_got'], bools: ['notify_submission'] },
+  Members:     { pk: 'member_id', cols: ['member_id','family_id','name','role','avatar','line_user_id','web_token','created_at','notify_submission','quest_seen','tree_seen','egg_seen','purple_seen','goal_got','news_seen'], bools: ['notify_submission'] },
   Missions:    { pk: 'mission_id', cols: ['mission_id','family_id','title','description','base_stars','multiplier','icon','is_active','created_by','created_at'], bools: ['is_active'] },
   Submissions: { pk: 'submission_id', cols: ['submission_id','mission_id','child_id','family_id','mission_title','status','stars_earned','submitted_at','reviewed_by','reviewed_at'], bools: [] },
   Rewards:     { pk: 'reward_id', cols: ['reward_id','family_id','title','description','stars_cost','type','secret_data','quantity','icon','is_active','created_by','created_at'], bools: ['is_active'] },
@@ -25,7 +25,7 @@ export const TABLES = {
 
 const NUM_COLS = new Set(['pct','base_stars','multiplier','stars_earned','stars_cost','quantity','stars_spent','prize_stars','prize_index',
   'stars_earned_today','stars_spent_today','balance','missions_completed_today','stars','duration_sec',
-  'purple','gold','target','progress','reward','price','amount','warm','goal','day_warm','egg_pity','egg_rare_pity']);
+  'purple','gold','target','progress','reward','price','amount','warm','goal','day_warm','egg_pity','egg_rare_pity','news_seen']);
 
 export class ConflictError extends Error {}
 
