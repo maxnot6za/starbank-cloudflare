@@ -1831,7 +1831,7 @@ export function createCore(S) {
     var mine = member.role === 'child' ? kids.filter(function(q) { return String(q.owner) === String(member.member_id); }) : (parents ? [parents] : []);
     return { date: today, seen: String(member.quest_seen || '') === today, mine: mine, parents: parents, kids: kids,
       wallet: { purple: Number(fam.purple || 0), gold: Number(fam.gold || 0) },
-      news: purpleNews_(member), goal: purpleGoal_(member, Number(fam.purple || 0)) };
+      news: purpleNews_(member), goal: purpleGoal_(member, Number(fam.purple || 0)), got: goalGot_(member) };
   }
   // ดาวม่วงที่เข้ากระเป๋าโดยที่คนนี้ไม่ได้กดเอง (คนอื่นรับให้ / ระบบเก็บให้) และยังไม่เคยเห็น
   // เด็ก: เฉพาะภารกิจของตัวเอง · ผู้ปกครอง: ทุกภารกิจ · ยังไม่เคยตั้งค่า = ดูย้อน 24 ชม.
@@ -1851,29 +1851,44 @@ export function createCore(S) {
     return { total: items.reduce(function(a, b) { return a + b.reward; }, 0), items: items,
       until: rows.map(function(q) { return String(q.claimed_at); }).sort().pop() };
   }
-  // เป้าหมายถัดไป: ของที่กด "อยากได้" ไว้ (ลูก = ของตัวเอง · ผู้ปกครอง = ของใครก็ได้ในบ้าน) ราคาถูกสุด · ยังไม่มี = { none } ชวนไปกด
+  // เป้าหมาย = ของที่ "อยากได้" (มีได้คนละ 1 ชิ้น) · ลูก: ของตัวเอง → ไม่มีก็ใช้ของที่ผู้ปกครองตั้ง (เป้าหมายของบ้าน) → ไม่มี = { none }
+  // ผู้ปกครอง: goal = เป้าหมายของบ้าน (ถ้าตั้ง) · kidGoals = เป้าหมายของลูกแต่ละคน
+  function goalView_(fid, it, have, extra) {
+    var pay = priceFor_(fid, it);
+    return Object.assign({ id: it.id, name: it.name, kind: it.kind, sprite: it.sprite || '', art: it.art || '', price: pay, have: have, left: Math.max(0, pay - have) }, extra || {});
+  }
   function purpleGoal_(member, have) {
     var fid = member.family_id;
-    var buyable = SHOP_ITEMS.filter(function(it) { return !it.free && !it.egg && it.price > 0 && !owns_(fid, it); });
-    if (!buyable.length) return null;
-    var wishes = getAllRows_('Wishes').filter(function(w) {
-      if (String(w.family_id) !== String(fid)) return false;
-      if (member.role !== 'child') return true;
-      var x = getMember_(w.child_id); return String(w.child_id) === String(member.member_id) || (x && x.role === 'parent');   // ลูกเห็นของที่ตัวเองหรือพ่อแม่ตั้งไว้
-    });
-    var wished = buyable.filter(function(it) { return wishes.some(function(w) { return w.item_id === it.id; }); });
-    if (!wished.length) return { none: true, have: have };   // ยังไม่มีใครเลือกของที่อยากได้ → ชวนไปกด "อยากได้"
-    var pick = wished.map(function(it) { return { it: it, pay: priceFor_(fid, it) }; }).sort(function(a, b) { return a.pay - b.pay; })[0];
-    var it = pick.it;
-    var by = wishes.filter(function(w) { return w.item_id === it.id; }).map(function(w) { var x = getMember_(w.child_id); return x ? x.role : ''; });
-    return { id: it.id, name: it.name, kind: it.kind, sprite: it.sprite || '', art: it.art || '', price: pick.pay, have: have, left: Math.max(0, pick.pay - have), wished: true,
-      byKid: by.indexOf('child') >= 0 };
+    var wishes = getAllRows_('Wishes').filter(function(w) { return String(w.family_id) === String(fid); });
+    var itemOf = function(w) { var it = shopItem_(w.item_id); return it && !owns_(fid, it) ? it : null; };
+    var wishOf = function(id) { var w = wishes.filter(function(x) { return String(x.child_id) === String(id); }).pop(); return w ? itemOf(w) : null; };
+    var parents = getFamilyMembers_(fid).filter(function(x) { return x.role === 'parent'; });
+    var home = null; parents.some(function(p) { home = wishOf(p.member_id); return home; });
+    if (member.role === 'child') {
+      var mine = wishOf(member.member_id);
+      if (mine) return goalView_(fid, mine, have, { byKid: true });
+      if (home) return goalView_(fid, home, have, { home: true });
+      return { none: true, have: have };
+    }
+    var kidGoals = getFamilyMembers_(fid).filter(function(x) { return x.role === 'child'; }).map(function(k) {
+      var it = wishOf(k.member_id); return it ? goalView_(fid, it, have, { kid: k.name, byKid: true }) : null;
+    }).filter(Boolean);
+    var g = home ? goalView_(fid, home, have, { home: true }) : (kidGoals[0] ? Object.assign({}, kidGoals[0]) : { none: true, have: have });
+    g.kidGoals = kidGoals;
+    return g;
   }
-  function purpleSeen(memberId, until) {
+  // ของที่หนูอยากได้ ผู้ปกครองซื้อให้แล้ว (ขึ้นครั้งเดียว · ล้างด้วย purpleSeen(.., .., true))
+  function goalGot_(member) {
+    if (member.role !== 'child' || !member.goal_got) return null;
+    var p = String(member.goal_got).split('|'), it = shopItem_(p[0]), by = getMember_(p[2]);
+    return it ? { id: it.id, name: it.name, kind: it.kind, sprite: it.sprite || '', art: it.art || '', by: by ? by.name : '' } : null;
+  }
+  function purpleSeen(memberId, until, gotSeen) {
     var m = getMember_(memberId);
     if (!m) throw new Error('ไม่พบสมาชิก');
     var u = String(until || '').slice(0, 40);
     if (u && u > String(m.purple_seen || '')) updateRow_('Members', 'member_id', m.member_id, { purple_seen: u });
+    if (gotSeen) updateRow_('Members', 'member_id', m.member_id, { goal_got: '' });
     return { seen: u };
   }
 
@@ -2218,7 +2233,11 @@ export function createCore(S) {
     if (assignTo && item.kind === 'avatar') assignTo_(familyId, getAllRows_('Inventory').find(function(r) { return r.inv_id === inv.inv_id; }), item, assignTo);
     // ซื้อแล้ว → ลบคำขอ "อยากได้" ของชิ้นนี้
     getAllRows_('Wishes').filter(function(w) { return String(w.family_id) === String(familyId) && w.item_id === item.id; })
-      .forEach(function(w) { S.store.remove('Wishes', 'wish_id', w.wish_id); });
+      .forEach(function(w) {
+        var k = getMember_(w.child_id);
+        if (k && k.role === 'child') updateRow_('Members', 'member_id', k.member_id, { goal_got: item.id + '|' + msIso_(nowMs_()) + '|' + memberId });
+        S.store.remove('Wishes', 'wish_id', w.wish_id);
+      });
     return { bought: item.id, paid: price, shop: getShop(memberId) };
   }
 
@@ -2239,11 +2258,15 @@ export function createCore(S) {
     if (!item) throw new Error('ไม่พบสินค้านี้');
     if (item.egg) throw new Error('ของชิ้นนี้ได้จากไข่เท่านั้น');
     if (owns_(m.family_id, item)) throw new Error('ครอบครัวมีของชิ้นนี้แล้ว');
-    var mine = getAllRows_('Wishes').find(function(w) { return String(w.child_id) === String(m.member_id) && w.item_id === item.id; });
+    var mineAll = getAllRows_('Wishes').filter(function(w) { return String(w.child_id) === String(m.member_id); });
+    var mine = mineAll.find(function(w) { return w.item_id === item.id; });
     if (mine) { S.store.remove('Wishes', 'wish_id', mine.wish_id); return { wished: false, shop: getShop(memberId) }; }
+    // อยากได้ได้คนละ 1 ชิ้น = เป้าหมาย → กดชิ้นใหม่แทนชิ้นเดิม
+    var old = mineAll.map(function(w) { return shopItem_(w.item_id); }).filter(Boolean)[0];
+    mineAll.forEach(function(w) { S.store.remove('Wishes', 'wish_id', w.wish_id); });
     appendRow_('Wishes', { wish_id: genId_(), family_id: m.family_id, child_id: m.member_id, item_id: item.id, created_at: msIso_(nowMs_()) });
     if (m.role === 'child' && S.events) S.events.push({ type: 'shop_wish', familyId: String(m.family_id), childName: m.name, itemName: item.name });
-    return { wished: true, shop: getShop(memberId) };
+    return { wished: true, replaced: old ? old.name : '', shop: getShop(memberId) };
   }
 
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,

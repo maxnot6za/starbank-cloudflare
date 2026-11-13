@@ -569,6 +569,11 @@
     .pp-goal .gt { flex:1; font-size:.8rem; min-width:0; }
     .pp-gb { height:9px; border-radius:9px; background:#EFE7FF; overflow:hidden; margin-top:5px; }
     .pp-gb i { display:block; height:100%; background:linear-gradient(90deg,#B98CFF,#8B5CF6); transition:width 1s cubic-bezier(.3,1.4,.5,1); }
+    .pp-bar { display:flex; align-items:center; gap:8px; background:#FBF8FF; border-radius:12px; padding:7px 10px; margin:6px 0 2px; font-size:.78rem; cursor:pointer; border:0; width:100%; font:inherit; text-align:left; color:inherit; }
+    .pp-bar .pic { width:26px; height:26px; flex:none; display:grid; place-items:center; font-size:18px; overflow:hidden; }
+    .pp-bar .pic img { max-width:26px; max-height:26px; }
+    .pp-bar .gt { flex:1; min-width:0; } .pp-bar .gt b { color:#5B34C9; }
+    .pp-bar .pp-gb { height:6px; margin-top:3px; }
     .pp-news { text-align:center; }
     .pp-news .big { font-size:2.1rem; font-weight:900; color:#5B34C9; margin:4px 0; }
     .pp-news .who { min-height:70px; position:relative; display:flex; justify-content:center; align-items:flex-end; }
@@ -3433,17 +3438,18 @@ function renderDaily(d) {
   var head = '<h3>🌞 ภารกิจประจำวัน <small>' + PSTAR + ' <span class="dq-wallet">' + dl.wallet.purple + '</span> ของครอบครัว</small></h3>';
   var html;
   if (isKid) {
-    html = '<div class="dq-card">' + head + (dl.mine.length ? dl.mine.map(function (q) { return dqRow(q, true); }).join('') : '<div class="dq-t" style="color:var(--text-muted)">วันนี้ยังไม่มีภารกิจ</div>') + '</div>';
+    html = '<div class="dq-card">' + head + ppGoalBar(dl.goal) + (dl.mine.length ? dl.mine.map(function (q) { return dqRow(q, true); }).join('') : '<div class="dq-t" style="color:var(--text-muted)">วันนี้ยังไม่มีภารกิจ</div>') + '</div>';
   } else {
     var all = (dl.parents ? [dl.parents] : []).concat(dl.kids), nd = all.filter(function (q) { return q.status !== 'active'; }).length;
     head = '<h3>👨‍👩‍👧 ภารกิจร่วมผู้ปกครอง <small>' + PSTAR + ' <span class="dq-wallet">' + dl.wallet.purple + '</span> ของครอบครัว</small></h3>';
     html = '<div class="section-title fold-h" onclick="foldToggle(\'daily\')"><span class="fh-t">🌞 ภารกิจประจำวัน</span><span class="fold-sum">' + (all.length ? nd + '/' + all.length + ' เสร็จ' : '') + '</span><button type="button" class="fold-tg" data-fold-tg="daily" aria-label="พับ/กาง">+</button></div><div class="fold-body" data-fold="daily">' +
-      '<div class="dq-card">' + head + (dl.parents ? dqRow(dl.parents, true) : '') +
+      '<div class="dq-card">' + head + ppGoalBar(dl.goal) + (dl.parents ? dqRow(dl.parents, true) : '') +
       (dl.parents ? '<div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">ภารกิจร่วมของผู้ปกครอง ใครทำก็นับ</div>' : '') + '</div>';
     if (dl.kids.length) html += '<div class="dq-card"><h3>👧 ภารกิจของลูกวันนี้</h3>' + dl.kids.map(function (q) { return dqRow(q, true); }).join('') + '</div>';
     html += '</div>';
   }
   el.innerHTML = html;
+  ppSprites(el);
   foldApply();
   feReplace(el);
   // รอให้ป้ายภารกิจด่วน/กล่องของขวัญ (สำคัญกว่า) เปิดก่อน แล้วค่อยเด้งภารกิจประจำวัน
@@ -3779,18 +3785,37 @@ function ppCheer(owner) {
     });
   } catch (e) {}
 }
+function ppGoalLabel(g) {
+  return g.home ? ' · เป้าหมายของบ้าน 🎯' : currentMember.role === 'child' ? ' ที่หนูอยากได้ 💗' : ' · ' + esc(g.kid || 'ลูก') + 'อยากได้ 💗';
+}
+// หลอดเป้าหมายเล็ก (หัวภารกิจประจำวัน / หัวร้านค้า) · แตะ = ไปร้าน
+function ppGoalBar(g) {
+  if (!g) return '';
+  if (g.none) return '<button type="button" class="pp-bar" onclick="goShop()"><span class="pic">💜</span><span class="gt">' +
+    (currentMember.role === 'child' ? '<b>อยากได้อะไร?</b> แตะเลือกในร้าน' : '<b>ยังไม่มีเป้าหมาย</b> · ให้ลูกกด 💜 อยากได้ ในร้าน') + '</span></button>';
+  var row = function (x) {
+    var pic = x.art ? '<img src="' + decorUrl(x.art) + '" alt="">' : '<span data-pp-sprite="' + esc(x.sprite) + '" style="width:26px;height:26px">' + (x.kind === 'pet' ? '🐾' : '🧸') + '</span>';
+    return '<button type="button" class="pp-bar" onclick="goShop()"><span class="pic">' + pic + '</span><span class="gt"><b>' + esc(x.name) + '</b>' + ppGoalLabel(x) + ' · ' +
+      (x.left ? 'อีก ' + x.left + ' ดวง' : 'พอซื้อแล้ว!') + '<div class="pp-gb"><i style="width:' + Math.min(100, x.have / x.price * 100) + '%"></i></div></span></button>';
+  };
+  if (currentMember.role === 'parent') {
+    var list = (g.home ? [g] : []).concat(g.kidGoals || []);
+    return list.length ? list.map(row).join('') : ppGoalBar({ none: true });
+  }
+  return row(g);
+}
 function ppGoalHtml(g, fromHave) {
   if (!g) return '';
   if (g.none) {   // ยังไม่มีของที่อยากได้ → ชวนไปเลือก
     var kidNone = currentMember.role === 'child';
     return '<div class="pp-goal"><div class="pic">🎯</div><div class="gt"><b>' + (kidNone ? 'อยากได้อะไร? ไปเลือกเลย!' : 'ยังไม่มีเป้าหมาย') + '</b><div>' +
-      (kidNone ? 'กด 💜 อยากได้ ในร้านค้า แล้วมาดูว่าอีกกี่ดวงจะได้' : 'ให้ลูกกด 💜 อยากได้ หรือกดตั้งเองในร้านค้า') + '</div></div>' +
+      (kidNone ? 'แตะ 💜 อยากได้ ที่ของในร้าน 1 ชิ้น แล้วมาดูว่าอีกกี่ดวงจะได้' : 'ให้ลูกกด 💜 อยากได้ หรือกดตั้งเองในร้านค้า') + '</div></div>' +
       '<button class="dq-claim" style="animation:none" onclick="ppGoShop()">ไปร้าน</button></div>';
   }
   var pct = function (h) { return Math.min(100, h / g.price * 100); };
   var pic = g.art ? '<img src="' + decorUrl(g.art) + '" alt="">' : '<span data-pp-sprite="' + esc(g.sprite) + '">' + (g.kind === 'pet' ? '🐾' : '🧸') + '</span>';
   var txt = g.left ? 'อีก <b>' + g.left + '</b> ดวงก็ได้แล้ว!' : (currentMember.role === 'child' ? '💜 <b>พอซื้อแล้ว!</b> บอกพ่อแม่เลย' : '💜 <b>พอซื้อแล้ว!</b>');
-  return '<div class="pp-goal"><div class="pic">' + pic + '</div><div class="gt"><b>' + esc(g.name) + '</b>' + (currentMember.role === 'child' ? (g.byKid ? ' ที่หนูอยากได้ 💗' : ' · เป้าหมายของบ้าน 🎯') : (g.byKid ? ' · ลูกอยากได้ 💗' : ' · เป้าหมายของบ้าน 🎯')) +
+  return '<div class="pp-goal"><div class="pic">' + pic + '</div><div class="gt"><b>' + esc(g.name) + '</b>' + ppGoalLabel(g) +
     '<div>' + txt + '</div><div class="pp-gb"><i data-to="' + pct(g.have) + '" style="width:' + pct(fromHave == null ? g.have : fromHave) + '%"></i></div></div>' +
     (!g.left && currentMember.role === 'parent' ? '<button class="dq-claim" style="animation:none" onclick="ppGoShop()">ไปร้าน</button>' : '') + '</div>';
 }
@@ -3800,7 +3825,8 @@ function ppSprites(root) {
     var id = el.getAttribute('data-pp-sprite'); if (!id) return;
     spriteManifest(id).then(function (m) {
       var sh = m.sheets[m.walk || 'walk'] || m.sheets[Object.keys(m.sheets)[0]]; if (!sh) return;
-      el.textContent = ''; el.style.cssText = 'display:block;width:44px;height:44px;background:url(/sprites/characters/' + id + '/' + sh.file + ') 0 50%/' + (sh.frames * 100) + '% auto no-repeat';
+      var w = el.style.width || '44px', h = el.style.height || '44px';
+      el.textContent = ''; el.style.cssText = 'display:inline-block;width:' + w + ';height:' + h + ';background:url(/sprites/characters/' + id + '/' + sh.file + ') 0 50%/' + (sh.frames * 100) + '% auto no-repeat';
     });
   });
 }
@@ -3815,11 +3841,26 @@ function ppBanner(html, goal, gained) {
 }
 // ข่าวดาวม่วงที่คนอื่นรับให้ / ระบบเก็บให้ ตอนเราไม่ได้อยู่ → ขึ้นครั้งเดียว · รอหน้าต่างอื่นปิดก่อน
 function maybePurpleNews(d) {
-  var nw = d && d.daily && d.daily.news; if (!nw || PP.shown === nw.until) return;
+  var got = d && d.daily && d.daily.got, nw = d && d.daily && d.daily.news;
+  if (!got && (!nw || PP.shown === nw.until)) return;
   var ov = document.getElementById('modal-overlay');
   if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || (typeof TREE !== 'undefined' && TREE.open) || (typeof EGG !== 'undefined' && EGG.open)) {
     setTimeout(function () { if (dashboardData) maybePurpleNews(dashboardData); }, 1500); return;
   }
+  if (got && PP.gotShown !== got.id) {   // ของที่หนูอยากได้ ผู้ปกครองซื้อให้แล้ว
+    PP.gotShown = got.id;
+    var gpic = got.art ? '<img src="' + decorUrl(got.art) + '" alt="" style="max-height:110px">' : '<span data-pp-sprite="' + esc(got.sprite) + '" style="display:inline-block;width:90px;height:90px">🎁</span>';
+    openModal('<div class="pp-news"><div style="font-size:2rem">🎉</div>' + gpic + '<div class="big" style="font-size:1.4rem">' + esc(got.by || 'พ่อแม่') + 'ซื้อ ' + esc(got.name) + ' ให้แล้ว!</div>' +
+      '<div>ของที่หนูอยากได้ 💗 เก็บดาวสำเร็จแล้ว เก่งมาก!</div><div style="font-size:.85rem;color:var(--text-muted);margin-top:6px">อยากได้อะไรต่อ? แตะ 💜 ที่ของในร้านได้เลย</div>' +
+      '<div style="display:flex;gap:8px;margin-top:14px"><button class="dq-btn g" onclick="closeModal()">เย้!</button><button class="dq-btn p" style="flex:1.4" onclick="closeModal();goShop()">ไปร้าน 🛍️</button></div></div>');
+    ppSprites(document.getElementById('modal-content'));
+    if (typeof confetti === 'function') confetti();
+    google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).purpleSeen(currentMember.memberId, '', true);
+    d.daily.got = null;
+    if (nw) setTimeout(function () { if (dashboardData) maybePurpleNews(dashboardData); }, 1500);
+    return;
+  }
+  if (!nw || PP.shown === nw.until) return;
   PP.shown = nw.until;
   var kid = currentMember.role === 'child', g = d.daily.goal, it = nw.items;
   var byTxt = function (x) { return x.by === 'auto' ? 'ระบบเก็บให้อัตโนมัติ' : (x.byRole === 'parent' ? '👨 ' + esc(x.by) + 'รับดาวให้แล้ว' : esc(x.by) + ' กดรับแล้ว'); };
@@ -3886,7 +3927,7 @@ function renderShop() {
   var wishCount = d.items.reduce(function (n, i) { return n + (i.owned ? 0 : i.wishedBy.length); }, 0);
   var b = document.getElementById('shop-badge');
   if (b) { b.style.display = wishCount ? 'inline-flex' : 'none'; b.textContent = wishCount; }
-  root.innerHTML = '<div class="shop-top"><h2>🛍️ ร้านค้า</h2><span class="wallet-pill">' + COIN + ' ' + d.wallet.gold + '</span><span class="wallet-pill">' + PSTAR + ' ' + d.wallet.purple + '</span></div>' +
+  root.innerHTML = (dashboardData && dashboardData.daily ? '<div style="margin-bottom:6px">' + ppGoalBar(dashboardData.daily.goal) + '</div>' : '') + '<div class="shop-top"><h2>🛍️ ร้านค้า</h2><span class="wallet-pill">' + COIN + ' ' + d.wallet.gold + '</span><span class="wallet-pill">' + PSTAR + ' ' + d.wallet.purple + '</span></div>' +
     (d.coupons && d.coupons.length ? '<div class="cp-bar"><b>🎟️ คูปองของครอบครัว</b><br>' + couponPills(d.coupons) + (d.canBuy ? '' : '<div style="font-size:.75rem;color:var(--text-muted);margin-top:4px">ผู้ปกครองใช้ตอนซื้อของ</div>') + '</div>' : '') +
     (d.firstDiscount ? '<div class="shop-sale">🎉 ซื้อชิ้นแรกของครอบครัว ลด ' + d.discountPct + '% · เลือกได้ทุกอย่างในร้าน</div>' : '') +
     '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · สัตว์เลี้ยง ' + cnt('pet') + ' · ผนัง ' + cnt('wall') + ' · พื้น ' + cnt('floor') + ' · ตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
@@ -3899,7 +3940,7 @@ function renderShop() {
     }).join('') + (items.length < 2 ? '<div class="shop-soon">✨ ' + (SHOP.tab === 'decor' ? 'ของตกแต่ง' : SHOP.tab === 'pet' ? 'สัตว์เลี้ยงตัวใหม่' : SHOP.tab === 'floor' ? 'พื้นแบบใหม่' : SHOP.tab === 'wall' ? 'ผนังแบบใหม่' : 'ตัวละครใหม่') + ' เร็ว ๆ นี้</div>' : '') + '</div>' +
     '<div class="shop-note">' + (d.canBuy ? (SHOP.tab === 'avatar' ? 'ซื้อแล้วเลือกได้ว่าให้ใครในบ้านใช้ ตัวละครจะเดินอยู่ด้านล่างจอของทุกคนในครอบครัว' : SHOP.tab === 'pet' ? 'สัตว์เลี้ยงเป็นของทั้งบ้าน · อยู่ในห้องได้พร้อมกัน 2 ตัว · เดินเล่นนิดหน่อยแล้วนั่งเล่น/งีบหลับ' : 'ผนัง พื้น และของตกแต่งจะอยู่ด้านล่างจอของทุกคนในครอบครัว')
       : 'ผู้ปกครองเป็นคนซื้อ · กด "อยากได้" ให้พ่อแม่รู้ได้นะ 💜') + '<br>เหรียญทอง: เร็ว ๆ นี้</div>';
-  feReplace(root);
+  feReplace(root); ppSprites(root);
   if (!spriteReady()) return;
   root.querySelectorAll('.shop-stage[data-sprite]').forEach(function (st) {
     var id = st.getAttribute('data-sprite');
@@ -4176,7 +4217,7 @@ function shopAssign(btn, id) {
 }
 function shopWish(btn, id) {
   btn.disabled = true;
-  google.script.run.withSuccessHandler(function (res) { closeModal(); SHOP.data = res.shop; renderShop(); toast(res.wished ? (currentMember.role === 'child' ? '💜 บอกพ่อแม่แล้วว่าอยากได้!' : '🎯 ตั้งเป็นเป้าหมายของบ้านแล้ว') : 'ยกเลิกแล้ว'); Live.request(); })
+  google.script.run.withSuccessHandler(function (res) { closeModal(); SHOP.data = res.shop; renderShop(); toast(res.wished ? (res.replaced ? '💜 เปลี่ยนเป็นอยากได้ชิ้นนี้แล้ว (แทน ' + res.replaced + ')' : currentMember.role === 'child' ? '💜 ตั้งเป็นเป้าหมายแล้ว · บอกพ่อแม่แล้ว!' : '🎯 ตั้งเป็นเป้าหมายของบ้านแล้ว') : 'ยกเลิกแล้ว'); Live.request(); })
     .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); })
     .wishItem(currentMember.memberId, id);
 }
