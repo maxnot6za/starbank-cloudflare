@@ -1,0 +1,284 @@
+{
+  "id": "beargirl",
+  "name": "น้องหมีชมพู",
+  "headWidth": 150,
+  "sheets": {
+    "walk": {
+      "file": "walk.webp",
+      "frames": 6,
+      "cell": [
+        191,
+        332
+      ],
+      "facing": "right",
+      "extent": [
+        92,
+        90
+      ],
+      "cut": {
+        "src": "src/walk.png",
+        "frames": 6,
+        "facing": "right"
+      }
+    },
+    "hug": {
+      "file": "hug.webp",
+      "frames": 6,
+      "cell": [
+        186,
+        328
+      ],
+      "facing": "right",
+      "extent": [
+        83,
+        89
+      ],
+      "cut": {
+        "src": "src/hug.png",
+        "frames": 6,
+        "facing": "right"
+      }
+    },
+    "dance": {
+      "file": "dance.webp",
+      "frames": 6,
+      "cell": [
+        230,
+        284
+      ],
+      "facing": "right",
+      "extent": [
+        103,
+        111
+      ],
+      "cut": {
+        "src": "src/dance.png",
+        "frames": 6,
+        "order": "2,3,1,4,5,6",
+        "facing": "right"
+      }
+    },
+    "cheer": {
+      "file": "cheer.webp",
+      "frames": 6,
+      "cell": [
+        187,
+        399
+      ],
+      "facing": "right",
+      "extent": [
+        90,
+        84
+      ],
+      "cut": {
+        "src": "src/cheer.png",
+        "frames": 6,
+        "order": "2,3,4,1,5,6",
+        "facing": "right",
+        "keep_y": true
+      }
+    },
+    "celebrate": {
+      "file": "celebrate.webp",
+      "frames": 3,
+      "cell": [
+        179,
+        289
+      ],
+      "facing": "right",
+      "extent": [
+        84,
+        86
+      ],
+      "cut": {
+        "src": "src/celebrate.png",
+        "frames": 3,
+        "facing": "right"
+      }
+    }
+  },
+  "anims": {
+    "walk": {
+      "label": "เดิน",
+      "sheet": "walk",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "ms": 140,
+      "loop": true,
+      "speed": 1.0,
+      "bob": [
+        0,
+        -1,
+        -1.5,
+        0,
+        -1,
+        -1.5
+      ]
+    },
+    "hug": {
+      "label": "กอดตุ๊กตาโยกตัว",
+      "sheet": "hug",
+      "loop": true,
+      "steps": [
+        [
+          0,
+          700
+        ],
+        [
+          1,
+          500
+        ],
+        [
+          2,
+          600
+        ],
+        [
+          3,
+          450
+        ],
+        [
+          4,
+          700,
+          "รักน้องหมีที่สุด 💗"
+        ],
+        [
+          5,
+          600
+        ]
+      ]
+    },
+    "dance": {
+      "label": "เต้นกับตุ๊กตา",
+      "sheet": "dance",
+      "loop": true,
+      "steps": [
+        [
+          0,
+          400
+        ],
+        [
+          1,
+          300
+        ],
+        [
+          2,
+          350
+        ],
+        [
+          3,
+          300
+        ],
+        [
+          4,
+          300
+        ],
+        [
+          5,
+          400
+        ]
+      ],
+      "lift": [
+        0,
+        0,
+        0,
+        0,
+        -6,
+        0
+      ]
+    },
+    "cheer": {
+      "label": "ดีใจ กระโดด",
+      "sheet": "cheer",
+      "steps": [
+        [
+          0,
+          350
+        ],
+        [
+          1,
+          250
+        ],
+        [
+          2,
+          250
+        ],
+        [
+          3,
+          450
+        ],
+        [
+          4,
+          250
+        ],
+        [
+          5,
+          900
+        ]
+      ],
+      "lift": [
+        0,
+        0,
+        -8,
+        -14,
+        0,
+        0
+      ]
+    },
+    "celebrate": {
+      "label": "ฉลอง",
+      "sheet": "celebrate",
+      "steps": [
+        [
+          0,
+          900
+        ],
+        [
+          1,
+          900
+        ],
+        [
+          2,
+          1200
+        ]
+      ]
+    }
+  },
+  "life": [
+    {
+      "walk": "random"
+    },
+    {
+      "pick": [
+        "hug",
+        "dance"
+      ],
+      "for": [
+        5000,
+        8000
+      ]
+    },
+    {
+      "walk": "random"
+    },
+    {
+      "chance": 0.3,
+      "do": [
+        {
+          "play": "cheer"
+        }
+      ]
+    }
+  ],
+  "idle": "hug",
+  "walk": "walk",
+  "tap": {
+    "anim": "cheer",
+    "say": "เย้! 🧸"
+  }
+}

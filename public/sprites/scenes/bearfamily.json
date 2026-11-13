@@ -1,0 +1,10 @@
+{
+  "id": "bearfamily",
+  "name": "ครอบครัวหมี (ตัวอย่าง)",
+  "cast": [
+    "bearmom",
+    "beargirl",
+    "petdino"
+  ],
+  "interactions": []
+}
