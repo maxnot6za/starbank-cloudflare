@@ -17,7 +17,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
     await ctx.addCookies([{ name: 'sb_s', value: await sessionFor(db, id), url: base }]); const p = await ctx.newPage(); await routes(p); p.on('pageerror', e => errors.push(e.message)); await p.goto(base + '/'); return p; };
   let dad = await open(P1);
   await dad.waitForSelector('.wn-list', { timeout: 15000 }); await dad.waitForTimeout(700); await dad.screenshot({ path: OUT + 'n1-whats-new.png' });
-  ok(/ไข่หายาก/.test(await dad.textContent('.wn-list')), 'ผู้ปกครองเห็น "มีอะไรใหม่"');
+  ok(/ปุ่มภารกิจด่วน/.test(await dad.textContent('.wn-list')), 'ผู้ปกครองเห็น "มีอะไรใหม่"');
   await dad.click('#modal-content .dq-btn.g'); await dad.waitForTimeout(800);
   ok((await db.prepare('SELECT news_seen FROM Members WHERE member_id = ?').bind(P1).first()).news_seen >= 1, 'จำว่าเห็นแล้ว');
   dad = await open(P1); await dad.waitForTimeout(3500);
