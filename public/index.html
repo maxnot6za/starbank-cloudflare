@@ -487,16 +487,14 @@
     .g-after { opacity:0; pointer-events:none; transition:opacity .4s 1.6s; margin-top:12px; width:min(320px,85%); }
     .g-wrap.open ~ .g-after { opacity:1; pointer-events:auto; }
     /* ===== ภารกิจด่วน ===== */
-    #urg-fab{position:fixed;right:16px;bottom:calc(var(--nav-h) + 14px);z-index:95;width:62px;height:62px;border-radius:50%;border:0;padding:0;font-size:1.9rem;line-height:1;color:#fff;background:linear-gradient(135deg,#FF5A36,#FF7A45);box-shadow:0 6px 18px #FF5A3666;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;transition:transform .15s}
+    #urg-fab{position:fixed;right:16px;top:calc(env(safe-area-inset-top,0px) + 96px);bottom:auto;z-index:95;width:62px;height:62px;border-radius:50%;border:0;padding:0;font-size:1.9rem;line-height:1;color:#fff;background:linear-gradient(135deg,#FF5A36,#FF7A45);box-shadow:0 6px 18px #FF5A3666;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;transition:transform .15s}
     #urg-fab[hidden]{display:none}
-    body.has-strip #urg-fab{bottom:calc(var(--nav-h) + var(--strip-h) + 14px)}
     #urg-fab.drag{transform:scale(1.12);box-shadow:0 10px 26px #FF5A3699;transition:none}
     #urg-fab.snap{transition:left .25s ease,top .25s ease,transform .15s}
     #urg-fab.live{animation:urgfab 1.6s ease-in-out infinite}
     @keyframes urgfab{50%{transform:scale(1.06)}}
     #urg-fab .ring{position:absolute;inset:-9px;border-radius:50%;background:conic-gradient(#FF5A36 0 var(--p,100%),#FFE1D6 var(--p,100%));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 0);pointer-events:none}
     #urg-fab .b{position:absolute;top:-6px;right:-4px;background:#E5484D;color:#fff;border-radius:99px;min-width:22px;height:22px;padding:0 5px;font-size:.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
-    body.urg-fab-on #screen-parent-home{padding-bottom:90px}
     .pg-h{font-weight:800;font-size:.85rem;margin:10px 2px 6px}.pg-h.u{color:#E0451F}.pg-h.n{color:var(--text-muted)}
     .pending-item.urg{border-left:5px solid #FF5A36;background:#FFF6F2}
     .urg-tag{display:inline-block;background:#FF5A36;color:#fff;border-radius:99px;padding:1px 8px;font-size:.72rem;font-weight:800;margin-right:4px;vertical-align:1px}
@@ -3150,7 +3148,7 @@ function renderUrgentParent(d) {
   urgStartTick();
 }
 // ---- ปุ่มลอย ⚡ (เฉพาะหน้าหลักผู้ปกครอง) · แตะ = สร้าง / ดูที่กำลังนับเวลา · ลากย้ายได้ จำตำแหน่งในเครื่อง ----
-var URGFAB = { key: 'sb_urgfab' };
+var URGFAB = { key: 'sb_urgfab2' };  // เปลี่ยนชื่อ = รีเซ็ตตำแหน่งทุกเครื่องกลับไปขวาบน
 function urgFabEl() {
   var b = document.getElementById('urg-fab');
   if (b && !b.__init) { b.__init = true; urgFabDrag(b); window.addEventListener('resize', function () { urgFabPlace(b); }); }
@@ -3185,7 +3183,7 @@ function urgFabShow() {
 }
 function urgFabPlace(b) {
   var pos = null; try { pos = JSON.parse(localStorage.getItem(URGFAB.key) || 'null'); } catch (e) {}
-  if (!pos) { b.style.left = ''; b.style.top = ''; b.style.right = ''; b.style.bottom = ''; return; }
+  if (!pos) { b.style.left = ''; b.style.top = ''; b.style.right = ''; b.style.bottom = ''; return; }  // ค่าเริ่มต้น = ขวาบน (CSS)
   var W = window.innerWidth, sz = 62, m = 16;
   var y = Math.max(80, Math.min(urgFabFloor(), pos.y * window.innerHeight));
   b.style.right = 'auto'; b.style.bottom = 'auto';
