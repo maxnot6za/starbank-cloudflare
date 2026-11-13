@@ -7,31 +7,32 @@
       "file": "walk.webp",
       "frames": 6,
       "cell": [
-        194,
-        383
+        154,
+        303
       ],
       "facing": "right",
       "extent": [
-        87,
-        93
+        69,
+        73
       ],
       "cut": {
         "src": "src/walk.png",
         "frames": 6,
-        "facing": "right"
+        "facing": "right",
+        "zoom": 0.79
       }
     },
     "read": {
       "file": "read.webp",
       "frames": 6,
       "cell": [
-        184,
-        307
+        188,
+        300
       ],
       "facing": "right",
       "extent": [
         80,
-        88
+        90
       ],
       "cut": {
         "src": "src/read.png",
@@ -61,13 +62,13 @@
       "file": "cheer.webp",
       "frames": 6,
       "cell": [
-        197,
-        300
+        201,
+        289
       ],
       "facing": "right",
       "extent": [
-        94,
-        86
+        96,
+        96
       ],
       "cut": {
         "src": "src/cheer.png",

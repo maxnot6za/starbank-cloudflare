@@ -309,6 +309,8 @@ def main():
     p.add_argument('--keep-y', action='store_true',
                    help='คงความสูงจากพื้นตามภาพต้นฉบับ (ท่ากระโดด) แทนการวางเท้าแตะพื้นทุกเฟรม')
     p.add_argument('--quality', type=int, default=90)
+    p.add_argument('--zoom', type=float, default=1.0,
+                   help='คูณขนาดทั้งชีต (เช่น 0.79) · ใช้เมื่อชีตมุมข้าง (เดิน) หัวแคบกว่าท่าอื่นจนตัวใหญ่เกิน')
     if len(sys.argv) > 2 and sys.argv[1] == '--recut':
         return recut(sys.argv[2])
     a_ = p.parse_args()
@@ -335,7 +337,7 @@ def main():
     out = []
     # ขนาดต่อเฟรม: ปรับให้หัวกว้าง HEAD_W · แต่ถ้าเฟรมไหนต่างจากค่ากลางของชีตเกิน 7%
     # (มักเพราะมือ/ของที่ชูข้างหัวถูกนับเป็นหัว) ใช้ค่ากลางของชีตแทน
-    scales = [HEAD_W / (r - l) for l, r in map(head_span, frames)]
+    scales = [HEAD_W / (r - l) * a_.zoom for l, r in map(head_span, frames)]
     for i, f in enumerate(frames):
         s = scales[i]
         same = [scales[j] for j, g in enumerate(frames) if g.info.get('src') == f.info.get('src')]
