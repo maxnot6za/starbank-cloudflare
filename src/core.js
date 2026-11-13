@@ -1878,9 +1878,9 @@ export function createCore(S) {
   //       floor = พื้นที่ตัวละครเดิน (art = /stage/floors/<art>.webp) · wall = ผนังหลังตัวละคร (/stage/walls/<art>.webp) · decor = ของตกแต่งลากวางในห้อง (art = /stage/decor/<art>.webp)
   // free = ทุกครอบครัวมีอยู่แล้ว ไม่ต้องซื้อ · เพิ่มของใหม่ = เพิ่มแถวที่นี่ + ใส่ภาพใน public/stage/
   var SHOP_ITEMS = [
-    { id: 'dino_dad', kind: 'avatar', name: 'พ่อไดโน', type: 'dad', sprite: 'dad',  price: 50, currency: 'purple' },
-    { id: 'dino_mom', kind: 'avatar', name: 'แม่ไดโน', type: 'mom', sprite: 'mom',  price: 50, currency: 'purple' },
-    { id: 'dino_kid', kind: 'avatar', name: 'ลูกไดโน', type: 'kid', sprite: 'dino', price: 50, currency: 'purple' },
+    { id: 'dino_dad', kind: 'avatar', name: 'พ่อไดโน', type: 'dad', sprite: 'dad',  price: 30, currency: 'purple' },
+    { id: 'dino_mom', kind: 'avatar', name: 'แม่ไดโน', type: 'mom', sprite: 'mom',  price: 30, currency: 'purple' },
+    { id: 'dino_kid', kind: 'avatar', name: 'ลูกไดโน', type: 'kid', sprite: 'dino', price: 30, currency: 'purple' },
     // สัตว์เลี้ยง (ตัวละครประเภทที่ 4): ของทั้งครอบครัว · อยู่ในห้องได้สูงสุด PET_MAX ตัว · เดินนิดเดียวแล้วนั่งเล่น/หลับ
     { id: 'pet_dino', kind: 'pet', name: 'ไดโนจิ๋ว', sprite: 'petdino', price: 20, currency: 'purple' },
     { id: 'pet_dino_pink', kind: 'pet', name: 'ไดโนชมพู', sprite: 'petpink', price: 20, currency: 'purple' },

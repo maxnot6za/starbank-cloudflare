@@ -94,17 +94,17 @@ const thaiToday = () => new Date(Date.now() + 7 * 3600000).toISOString().slice(0
   ok(shop.items.find(i => i.id === 'dino_kid').wishedBy.length === 1, 'ผู้ปกครองเห็นว่าลูกอยากได้');
   ok(!(await call(mf, 'buyItem', P1, 'dino_dad', C)).ok, 'ตัวละครพ่อให้เด็กใช้ไม่ได้');
   r = await call(mf, 'buyItem', P1, 'dino_kid', C);
-  ok(r.ok && r.value.paid === 25 && (await purple()) === 5, 'ซื้อตัวแรก จ่าย 25 ดาวม่วง', r.error || r.value.paid);
+  ok(r.ok && r.value.paid === 15 && (await purple()) === 15, 'ซื้อตัวแรก จ่าย 15 ดาวม่วง', r.error || r.value.paid);
   ok(r.value.shop.items.find(i => i.id === 'dino_kid').wishedBy.length === 0, 'ซื้อแล้ว → ป้าย "อยากได้" หายไป');
   ok(!(await call(mf, 'buyItem', P2, 'dino_kid', C)).ok, 'ซื้อซ้ำไม่ได้');
   r = await call(mf, 'buyItem', P1, 'dino_mom', P2);
-  ok(!r.ok && /ไม่พอ/.test(r.error) && (await purple()) === 5, 'ตัวที่สองราคาเต็ม 50 → ดาวม่วงไม่พอ', r.error);
+  ok(!r.ok && /ไม่พอ/.test(r.error) && (await purple()) === 15, 'ตัวที่สองราคาเต็ม 30 → ดาวม่วงไม่พอ', r.error);
   let blocked = false;
   try { await db.prepare('UPDATE Families SET purple = -1 WHERE family_id = ?').bind(FAM).run(); } catch (e) { blocked = true; }
   ok(blocked, 'ฐานข้อมูลกันดาวม่วงติดลบ');
   await db.prepare('UPDATE Families SET purple = 100 WHERE family_id = ?').bind(FAM).run();
   r = await call(mf, 'buyItem', P2, 'dino_mom', P2);
-  ok(r.ok && r.value.paid === 50, 'ตัวที่สองราคาเต็ม', r.value && r.value.paid);
+  ok(r.ok && r.value.paid === 30, 'ตัวที่สองราคาเต็ม', r.value && r.value.paid);
   r = await call(mf, 'buyItem', P1, 'dino_dad', P2);
   ok(r.ok, 'ซื้อพ่อไดโนให้แม่ใช้ (ผู้ปกครองคนไหนก็ได้)');
   const av = (await call(mf, 'getChildDashboard', C)).value.avatars;
