@@ -612,9 +612,20 @@
     @keyframes dcGlow { 0%,100%{opacity:.45} 50%{opacity:1} }
     @media (prefers-reduced-motion: reduce) { .dc img, .dc::before { animation:none !important; } }
     /* ไข่ในห้อง */
-    #avatar-strip .strip-egg { position:absolute; right:10px; bottom:12px; width:40px; z-index:20; pointer-events:auto; cursor:pointer; transform-origin:50% 90%; }
-    #avatar-strip .strip-egg.ready { animation:eggWob .9s ease-in-out infinite; }
-    @keyframes eggWob { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
+    /* ไข่ในห้อง 54px · หายใจตลอด + กระโดดดุ๊กดิ๊กทุก 4 วิ + แสงอุ่น · พร้อมฟัก = สั่นแรง + ประกาย */
+    #avatar-strip .strip-egg { position:absolute; right:10px; bottom:10px; width:54px; z-index:20; pointer-events:auto; cursor:pointer; transform-origin:50% 90%; animation:eggJump 4s ease-in-out infinite; }
+    #avatar-strip .strip-egg svg { position:relative; transform-origin:50% 90%; animation:eggBreathe 1.6s ease-in-out infinite; }
+    #avatar-strip .strip-egg::after { content:""; position:absolute; inset:-8px -6px 0; border-radius:50%; background:radial-gradient(#FFE08A88, transparent 65%); z-index:-1; animation:eggGlow 1.6s ease-in-out infinite; }
+    @keyframes eggBreathe { 0%,100%{transform:scale(1,1)} 50%{transform:scale(1.04,.97)} }
+    @keyframes eggJump { 0%,70%,100%{transform:translateY(0) rotate(0)} 74%{transform:scale(1.1,.9)} 80%{transform:translateY(-10px) rotate(-8deg)} 86%{transform:translateY(0) rotate(6deg) scale(1.08,.92)} 90%{transform:translateY(-4px) rotate(-3deg)} 94%{transform:translateY(0)} }
+    @keyframes eggGlow { 0%,100%{opacity:.4} 50%{opacity:1} }
+    #avatar-strip .strip-egg.ready { animation:eggShake .7s ease-in-out infinite; }
+    @keyframes eggShake { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-12deg)} 40%{transform:rotate(11deg)} 60%{transform:rotate(-8deg)} 80%{transform:rotate(6deg)} }
+    #avatar-strip .strip-egg .esp { position:absolute; font-size:12px; opacity:0; pointer-events:none; animation:eggSpark 1.4s ease-out infinite; }
+    @keyframes eggSpark { 0%{opacity:0;transform:translate(0,0) scale(.5)} 30%{opacity:1} 100%{opacity:0;transform:translate(var(--dx),-22px) scale(1.1)} }
+    #avatar-strip .strip-egg svg.tap { animation:eggTap .45s ease-out; }
+    @keyframes eggTap { 0%{transform:scale(1)} 40%{transform:scale(1.25,.8)} 70%{transform:scale(.92,1.1)} 100%{transform:scale(1)} }
+    @media (prefers-reduced-motion: reduce) { #avatar-strip .strip-egg, #avatar-strip .strip-egg svg, #avatar-strip .strip-egg::after { animation:none !important; } }
     #avatar-strip .strip-egg .eb { position:absolute; top:-9px; left:3px; right:3px; height:5px; border-radius:9px; background:#fff; box-shadow:0 0 0 1.5px #1F3B35; overflow:hidden; }
     #avatar-strip .strip-egg .eb i { display:block; height:100%; background:#FF7A8A; }
     #avatar-strip .strip-egg .ed { position:absolute; top:-4px; right:-4px; width:12px; height:12px; border-radius:50%; background:#E84545; border:2px solid #fff; }
@@ -3423,6 +3434,11 @@ function eggSVG(stage, glow) {
     '<path d="M58 32 l2 5 l5 .5 l-4 3 l1.5 5 l-4.5 -3 l-4.5 3 l1.5 -5 l-4 -3 l5 -.5Z" fill="#FFC24B" stroke="#1F3B35" stroke-width="1.5"/>' +
     '<g stroke="#1F3B35" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' + cr + '</g><ellipse cx="36" cy="32" rx="6" ry="10" fill="#fff" opacity=".7"/></svg>';
 }
+// แตะไข่ในห้อง: เด้งยุบก่อนแล้วเปิดหน้าไข่
+function eggStripTap(el) {
+  var sv = el.querySelector('svg'); if (sv) { sv.classList.remove('tap'); void sv.offsetWidth; sv.classList.add('tap'); }
+  setTimeout(openEgg, 280);
+}
 function goShop() { var b = document.getElementById(currentMember && currentMember.role === 'child' ? 'cnav-shop' : 'pnav-shop'); if (b) b.click(); }
 function openEgg() {
   var e = dashboardData && dashboardData.egg, c = e && e.current; if (!c) return;
@@ -4002,8 +4018,8 @@ function stripUpdate(avatars, stage, egg) {
   el.classList.add('on'); document.body.classList.add('has-strip');
   // ผนัง + พื้น + ของตกแต่ง (หลังตัวละคร) · ไข่ · ป้ายชวนซื้อตัวละคร (ห้องยังไม่มีใครเดิน)
   el.innerHTML = stageBase(stage) + decorHtml(decor, el.clientHeight || 96, 16) +
-    (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + '" onclick="openEgg()" role="button" aria-label="ไข่ปริศนา">' +
-      '<div class="eb"><i style="width:' + Math.min(100, cur.warm / cur.goal * 100) + '%"></i></div>' + eggSVG(eggStage(cur), cur.status === 'ready') + (cur.status === 'ready' ? '<div class="ed"></div>' : '') + '</div>' : '') +
+    (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + '" onclick="eggStripTap(this)" role="button" aria-label="ไข่ปริศนา">' +
+      '<div class="eb"><i style="width:' + Math.min(100, cur.warm / cur.goal * 100) + '%"></i></div>' + eggSVG(eggStage(cur), cur.status === 'ready') + (cur.status === 'ready' ? '<div class="ed"></div><span class="esp" style="left:-6px;top:12px;--dx:-8px">✨</span><span class="esp" style="right:-6px;top:6px;--dx:8px;animation-delay:.5s">✨</span><span class="esp" style="left:40%;top:-14px;--dx:2px;animation-delay:1s">⭐</span>' : '') + '</div>' : '') +
     (list.length ? '' : '<button type="button" class="strip-sign" onclick="goShop()">🛒 พาตัวละครมาอยู่ในห้องสิ</button>');
   if (!list.length) return;
   // จุดที่มีของตกแต่ง → ตัวละครเดินผ่านได้ แต่ไม่หยุดยืนทับ
