@@ -2,9 +2,9 @@
   "id": "bearfamily",
   "name": "ครอบครัวหมี (ตัวอย่าง)",
   "cast": [
+    "beardad",
     "bearmom",
-    "beargirl",
-    "petdino"
+    "beargirl"
   ],
   "interactions": []
 }
