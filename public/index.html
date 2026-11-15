@@ -693,6 +693,15 @@
     @media (prefers-reduced-motion: reduce) { #avatar-strip .strip-egg, #avatar-strip .strip-egg svg, #avatar-strip .strip-egg::after { animation:none !important; } }
     #avatar-strip .strip-egg .eb { position:absolute; top:-9px; left:3px; right:3px; height:5px; border-radius:9px; background:#fff; box-shadow:0 0 0 1.5px #1F3B35; overflow:hidden; }
     #avatar-strip .strip-egg .eb i { display:block; height:100%; background:#FF7A8A; }
+    #avatar-strip .strip-egg.want::after { background:radial-gradient(#FF9EC0aa, transparent 65%); }
+    #avatar-strip .strip-egg .hug-want { position:absolute; inset:0; pointer-events:none; }
+    #avatar-strip .strip-egg .hug-b { position:absolute; right:calc(100% + 4px); top:6px; background:#fff; border-radius:14px; padding:4px 9px; font-size:12px; font-weight:800; color:#E5487A; box-shadow:0 3px 8px #0002; white-space:nowrap; animation:hugB 2.4s ease-in-out infinite; }
+    #avatar-strip .strip-egg .hug-b::after { content:""; position:absolute; right:-10px; top:50%; margin-top:-6px; border:6px solid transparent; border-left-color:#fff; }
+    #avatar-strip .strip-egg .hug-want i { position:absolute; left:50%; top:-6px; font-style:normal; font-size:14px; opacity:0; animation:hugH 1.8s ease-out infinite; }
+    #avatar-strip .strip-egg .hug-want i.b { left:15%; font-size:11px; animation-delay:.9s; }
+    @keyframes hugB { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-4px) } }
+    @keyframes hugH { 0% { opacity:0; transform:translateY(0) scale(.6) } 20% { opacity:1 } 100% { opacity:0; transform:translateY(-26px) scale(1.1) } }
+    @media (prefers-reduced-motion: reduce) { #avatar-strip .strip-egg .hug-b, #avatar-strip .strip-egg .hug-want i { animation:none !important; } #avatar-strip .strip-egg .hug-want i { opacity:1; } }
     #avatar-strip .strip-egg .ed { position:absolute; top:-4px; right:-4px; width:12px; height:12px; border-radius:50%; background:#E84545; border:2px solid #fff; }
     #avatar-strip .strip-sign { position:absolute; left:50%; top:8px; transform:translateX(-50%); z-index:6; pointer-events:auto; background:#fffe; border:0; border-radius:99px; padding:4px 12px; font:inherit; font-size:.72rem; font-weight:600; color:var(--mint-dark,#1F6F5C); box-shadow:0 1px 4px rgba(0,0,0,.15); white-space:nowrap; cursor:pointer; }
     .egg-hb { height:12px; border-radius:9px; background:#FFE6EC; overflow:hidden; margin:8px 0 4px; } .egg-hb i { display:block; height:100%; background:linear-gradient(90deg,#FF8E8E,#FF5A7A); }
@@ -3672,6 +3681,17 @@ function openEgg() {
     (ready ? (kid ? '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();eggHatchStart()">✨ ฟักเลย!</button>' : '') :
       '<button class="dq-btn p" style="flex:1.6" ' + (c.huggedToday ? 'disabled' : '') + ' onclick="eggHug(this)">' + (c.huggedToday ? 'กอดแล้ววันนี้ 💗' : '🤗 กอดไข่ (+1)') + '</button>') + '</div></div>');
 }
+// ไข่ขอกอด: คนนี้ยังไม่ได้กอดวันนี้ → กล่องข้อความ + หัวใจลอย + แสงชมพู · กอดแล้ว = ไข่ปกติ
+function eggWantUpdate(cur) {
+  var e = document.querySelector('#avatar-strip .strip-egg'); if (!e) return;
+  var want = !!(cur && cur.status === 'warming' && !cur.huggedToday);
+  e.classList.toggle('want', want);
+  var old = e.querySelector('.hug-want'); if (old && !want) old.remove();
+  if (want && !old) {
+    var sign = document.querySelector('#avatar-strip .strip-sign');   // มีป้ายชวนซื้อ → ย่อเหลือ 🤗 ไม่ทับป้าย
+    e.insertAdjacentHTML('beforeend', '<div class="hug-want"><span class="hug-b">' + (sign ? '🤗' : 'กอดหนูหน่อย 🤗') + '</span><i>💗</i><i class="b">💗</i></div>');
+  }
+}
 function eggHug(btn) {
   btn.disabled = true;
   google.script.run.withSuccessHandler(function (res) {
@@ -4497,7 +4517,7 @@ function stripUpdate(avatars, stage, egg) {
   // สัตว์เลี้ยง = ตัวละครประเภทที่ 4 เดินในห้องด้วย (ไม่มีเจ้าของรายคน)
   ((stage && stage.pets) || []).forEach(function (p) { list.push({ sprite: p.sprite, name: p.name, member_id: 'pet:' + p.id, pet: true }); });
   var key = list.map(function (a) { return a.sprite + ':' + a.member_id; }).join(',') + '|' + JSON.stringify(stage || '') + '|' + (cur ? cur.status + cur.warm : '');
-  if (key === STRIP.key) return;
+  if (key === STRIP.key) { eggWantUpdate(cur); return; }
   STRIP.key = key;
   if (STRIP.scene) { STRIP.scene.stop(); el.innerHTML = ''; STRIP.scene = null; }
   var nav = document.getElementById(currentMember && currentMember.role === 'child' ? 'nav-child' : 'nav-parent');
@@ -4513,6 +4533,7 @@ function stripUpdate(avatars, stage, egg) {
     (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + '" onclick="eggStripTap(this)" role="button" aria-label="ไข่ปริศนา">' +
       '<div class="eb"><i style="width:' + Math.min(100, cur.warm / cur.goal * 100) + '%"></i></div>' + eggSVG(eggStage(cur), cur.status === 'ready', cur.tier) + (cur.status === 'ready' ? '<div class="ed"></div><span class="esp" style="left:-6px;top:12px;--dx:-8px">✨</span><span class="esp" style="right:-6px;top:6px;--dx:8px;animation-delay:.5s">✨</span><span class="esp" style="left:40%;top:-14px;--dx:2px;animation-delay:1s">⭐</span>' : '') + '</div>' : '') +
     (list.length ? '' : '<button type="button" class="strip-sign" onclick="goShop()">🛒 พาตัวละครมาอยู่ในห้องสิ</button>');
+  eggWantUpdate(cur);
   if (!list.length) return;
   // จุดที่มีของตกแต่ง → ตัวละครเดินผ่านได้ แต่ไม่หยุดยืนทับ
   var blocked = function () { var w = el.clientWidth; return Array.prototype.map.call(el.querySelectorAll('.dc'), function (d) { var r = d.getBoundingClientRect(), b = el.getBoundingClientRect(); return [r.left - b.left, r.right - b.left]; }).filter(function (b) { return w && b[1] > b[0]; }); };

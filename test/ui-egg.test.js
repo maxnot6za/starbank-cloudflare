@@ -52,10 +52,13 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   ok(await mom.waitForFunction(() => document.querySelectorAll('#avatar-strip .dc').length === 2, null, { timeout: 8000 }).then(() => true, () => false), 'ของตกแต่งขึ้นในแถบห้อง');
 
   // กอดไข่
+  ok(await mom.isVisible('#avatar-strip .strip-egg.want .hug-b'), 'ยังไม่ได้กอดวันนี้ → ไข่ขอกอด');
+  await mom.screenshot({ path: OUT + 'e1b-egg-want.png' });
   await mom.click('#avatar-strip .strip-egg'); await mom.waitForSelector('text=ไข่ปริศนาของบ้านเรา');
   await mom.screenshot({ path: OUT + 'e2-egg-sheet.png' });
   await mom.click('#modal-content button:has-text("กอดไข่")'); await mom.waitForSelector('text=กอดแล้ววันนี้');
   ok((await db.prepare('SELECT warm FROM Eggs').first()).warm === 7, 'กอดไข่ +1');
+  ok(await mom.locator('#avatar-strip .strip-egg .hug-b').count() === 0 && !(await mom.$('#avatar-strip .strip-egg.want')), 'กอดแล้ว → กล่องขอกอดหายไป');
   await mom.click('#modal-content .dq-btn.g');
 
   // พร้อมฟัก → ลูกฟัก
