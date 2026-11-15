@@ -1281,13 +1281,39 @@ function toast(msg, duration) {
 }
 
 // === MODAL ===
-function openModal(html) {
+// ===== ป๊อปอัป =====
+// openModal(html, onClose) · onClose ทำงานตอนปิด (ใช้จด "เห็นแล้ว" ตอนปิด ไม่ใช่ตอนเปิด)
+// openModalOver = ป๊อปอัปประเภท "ต้องเห็นทันที" ที่แซงได้ → อันเดิมเก็บไว้ แล้วเปิดกลับเมื่อปิดอันใหม่
+var MODAL = { onClose: null, stack: [] };
+function openModal(html, onClose) {
+  MODAL.onClose = onClose || null;
   document.getElementById('modal-content').innerHTML = html;
   document.getElementById('modal-overlay').classList.add('show');
 }
+function openModalOver(html, onClose) {
+  var ov = document.getElementById('modal-overlay');
+  if (ov.classList.contains('show')) MODAL.stack.push({ html: document.getElementById('modal-content').innerHTML, onClose: MODAL.onClose });
+  MODAL.onClose = null; openModal(html, onClose);
+}
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('show');
+  var f = MODAL.onClose; MODAL.onClose = null; if (f) try { f(); } catch (e) {}
+  if (MODAL.stack.length) setTimeout(modalRestore, 300);
 }
+function modalRestore() {
+  if (!MODAL.stack.length) return;
+  if (document.getElementById('modal-overlay').classList.contains('show')) return setTimeout(modalRestore, 800);   // มีหน้าต่างอื่นเปิดอยู่ → รอ
+  var m = MODAL.stack.pop(); openModal(m.html, m.onClose); feReplace(document.getElementById('modal-content'));
+}
+// ประเภทป๊อปอัปที่เด้งเอง (เพิ่มใหม่ → ถาม KC ว่าเป็นประเภทไหน · HANDOFF 8.17)
+//  NOW   = ต้องเห็นทันที ไม่จำกัดจำนวน: ⚡ ภารกิจด่วน/ผล · 🎁 ของขวัญ · 🥚 เจอไข่/ฟักไข่ · 🎄 ฉลองครบ 5 วัน · 💜 ของที่อยากได้ซื้อแล้ว
+//  LATER = เห็นรอบหน้าได้ เปิดแอปครั้งละไม่เกิน 2 อัน ที่เหลือรอเปิดแอปครั้งถัดไป: 🌞 ภารกิจประจำวัน · 💜 ได้ดาวม่วง · ✨ มีอะไรใหม่ · 🗓️ สรุปสัปดาห์
+var POP = { later: 0, MAX: 2 };
+function popBusy() {
+  var ov = document.getElementById('modal-overlay');
+  return !!(document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || (typeof TREE !== 'undefined' && TREE.open) || (typeof EGG !== 'undefined' && EGG.open));
+}
+function popLater() { if (POP.later >= POP.MAX) return false; POP.later++; return true; }
 
 // === FAMILY JOIN (เด็ก / ผู้ปกครองย้ายเครื่อง) ===
 function handleJoinLookup() {
@@ -3098,7 +3124,7 @@ function showUrgentBanner() {
   var a = window.__urgActive; if (!a) return;
   URG.shown[a.urgent_id] = true;
   var autoAt = a.auto_start_at ? new Date(a.auto_start_at).getTime() : urgNow() + 60000;
-  openModal('<div class="u-banner"><div class="u-ribbon">⚡ ภารกิจด่วน!!</div>' +
+  openModalOver('<div class="u-banner"><div class="u-ribbon">⚡ ภารกิจด่วน!!</div>' +
     '<img class="u-mascot bounce" src="' + URG_IMG.go + '" alt="น้องดาว">' +
     '<div class="u-sub" style="margin-top:4px">จาก ' + esc(a.from_name) + '</div>' +
     '<div style="font-size:1.35rem;font-weight:700;margin:2px 0">' + esc(a.icon) + ' ' + esc(a.title) + '</div>' +
@@ -3138,7 +3164,7 @@ document.addEventListener('visibilitychange', function () {
 });
 
 function urgPopup(img, title, msg, btn) {
-  openModal('<div class="u-banner"><img class="u-mascot" src="' + img + '" alt="น้องดาว" style="width:140px">' +
+  openModalOver('<div class="u-banner"><img class="u-mascot" src="' + img + '" alt="น้องดาว" style="width:140px">' +
     '<div style="font-size:1.3rem;font-weight:700;margin-top:6px">' + title + '</div>' +
     '<div style="margin:6px 0 14px;line-height:1.6">' + msg + '</div>' +
     '<button class="u-btn mint" onclick="closeModal();Live.request()">' + (btn || 'ตกลง') + '</button></div>');
@@ -3793,7 +3819,7 @@ function renderDaily(d) {
   foldApply();
   feReplace(el);
   // รอให้ป้ายภารกิจด่วน/กล่องของขวัญ (สำคัญกว่า) เปิดก่อน แล้วค่อยเด้งภารกิจประจำวัน
-  setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 700);
+  setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 1150);   // ป๊อปอัป "ต้องเห็นทันที" (ไข่/ของที่อยากได้) ขึ้นก่อน
   stripUpdate(d.avatars || [], d.stage, d.egg);
   setTimeout(function () { if (dashboardData) maybeEggEvent(dashboardData); }, 900);
   setTimeout(function () { if (dashboardData) maybePurpleNews(dashboardData); }, 1100);
@@ -4016,7 +4042,7 @@ function maybeTreePop(d) {
   if (!w || !w.enabled || !w.lastEarned || !m || m.role !== 'child') return;
   if (w.lastEarned <= (w.treeSeen || '') || TREE.popped[w.lastEarned] || TREE.open) return;
   var ov = document.getElementById('modal-overlay');
-  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show'))) {
+  if (popBusy()) {
     setTimeout(function () { if (dashboardData) maybeTreePop(dashboardData); }, 1500);   // รอหน้าต่างอื่นปิดก่อน
     return;
   }
@@ -4112,19 +4138,19 @@ function maybeQuestPopup(d) {
   var key = m.memberId + '|' + dl.date;
   if (__dqPopped[key]) return;
   var ov = document.getElementById('modal-overlay');
-  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || TREE.open || EGG.open) {
+  if (popBusy()) {
     setTimeout(function () { if (dashboardData) maybeQuestPopup(dashboardData); }, 1500);   // รอหน้าต่างอื่นปิดก่อน
     return;
   }
   __dqPopped[key] = true;
-  google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).questSeen(m.memberId);
+  if (!popLater()) return;   // ครบ 2 อันแล้ว → เปิดแอปครั้งหน้า
   var isKid = m.role === 'child';
   var list = isKid ? dl.mine : [dl.parents].filter(Boolean).concat(dl.kids);
   var day = new Date(dl.date + 'T00:00:00').toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' });
   openModal('<div class="dq-pop"><div class="sun">🌞</div><h2>ภารกิจประจำวัน</h2><div class="sub">' + day + ' · ทำสำเร็จรับดาวม่วง</div>' +
     '<div class="dq-card">' + list.map(function (q) { return dqRow(q, false); }).join('') + '</div>' +
     '<div style="font-size:.8rem;color:var(--text-muted);margin:4px 0 14px">ดาวม่วงเป็นของทั้งครอบครัว ใช้ซื้อตัวละครในร้านค้า 🛍️</div>' +
-    '<div style="display:flex;gap:8px"><button class="dq-btn g" onclick="closeModal()">ดูทีหลัง</button><button class="dq-btn p" style="flex:1.4" onclick="closeModal()">ไปทำเลย! 💪</button></div></div>');
+    '<div style="display:flex;gap:8px"><button class="dq-btn g" onclick="closeModal()">ดูทีหลัง</button><button class="dq-btn p" style="flex:1.4" onclick="closeModal()">ไปทำเลย! 💪</button></div></div>', function () { google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).questSeen(m.memberId); });
   feReplace(document.getElementById('modal-content'));
 }
 
@@ -4275,17 +4301,19 @@ function maybeWhatsNew(d) {
     var it = g.items.slice(0, Math.max(0, left)); left -= it.length; return { date: g.date, items: it };
   }).filter(function (g) { return g.items.length; });
   var ov = document.getElementById('modal-overlay');
-  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || (typeof TREE !== 'undefined' && TREE.open) || (typeof EGG !== 'undefined' && EGG.open)) {
+  if (popBusy()) {
     setTimeout(function () { if (dashboardData) maybeWhatsNew(dashboardData); }, 1500); return;
   }
   WN.shown = top.v;
+  if (!popLater()) return;
   var row = function (x) { return '<div class="wn-row"><div class="ic">' + x[0] + '</div><div style="min-width:0"><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span>' + (x[3] === 'nests' ? wnNests() : '') + '</div></div>'; };
   var multi = groups.length > 1;
   openModal('<div class="wn-hd"><div class="sp">✨</div><h2>มีอะไรใหม่</h2><small>' + (multi ? 'ตั้งแต่ครั้งก่อนที่เข้ามา' : 'อัปเดต ' + top.date) + '</small></div><div class="wn-list">' +
     groups.map(function (g, i) { return (multi ? '<div class="wn-date">' + (i ? '' : 'ล่าสุด · ') + esc(g.date) + '</div>' : '') + g.items.map(row).join(''); }).join('') +
-    '</div><div style="display:flex;margin-top:16px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div>');
-  google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).newsSeen(currentMember.memberId, top.v);
-  d.newsSeen = top.v;
+    '</div><div style="display:flex;margin-top:16px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div>', function () {
+    google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).newsSeen(currentMember.memberId, top.v);
+    d.newsSeen = top.v;
+  });
 }
 // 🗓️ สรุปประจำสัปดาห์ (ผู้ปกครอง) · เด้งเองครั้งเดียวต่อสัปดาห์ ช่วงอาทิตย์ 17:00 – อังคาร (จำในเครื่อง) · ดูย้อนได้ในตั้งค่า
 var WK = { key: 'sb_week_seen', data: null, kid: 0 };
@@ -4301,19 +4329,25 @@ function maybeWeekly(d) {
   var end = wkEndKey(), seen = ''; try { seen = localStorage.getItem(WK.key) || ''; } catch (e) {}
   if (seen === end || WK.auto === end) return;
   var ov = document.getElementById('modal-overlay');
-  if (document.getElementById('gift-stage') || (ov && ov.classList.contains('show')) || (typeof TREE !== 'undefined' && TREE.open) || (typeof EGG !== 'undefined' && EGG.open)) {
+  if (popBusy()) {
     setTimeout(function () { if (dashboardData) maybeWeekly(dashboardData); }, 1500); return;
   }
-  WK.auto = end; showWeekly(true);
+  WK.auto = end;
+  if (!popLater()) return;
+  showWeekly(true);
 }
 function showWeekly(auto) {
   // เด้งเอง = สัปดาห์ จ–อา ล่าสุด · เปิดจากตั้งค่า = 7 วันล่าสุดถึงวันนี้
   var end = auto ? wkEndKey() : new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
   google.script.run.withSuccessHandler(function (r) {
     if (!r || !r.kids || !r.kids.length) return;
-    if (auto && !r.kids.some(function (k) { return k.missions || k.prevMissions; })) return;   // ยังไม่มีอะไรให้สรุป
-    if (auto) try { localStorage.setItem(WK.key, end); } catch (e) {}
-    WK.data = r; WK.kid = 0; openModal('<div id="wk-box"></div>'); wkRender();
+    if (auto && !r.kids.some(function (k) { return k.missions || k.prevMissions; })) { POP.later--; return; }   // ยังไม่มีอะไรให้สรุป → คืนโควตา
+    var show = function () {
+      if (auto && popBusy()) return setTimeout(show, 1500);   // ระหว่างโหลดมีป๊อปอัปอื่นเปิด → รอคิว ไม่เปิดทับ
+      WK.data = r; WK.kid = 0;
+      openModal('<div id="wk-box"></div>', auto ? function () { try { localStorage.setItem(WK.key, end); } catch (e) {} } : null); wkRender();
+    };
+    show();
   }).withFailureHandler(function (e) { if (!auto) toast(e.message); }).getWeeklySummary(currentMember.memberId, end);
 }
 function wkDate(k) { return new Date(k + 'T00:00:00+07:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }); }
@@ -4365,6 +4399,7 @@ function maybePurpleNews(d) {
   }
   if (!nw || PP.shown === nw.until) return;
   PP.shown = nw.until;
+  if (!popLater()) return;
   var kid = currentMember.role === 'child', g = d.daily.goal, it = nw.items;
   var byTxt = function (x) { return x.by === 'auto' ? 'ระบบเก็บให้อัตโนมัติ' : (x.byRole === 'parent' ? '👨 ' + esc(x.by) + 'รับดาวให้แล้ว' : esc(x.by) + ' กดรับแล้ว'); };
   var main = kid
@@ -4377,7 +4412,9 @@ function maybePurpleNews(d) {
   openModal('<div class="pp-news"><div class="who" id="pp-who">' + (me ? '' : '<span style="font-size:44px">' + (kid ? '🧒' : '🎉') + '</span>') + '</div>' +
     '<div class="big">+' + nw.total + ' <span style="display:inline-block;width:.9em;vertical-align:-.1em">' + PSTAR + '</span></div><div>' + main + '</div><div style="font-size:.8rem;color:var(--text-muted);margin-top:4px">' + sub + '</div>' +
     '<div class="pp-jar">' + jar + '</div>' + ppGoalHtml(g, Math.max(0, g ? g.have - nw.total : 0)) +
-    '<div style="display:flex;gap:8px;margin-top:14px"><button class="dq-btn p" onclick="closeModal();ppNewsDone()">เย้! 💜</button></div></div>');
+    '<div style="display:flex;gap:8px;margin-top:14px"><button class="dq-btn p" onclick="closeModal();ppNewsDone()">เย้! 💜</button></div></div>', function () {
+    google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).purpleSeen(currentMember.memberId, nw.until);
+  });
   ppSprites(document.getElementById('modal-content')); ppGrow(document.getElementById('modal-content'));
   for (var j = 0; j < Math.min(5, nw.total); j++) (function (j) { setTimeout(function () { ppTick(j); }, 350 + j * 150); })(j);
   if (me && spriteReady()) spriteManifest(me.sprite).then(function (m) {
@@ -4385,7 +4422,6 @@ function maybePurpleNews(d) {
     var a = SpriteActor.create(w, m, { size: 44, basePath: '/sprites/characters/' + me.sprite + '/', x: w.clientWidth / 2 });
     if (m.anims.cheer) a.play('cheer');
   });
-  google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).purpleSeen(currentMember.memberId, nw.until);
   if (dashboardData && dashboardData.daily) dashboardData.daily.news = null;
 }
 function ppNewsDone() {
