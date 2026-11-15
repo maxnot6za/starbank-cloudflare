@@ -530,6 +530,12 @@
     .u2-hero { position:relative; margin-top:6px; background:linear-gradient(150deg,#1E5A47,#2A7A5F); border-radius:26px; padding:16px 18px 14px; color:#fff; border:3px solid #fff; box-shadow:0 10px 20px #1E5A4740;
       background-image:radial-gradient(circle at 15% 25%,#ffffff22 2px,transparent 3px),radial-gradient(circle at 70% 15%,#ffffff22 2px,transparent 3px),radial-gradient(circle at 45% 80%,#ffffff1a 2px,transparent 3px),linear-gradient(150deg,#1E5A47,#2A7A5F); background-size:60px 60px,60px 60px,60px 60px,auto; }
     .u2-hero small { opacity:.85; font-size:.78rem; }
+    /* ลายการ์ดตามธีม · คริสต์มาส = เกล็ดหิมะ + กองหิมะขอบล่าง */
+    .u2-hero.th-xmas { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cg stroke='%23fff' stroke-opacity='.22' stroke-width='1.6' stroke-linecap='round' fill='none'%3E%3Cg transform='translate(16 18)'%3E%3Cpath d='M0-7V7M-6-3.5L6 3.5M-6 3.5L6-3.5M0-7l-2-2M0-7l2-2M0 7l-2 2M0 7l2 2'/%3E%3C/g%3E%3Cg transform='translate(48 46) scale(.7)'%3E%3Cpath d='M0-7V7M-6-3.5L6 3.5M-6 3.5L6-3.5'/%3E%3C/g%3E%3C/g%3E%3Ccircle cx='44' cy='14' r='1.6' fill='%23fff' fill-opacity='.25'/%3E%3Ccircle cx='12' cy='50' r='1.3' fill='%23fff' fill-opacity='.2'/%3E%3C/svg%3E"),linear-gradient(150deg,#1E5A47,#2A7A5F) !important; background-size:64px 64px,auto !important; overflow:hidden; }
+    .u2-slide.fam.th-xmas { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cg stroke='%23fff' stroke-opacity='.22' stroke-width='1.6' stroke-linecap='round' fill='none'%3E%3Cg transform='translate(16 18)'%3E%3Cpath d='M0-7V7M-6-3.5L6 3.5M-6 3.5L6-3.5M0-7l-2-2M0-7l2-2M0 7l-2 2M0 7l2 2'/%3E%3C/g%3E%3Cg transform='translate(48 46) scale(.7)'%3E%3Cpath d='M0-7V7M-6-3.5L6 3.5M-6 3.5L6-3.5'/%3E%3C/g%3E%3C/g%3E%3Ccircle cx='44' cy='14' r='1.6' fill='%23fff' fill-opacity='.25'/%3E%3Ccircle cx='12' cy='50' r='1.3' fill='%23fff' fill-opacity='.2'/%3E%3C/svg%3E"),linear-gradient(150deg,#5B3AA8,#8B5CF6) !important; }
+    .u2-hero.th-xmas::after { content:""; position:absolute; left:-4px; right:-4px; bottom:-2px; height:18px; z-index:0; pointer-events:none;
+      background:radial-gradient(14px 10px at 12px 100%,#fff 98%,transparent) 0 100%/28px 18px repeat-x; opacity:.92; }
+    .u2-hero > * { position:relative; z-index:1; }
     .u2-car { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; margin:6px -4px 0; padding:16px 4px 6px; }
     .u2-car::-webkit-scrollbar { display:none; }
     .u2-slide { flex:0 0 100%; scroll-snap-align:center; margin-top:0 !important; }
@@ -540,6 +546,7 @@
     .u2-dots { display:flex; justify-content:center; gap:6px; margin:2px 0 0; }
     .u2-dots i { width:7px; height:7px; border-radius:9px; background:#1E5A4733; cursor:pointer; transition:width .2s; } .u2-dots i.on { width:20px; background:#1E5A47; } .u2-dots i.p.on { background:#8B5CF6; }
     body.ui2 #parent-family-name, body.ui2 #parent-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:34vw; }
+    body.ui2 .top-strip > div:last-child { gap:5px !important; } body.ui2 .top-strip .hdr-btn, body.ui2 .top-strip .music-btn { width:38px; height:38px; min-width:0; }
     .u2-pp { border:0; border-radius:99px; background:#F1ECFF; color:#5B3AA8; font:inherit; font-weight:800; font-size:.82rem; padding:0 10px; height:36px; white-space:nowrap; box-shadow:0 2px 6px #0001; cursor:pointer; }
     body.ui2 #screen-parent-home > .fold-h, body.ui2 #parent-children-list { display:none !important; }
     .u2-big { font-size:2.3rem; font-weight:800; margin:0 0 8px; display:flex; align-items:baseline; gap:8px; } .u2-big span { font-size:.95rem; opacity:.75; font-weight:600; }
@@ -552,7 +559,7 @@
     .u2-act { display:flex; flex-direction:column; align-items:center; gap:5px; font:inherit; font-size:.74rem; width:24%; background:none; border:0; color:var(--text); cursor:pointer; padding:0; }
     .u2-act i { width:60px; height:60px; border-radius:22px; display:grid; place-items:center; font-style:normal; font-size:26px; background:#fff; border:3px solid #fff; box-shadow:0 4px 0 #D7E6E0,0 6px 12px #0000000f; }
     .u2-act:active i { transform:translateY(3px); box-shadow:0 1px 0 #D7E6E0; }
-    .u2-act.u i { background:none; border:0; box-shadow:none; } .u2-act.u img { width:66px; margin:-4px; }
+    .u2-act.u i { background:none; border:0; box-shadow:none; } .u2-act.u img { width:68px; height:68px; object-fit:contain; margin:-4px; }
     .u2-act.a i { background:#E3F5EE; } .u2-act.b i { background:#FFF0E6; } .u2-act.c i { background:#F1ECFF; }
     .u2-promo { margin:14px 0 4px; border-radius:24px; padding:14px 16px; background:linear-gradient(120deg,#FFF6DD,#FFE6B3); border:3px solid #fff; box-shadow:0 6px 14px #E7B54A33; display:flex; align-items:center; gap:8px; cursor:pointer; }
     .u2-promo b { font-size:.95rem; } .u2-promo small { display:block; color:#7a5a1f; font-size:.76rem; margin:2px 0 8px; }
@@ -3746,9 +3753,7 @@ function ui2Top(d, dl) {
   return ui2Kids(d, dl, mascot) +
     '<div class="u2-acts">' +
       '<button class="u2-act u" onclick="showCreateUrgent()"><i>' + urgArt + '</i>ภารกิจด่วน</button>' +
-      '<button class="u2-act a" onclick="showAddMission()"><i>📝</i>เพิ่มภารกิจ</button>' +
-      '<button class="u2-act b" onclick="ui2Gift()"><i>🎁</i>ส่งของขวัญ</button>' +
-      '<button class="u2-act c" onclick="showWeekly()"><i>🗓️</i>สรุปสัปดาห์</button></div>' + promo;
+      ui2Act('a', 'add', '📝', 'เพิ่มภารกิจ', 'showAddMission()') + ui2Act('b', 'gift', '🎁', 'ส่งของขวัญ', 'ui2Gift()') + ui2Act('c', 'weekly', '🗓️', 'สรุปสัปดาห์', 'showWeekly()') + '</div>' + promo;
 }
 // การ์ดบนสุด = ดาวของลูกทีละคน ปัดซ้าย-ขวาเปลี่ยนคน · ใบสุดท้าย = กระเป๋าดาวม่วงของครอบครัว + เป้าหมาย
 var U2 = { i: 0 };
@@ -3756,14 +3761,14 @@ function ui2Kids(d, dl, mascot) {
   var kids = d.children || [];
   var slides = kids.map(function (c) {
     var wc = d.wheel && d.wheel.enabled ? wheelChildInfo(c.member_id) : null;
-    return '<div class="u2-hero u2-slide">' + (mascot ? '<img class="u2-mascot" src="' + mascot + '" alt="">' : '') +
+    return '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + '">' +
       '<div class="u2-kid"><span class="u2-kav">' + esc(c.avatar) + '</span><b>' + esc(c.name) + '</b></div>' +
       '<div class="u2-big">⭐ ' + c.stats.balance + ' <span>ดาว</span></div>' +
       '<div class="u2-goal"><div style="flex:1;min-width:0;font-size:.76rem">ได้รับ ' + c.stats.totalEarned + ' · ใช้ไป ' + c.stats.totalSpent +
         (wc ? '<br>' + TW('icon') + ' ' + wc.run + '/5' + (wc.spins ? ' · 🎡 หมุนได้ ' + wc.spins : '') : '') + '</div>' +
         '<button onclick="showSendGift(\'' + c.member_id + '\')">🎁 ของขวัญ</button><button class="q" onclick="showChildQr(\'' + c.member_id + '\',\'' + escJs(c.name) + '\')">QR</button></div></div>';
   });
-  slides.push('<div class="u2-hero u2-slide fam"><small>' + PSTAR + ' ดาวม่วงของครอบครัว</small><div class="u2-big">' + dl.wallet.purple + ' <span>ดวง</span></div>' + ui2Goal(dl.goal) + '</div>');
+  slides.push('<div class="u2-hero u2-slide fam th-' + esc(THEME.id || '') + '"><small>' + PSTAR + ' ดาวม่วงของครอบครัว</small><div class="u2-big">' + dl.wallet.purple + ' <span>ดวง</span></div>' + ui2Goal(dl.goal) + '</div>');
   if (U2.i >= slides.length) U2.i = 0;
   return '<div class="u2-car" id="u2-car" onscroll="ui2Dots(this)">' + slides.join('') + '</div>' +
     '<div class="u2-dots" id="u2-dots">' + slides.map(function (_, i) { return '<i class="' + (i === U2.i ? 'on' : '') + (i === slides.length - 1 ? ' p' : '') + '" onclick="ui2Go(' + i + ')"></i>'; }).join('') + '</div>';
@@ -3781,6 +3786,11 @@ function ui2Chip(n) {
   if (!c) { c = document.createElement('button'); c.id = 'u2-pp'; c.type = 'button'; c.className = 'u2-pp'; c.onclick = function () { ui2Go(document.querySelectorAll('#u2-car .u2-slide').length - 1); };
     var right = top.lastElementChild; right.insertBefore(c, right.firstChild); }
   c.innerHTML = PSTAR + ' ' + n;
+}
+// ปุ่มทางลัด: ธีมมีภาพไอคอน (theme.json → icons.add / gift / weekly) = ใช้ภาพขนาดเดียวกับปุ่มภารกิจด่วน · ไม่มี = อีโมจิในกล่อง
+function ui2Act(cls, key, emoji, label, fn) {
+  var ic = THEME.icons && THEME.icons[key];
+  return '<button class="u2-act ' + (ic ? 'u' : cls) + '" onclick="' + fn + '"><i>' + (ic ? '<img src="' + themeUrl(ic) + '" alt="">' : emoji) + '</i>' + label + '</button>';
 }
 function ui2Quests() {
   var dl = dashboardData && dashboardData.daily; if (!dl) return;
