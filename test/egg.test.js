@@ -70,9 +70,10 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   let shop = (await call(mf, 'getShop', P1)).value;
   const tree = shop.items.find(i => i.id === 'decor_tree'), drum = shop.items.find(i => i.id === 'decor_drum');
   ok(tree && tree.price === 10 && !tree.egg && drum && drum.egg, 'ต้นคริสต์มาส 10 ดาวม่วง · กลองได้จากไข่');
-  ok(tree.pay === 10, 'ครอบครัวมีของแล้ว → ไม่ลด 50%');
+  ok(tree.pay === 5 && shop.firstDiscount, 'มีแค่ของจากไข่ → ยังได้สิทธิ์ซื้อชิ้นแรกลด 50%');
   r = await call(mf, 'buyItem', P1, 'decor_drum', ''); ok(!r.ok, 'ของจากไข่ซื้อไม่ได้');
-  r = await call(mf, 'buyItem', P1, 'decor_tree', ''); ok(r.ok && r.value.paid === 10, 'ซื้อต้นคริสต์มาส 10 ดาวม่วง');
+  r = await call(mf, 'buyItem', P1, 'decor_tree', ''); ok(r.ok && r.value.paid === 5, 'ซื้อต้นคริสต์มาสชิ้นแรก จ่าย 5');
+  ok(!(await call(mf, 'getShop', P1)).value.firstDiscount, 'ซื้อแล้ว → สิทธิ์ลด 50% หมด');
 
   // --- จัดห้อง ---
   r = await call(mf, 'saveRoom', C, JSON.stringify([{ id: 'decor_tree', x: .2, s: 1 }])); ok(!r.ok, 'เด็กจัดห้องไม่ได้');

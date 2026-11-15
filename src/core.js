@@ -2015,7 +2015,9 @@ export function createCore(S) {
   function familyInv_(familyId) { return getAllRows_('Inventory').filter(function(r) { return String(r.family_id) === String(familyId); }); }
   // ราคาหลังลด: ปัดเศษลง (ลดได้อย่างน้อย 1 ดาวเสมอ) · ต่ำสุด 1
   function discPrice_(price, pct) { return price > 0 ? Math.max(1, Math.floor(price * (100 - pct) / 100)) : 0; }
-  function priceFor_(familyId, item) { return familyInv_(familyId).length ? item.price : discPrice_(item.price, FIRST_DISCOUNT * 100); }
+  // ส่วนลดชิ้นแรก: นับเฉพาะของที่ "ซื้อ" · ของที่ได้จากไข่ (currency = egg) ไม่ทำให้สิทธิ์หาย
+  function boughtAny_(familyId) { return familyInv_(familyId).some(function(r) { return r.currency !== 'egg'; }); }
+  function priceFor_(familyId, item) { return boughtAny_(familyId) ? item.price : discPrice_(item.price, FIRST_DISCOUNT * 100); }
   // คูปองจากไข่: ของแถมตอนฟัก · โอกาสรวม 15%
   var COUPON_DROPS = [[50, 0.02], [25, 0.05], [10, 0.08]];
   function rollCoupon_() { var r = Math.random(), acc = 0; for (var i = 0; i < COUPON_DROPS.length; i++) { acc += COUPON_DROPS[i][1]; if (r < acc) return COUPON_DROPS[i][0]; } return 0; }
@@ -2216,7 +2218,7 @@ export function createCore(S) {
     var familyId = m.family_id, inv = familyInv_(familyId), fam = familyRow_(familyId) || {};
     var members = getFamilyMembers_(familyId);
     var wishes = getAllRows_('Wishes').filter(function(w) { return String(w.family_id) === String(familyId); });
-    var first = !inv.length, stage = stageRaw_(familyId);
+    var first = !boughtAny_(familyId), stage = stageRaw_(familyId);
     return {
       stage: familyStage_(familyId),
       coupons: familyCoupons_(familyId),
