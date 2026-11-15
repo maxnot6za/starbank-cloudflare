@@ -628,6 +628,12 @@ body.ui2 #pend-box .section-title{margin:0 0 6px;background:none;box-shadow:none
 @keyframes spFall{to{transform:translateY(115vh) rotate(var(--r))}}
 #splash .sp-mid{position:absolute;left:0;right:0;top:40%;text-align:center;font-size:22px;font-weight:700;color:#1F3B35}
 body.booting .screen,body.booting #nav-parent,body.booting #nav-child,body.booting #avatar-strip,body.booting .urg-fab,body.booting #urg-fab{visibility:hidden !important}
+.sfx-press{animation:sfxSq .28s ease-out}
+@keyframes sfxSq{0%{transform:scale(1)}35%{transform:scale(.86)}70%{transform:scale(1.07)}100%{transform:scale(1)}}
+.sfx-sp{position:fixed;width:12px;height:12px;margin:-6px 0 0 -6px;pointer-events:none;z-index:9998;animation:sfxFly .55s ease-out forwards}
+.sfx-sp svg{display:block;width:100%;height:100%}
+@keyframes sfxFly{from{transform:scale(.4);opacity:1}to{transform:translate(var(--x),var(--y)) scale(1) rotate(160deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.sfx-press{animation:none}.sfx-sp{display:none}}
 </style>
   <style>
     /* === ภารกิจประจำวัน + ดาวม่วง + ร้านค้า + ตัวละครเดินด้านล่าง === */
@@ -1525,7 +1531,7 @@ function renderChildHome(d) {
           <div class="mi-title">${esc(m.title)}</div>
           <div class="mi-desc">${esc(m.description || '')}</div>${was}
         </div>
-        <button class="btn btn-sm btn-gold" onclick="submitMission('${m.mission_id}')">ส่ง!</button>
+        <button class="btn btn-sm btn-gold" data-sfx="send" onclick="submitMission('${m.mission_id}')">ส่ง!</button>
       </div>`;
   }).join('');
 }
@@ -1582,7 +1588,7 @@ function confirmRedeem(rewardId, title, cost) {
     <p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:20px">ยืนยันแลกรางวัลนี้?<br>ดาวจะถูกหักทันที</p>
     <div style="display:flex;gap:10px">
       <button class="btn btn-outline" onclick="closeModal()" style="flex:1">ยกเลิก</button>
-      <button class="btn btn-success" onclick="doRedeem('${rewardId}')" style="flex:1">ยืนยันแลก</button>
+      <button class="btn btn-success" data-sfx="redeem" onclick="doRedeem('${rewardId}')" style="flex:1">ยืนยันแลก</button>
     </div>
   `);
 }
@@ -1919,8 +1925,8 @@ function ui2Pending(list) {
     var t = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
     return '<div class="u2-pr' + (u ? ' urg' : '') + '"><span class="av">' + (c ? c.avatar : '👤') + '</span><div class="tx"><b>' +
       (u ? '<span class="urg-tag">⚡ ด่วน</span>' : '') + esc(String(s.mission_title).replace(/^⚡\s*/, '')) + '</b><small>' + esc(c ? c.name : '?') + ' · ' + (u ? urgOnTime(u) : '') + t + '</small></div>' +
-      '<button class="ok" aria-label="อนุมัติ" onclick="doReview(\'' + s.submission_id + '\',\'approved\')">✓</button>' +
-      '<button class="no" aria-label="ไม่อนุมัติ" onclick="doReview(\'' + s.submission_id + '\',\'rejected\')">✕</button></div>';
+      '<button class="ok" data-sfx="ok" aria-label="อนุมัติ" onclick="doReview(\'' + s.submission_id + '\',\'approved\')">✓</button>' +
+      '<button class="no" data-sfx="no" aria-label="ไม่อนุมัติ" onclick="doReview(\'' + s.submission_id + '\',\'rejected\')">✕</button></div>';
   }).join('') + (all.length > 3 ? '<button class="u2-pall" onclick="parentNav(\'approvals\')">ดูทั้งหมด (' + all.length + ') ›</button>' : '');
 }
 function pendingGroups(list, max) {
@@ -2218,6 +2224,7 @@ function showSettings() {
     </div>
     <button type="button" class="set-link" onclick="closeModal();showWeekly()"><span style="font-size:1.3rem">🗓️</span><span style="flex:1;text-align:left">สรุปสัปดาห์<small>7 วันที่ผ่านมา เทียบกับสัปดาห์ก่อน</small></span>›</button>
     <button type="button" class="set-link" onclick="closeModal();openSummary()"><span style="font-size:1.3rem">📊</span><span style="flex:1;text-align:left">สรุปรายวัน<small>ลูกทำอะไรไปบ้างวันนี้</small></span>›</button>
+    <button type="button" class="set-link" onclick="sfxToggle(this)"><span style="font-size:1.3rem">🔊</span><span style="flex:1;text-align:left">เสียงตอนกดปุ่ม<small>เปลี่ยนแค่เครื่องนี้</small></span><b class="sfx-st">${sfxOn() ? 'เปิด' : 'ปิด'}</b></button>
     
     <div class="divider"></div>
     <div id="theme-slot">${themeCard()}</div>
@@ -3811,7 +3818,7 @@ function ui2Top(d, dl) {
   ui2Chip(dl.wallet.purple);
   return ui2Kids(d, dl, mascot) +
     '<div class="u2-acts">' +
-      '<button class="u2-act u" onclick="showCreateUrgent()"><i>' + urgArt + '</i>ภารกิจด่วน</button>' +
+      '<button class="u2-act u" data-sfx="urgent" onclick="showCreateUrgent()"><i>' + urgArt + '</i>ภารกิจด่วน</button>' +
       ui2Act('a', 'add', '📝', 'เพิ่มภารกิจ', 'showAddMission()') + ui2Act('b', 'gift', '🎁', 'ส่งของขวัญ', 'ui2Gift()') + ui2Act('c', 'weekly', '🗓️', 'สรุปสัปดาห์', 'showWeekly()') + '</div>' + promo;
 }
 // การ์ดบนสุด = ดาวของลูกทีละคน ปัดซ้าย-ขวาเปลี่ยนคน · ใบสุดท้าย = กระเป๋าดาวม่วงของครอบครัว + เป้าหมาย
@@ -3854,8 +3861,44 @@ function ui2CardBg(k) {
 }
 function ui2Act(cls, key, emoji, label, fn) {
   var ic = THEME.icons && THEME.icons[key];
-  return '<button class="u2-act ' + (ic ? 'u' : cls) + '" onclick="' + fn + '"><i>' + (ic ? '<img src="' + themeUrl(ic) + '" alt="">' : emoji) + '</i>' + label + '</button>';
+  return '<button class="u2-act ' + (ic ? 'u' : cls) + '" data-sfx="' + key + '" onclick="' + fn + '"><i>' + (ic ? '<img src="' + themeUrl(ic) + '" alt="">' : emoji) + '</i>' + label + '</button>';
 }
+// เสียง+เอฟเฟกต์ตอนกดปุ่ม (ปุ่มที่มี data-sfx) · เสียงสร้างด้วย Web Audio ไม่มีไฟล์ · ปิดได้ใน ⚙️ (localStorage sb_sfx = '0')
+var SFX = { ac: null };
+function sfxOn() { try { return localStorage.getItem('sb_sfx') !== '0'; } catch (e) { return true; } }
+function sfxToggle(b) { var on = !sfxOn(); try { localStorage.setItem('sb_sfx', on ? '1' : '0'); } catch (e) {} var st = b && b.querySelector('.sfx-st'); if (st) st.textContent = on ? 'เปิด' : 'ปิด'; }
+function sfxTone(f, t0, d, type, vol, f2) {
+  var c = SFX.ac; if (!c) { var A = window.AudioContext || window.webkitAudioContext; if (!A) return; c = SFX.ac = new A(); }
+  if (c.state === 'suspended') c.resume();
+  var o = c.createOscillator(), g = c.createGain(), n = c.currentTime + t0;
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f, n); if (f2) o.frequency.exponentialRampToValueAtTime(f2, n + d);
+  g.gain.setValueAtTime(0.0001, n); g.gain.exponentialRampToValueAtTime(vol || .25, n + .012); g.gain.exponentialRampToValueAtTime(0.0001, n + d);
+  o.connect(g); g.connect(c.destination); o.start(n); o.stop(n + d + .02);
+}
+var SFX_SOUND = {
+  urgent: function () { sfxTone(880, 0, .09, 'triangle', .22, 1320); sfxTone(1320, .07, .14, 'sine', .18); },
+  add: function () { sfxTone(660, 0, .12, 'sine', .25, 990); },
+  gift: function () { sfxTone(784, 0, .1, 'sine', .2); sfxTone(1046, .08, .16, 'sine', .2); },
+  weekly: function () { sfxTone(587, 0, .12, 'sine', .22, 880); },
+  ok: function () { sfxTone(1046, 0, .12, 'sine', .22); sfxTone(1568, .09, .25, 'sine', .18); },
+  no: function () { sfxTone(330, 0, .16, 'triangle', .22, 220); },
+  send: function () { sfxTone(523, 0, .08, 'sine', .2); sfxTone(659, .07, .08, 'sine', .2); sfxTone(784, .14, .2, 'sine', .2); },
+  redeem: function () { [784, 988, 1175, 1568].forEach(function (f, i) { sfxTone(f, i * .06, .18, 'sine', .16); }); }
+};
+function sfxPlay(b) {
+  var k = b.getAttribute('data-sfx');
+  try { if (sfxOn() && SFX_SOUND[k]) SFX_SOUND[k](); } catch (e) {}
+  b.classList.remove('sfx-press'); void b.offsetWidth; b.classList.add('sfx-press');
+  var r = b.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, red = k === 'no';
+  for (var i = 0; i < 6; i++) {
+    var sp = document.createElement('span'), a = i / 6 * 6.283 + Math.random() * .5, d = Math.max(r.width, r.height) / 2 + 12 + Math.random() * 14;
+    sp.className = 'sfx-sp'; sp.style.left = cx + 'px'; sp.style.top = cy + 'px';
+    sp.style.setProperty('--x', Math.cos(a) * d + 'px'); sp.style.setProperty('--y', Math.sin(a) * d + 'px');
+    sp.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z" fill="' + (red ? '#F7B2B2' : '#FFC93C') + '" stroke="' + (red ? '#E05A5A' : '#E8A21A') + '" stroke-width="1.4"/></svg>';
+    document.body.appendChild(sp); setTimeout(sp.remove.bind(sp), 600);
+  }
+}
+document.addEventListener('pointerdown', function (e) { var b = e.target.closest && e.target.closest('[data-sfx]'); if (b && !b.disabled) sfxPlay(b); }, true);
 function ui2Quests() {
   var dl = dashboardData && dashboardData.daily; if (!dl) return;
   openModal('<h2>🌞 ภารกิจประจำวัน</h2>' + (dl.parents ? '<div class="dq-card"><h3>👨‍👩‍👧 ภารกิจร่วมผู้ปกครอง</h3>' + dqRow(dl.parents, true) + '</div>' : '') +
