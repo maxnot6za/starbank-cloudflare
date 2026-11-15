@@ -924,7 +924,7 @@ body.booting .screen,body.booting #nav-parent,body.booting #nav-child,body.booti
     #avatar-strip { position:fixed; left:0; right:0; bottom:var(--nav-h); height:var(--strip-h); z-index:90; pointer-events:none; display:none; overflow:hidden; }
     #avatar-strip.on { display:block; }
     #avatar-strip .sa-actor { bottom:4px; }
-    body.has-strip .screen { padding-bottom:calc(100px + var(--strip-h)); }
+    body.has-strip .screen { padding-bottom:calc(var(--nav-h) + var(--strip-h) + 36px); }
   </style>
 </head>
 <body class="booting">
@@ -4912,6 +4912,13 @@ function shopWish(btn, id) {
 // ---------- ตัวละครของครอบครัวเดินด้านล่างจอ ----------
 var STRIP = { key: '', scene: null, rules: null };
 // แถบห้องขึ้นเมื่อ: มีตัวละคร หรือ มีไข่กำลังฟัก หรือ มีของตกแต่งในห้อง
+// --nav-h = ความสูงเมนูล่างจริง (รวมขอบล่าง iPhone) · วัดใหม่ทุกครั้งที่เมนูเปลี่ยนขนาด/โผล่ (ResizeObserver ไม่ใช่ timer)
+// เดิมวัดตอนเมนูยังซ่อนอยู่ → ได้ 0 → ใช้ค่าเริ่ม 64px → ห้องจมใต้เมนูบน iPhone ที่มีขอบล่าง
+function navHSync() {
+  var nav = document.getElementById(currentMember && currentMember.role === 'child' ? 'nav-child' : 'nav-parent');
+  if (nav && nav.offsetHeight) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
+}
+if (window.ResizeObserver) { var NAV_RO = new ResizeObserver(function () { navHSync(); }); ['nav-parent', 'nav-child'].forEach(function (id) { var n = document.getElementById(id); if (n) NAV_RO.observe(n); }); }
 function stripUpdate(avatars, stage, egg) {
   var el = document.getElementById('avatar-strip');
   if (!el) return;
@@ -4923,8 +4930,7 @@ function stripUpdate(avatars, stage, egg) {
   if (key === STRIP.key) { eggWantUpdate(cur); return; }
   STRIP.key = key;
   if (STRIP.scene) { STRIP.scene.stop(); el.innerHTML = ''; STRIP.scene = null; }
-  var nav = document.getElementById(currentMember && currentMember.role === 'child' ? 'nav-child' : 'nav-parent');
-  if (nav && nav.offsetHeight) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
+  navHSync();
   if (!stage || (!list.length && !cur && !decor.length)) { el.classList.remove('on'); document.body.classList.remove('has-strip'); el.innerHTML = ''; return; }
   if (list.length && (!spriteReady() || typeof SpriteScene === 'undefined')) {
     setTimeout(function () { STRIP.key = ''; stripUpdate(avatars, stage, egg); }, 800);   // สคริปต์ตัวละครยังโหลดไม่เสร็จ
