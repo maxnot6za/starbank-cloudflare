@@ -2079,9 +2079,9 @@ function showSettings() {
       <div class="info-row"><span>รหัสครอบครัว (เด็กใช้เข้าระบบ)</span><strong style="letter-spacing:3px">${joinCode}</strong></div>
       <div class="info-row"><span>สมาชิกทั้งหมด</span><span>${d.members.length} คน</span></div>
     </div>
-    <button type="button" class="set-link" onclick="ui2Toggle()"><span style="font-size:1.3rem">🧪</span><span style="flex:1;text-align:left">หน้าหลักแบบใหม่ (ทดลอง)<small>${ui2On() ? 'เปิดอยู่ในเครื่องนี้ · แตะเพื่อกลับแบบเดิม' : 'ลองดูก่อนได้ · เปลี่ยนแค่เครื่องนี้'}</small></span>${ui2On() ? '✅' : '›'}</button>
     <button type="button" class="set-link" onclick="closeModal();showWeekly()"><span style="font-size:1.3rem">🗓️</span><span style="flex:1;text-align:left">สรุปสัปดาห์<small>7 วันที่ผ่านมา เทียบกับสัปดาห์ก่อน</small></span>›</button>
     <button type="button" class="set-link" onclick="closeModal();openSummary()"><span style="font-size:1.3rem">📊</span><span style="flex:1;text-align:left">สรุปรายวัน<small>ลูกทำอะไรไปบ้างวันนี้</small></span>›</button>
+    <button type="button" class="set-link" onclick="ui2Toggle()"><span style="font-size:1.3rem">🧪</span><span style="flex:1;text-align:left">หน้าหลักแบบใหม่ (ทดลอง)<small>${ui2On() ? 'เปิดอยู่ในเครื่องนี้ · แตะเพื่อกลับแบบเดิม' : 'ลองดูก่อนได้ · เปลี่ยนแค่เครื่องนี้'}</small></span>${ui2On() ? '✅' : '›'}</button>
     <div class="divider"></div>
     <div id="theme-slot">${themeCard()}</div>
     <div class="divider"></div>
