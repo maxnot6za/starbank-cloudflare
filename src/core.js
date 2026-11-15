@@ -1779,9 +1779,9 @@ export function createCore(S) {
   // นับเฉพาะเหตุการณ์ของวันนี้ (เวลาไทย) · ทำครบ → กดรับ · ลืมกด → ระบบเก็บให้ตอนข้ามวัน
   var QUEST_TYPES = {
     urgent_send: { who: 'parents', icon: '⚡', min: 1, max: 3, reward: 'target', title: function(n) { return 'ส่งภารกิจด่วนให้ลูก ' + n + ' ครั้ง'; } },
-    approve:     { who: 'parents', icon: '✅', min: 1, max: 5, reward: 'target', title: function(n) { return 'กดอนุมัติภารกิจ ' + n + ' ครั้ง'; }, hint: 'นับภารกิจด่วนด้วย' },
+    approve:     { who: 'parents', icon: '✅', min: 1, max: 3, reward: 'target', title: function(n) { return 'กดอนุมัติภารกิจ ' + n + ' ครั้ง'; }, hint: 'นับภารกิจด่วนด้วย' },
     gift:        { who: 'parents', icon: '🎁', min: 1, max: 1, reward: 3,        title: function() { return 'ส่งของขวัญให้ลูก 1 ครั้ง'; } },
-    kid_submit:  { who: 'kid', icon: '📝', min: 1, max: 5, reward: 'target', title: function(n) { return 'ทำภารกิจทั่วไป ' + n + ' ครั้ง'; }, hint: 'นับเมื่อผู้ปกครองอนุมัติ' },
+    kid_submit:  { who: 'kid', icon: '📝', min: 1, max: 3, reward: 'target', title: function(n) { return 'ทำภารกิจทั่วไป ' + n + ' ครั้ง'; }, hint: 'นับเมื่อผู้ปกครองอนุมัติ' },
     kid_urgent:  { who: 'kid', icon: '⚡', min: 1, max: 1, reward: 3,        title: function() { return 'ทำภารกิจด่วนสำเร็จ 1 ครั้ง'; }, hint: 'นับเมื่อผู้ปกครองอนุมัติ' },
     kid_multi:   { who: 'kid', icon: '✖️', min: 1, max: 1, reward: 2,        title: function() { return 'ทำภารกิจที่มีตัวคูณดาว 1 ครั้ง'; }, hint: 'นับเมื่อผู้ปกครองอนุมัติ' }
   };
