@@ -17,9 +17,10 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
     await ctx.addCookies([{ name: 'sb_s', value: await sessionFor(db, id), url: base }]); const p = await ctx.newPage(); await routes(p); p.on('pageerror', e => errors.push(e.message)); await p.goto(base + '/'); return p; };
   let dad = await open(P1);
   await dad.waitForSelector('.wn-list', { timeout: 15000 }); await dad.waitForTimeout(700); await dad.screenshot({ path: OUT + 'n1-whats-new.png' });
-  ok(/สรุปสัปดาห์/.test(await dad.textContent('.wn-list')), 'ผู้ปกครองเห็น "มีอะไรใหม่"');
+  ok(/ฐานไข่ 7 แบบ/.test(await dad.textContent('.wn-list')), 'ผู้ปกครองเห็น "มีอะไรใหม่"');
   const wn = await dad.textContent('.wn-list');
-  ok(/สรุปรายวัน/.test(wn) && !/ไข่หายาก/.test(wn) && await dad.locator('.wn-date').count() >= 2, 'เห็นแค่ v1 → รวม v3+v2 ที่ยังไม่เห็นในป๊อปอัปเดียว ไม่มี v1');
+  ok(/ฐานไข่/.test(wn) && /เลื่อนไม่สุด/.test(wn) && !/ไข่หายาก/.test(wn) && await dad.locator('.wn-date').count() >= 2, 'เห็นแค่ v1 → รวมรุ่นที่ยังไม่เห็นในป๊อปอัปเดียว ไม่มี v1');
+  ok(await dad.locator('.wn-nests .nk').count() === 7, 'พรีวิวฐานไข่ 7 แบบ');
   ok(await dad.locator('.wn-row').count() <= 6, 'ไม่เกิน 6 ข้อ');
   await dad.click('#modal-content .dq-btn.g'); await dad.waitForTimeout(800);
   ok((await db.prepare('SELECT news_seen FROM Members WHERE member_id = ?').bind(P1).first()).news_seen >= 1, 'จำว่าเห็นแล้ว');

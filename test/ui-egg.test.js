@@ -41,7 +41,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await mom.mouse.move(b0.x + b0.width / 2, b0.y + b0.height / 2); await mom.mouse.down();
   await mom.mouse.move(b0.x + 400, b0.y + b0.height / 2, { steps: 6 }); await mom.mouse.up(); await mom.waitForTimeout(400);
   ok(await mom.evaluate(() => { const ed = document.getElementById('room-ed').getBoundingClientRect(), r = document.querySelector('#room-ed .dc').getBoundingClientRect(); return r.right > ed.right - 40; }), 'ลากไปมุมขวาได้ (ไข่ย้ายไปซ้ายแล้ว)');
-  ok(await mom.isVisible('#room-ed .ed-nest .ed-egg'), 'หน้าจัดห้องเห็นฐานไข่ + ไข่');
+  ok(await mom.isVisible('#room-ed .ed-nest .nk-egg svg'), 'หน้าจัดห้องเห็นฐานไข่ + ไข่');
   // ลากของไปทับฐานไข่ได้ · ไข่อยู่หน้าสุด
   const b1 = await mom.locator('#room-ed .dc').nth(1).boundingBox(), nb = await mom.locator('#room-ed .ed-nest').boundingBox();
   await mom.mouse.move(b1.x + b1.width / 2, b1.y + b1.height / 2); await mom.mouse.down();
@@ -60,7 +60,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await mom.screenshot({ path: OUT + 'e1-room-editor.png' });
   await mom.click('text=💾 บันทึกห้อง'); await mom.waitForSelector('text=บันทึกห้องแล้ว');
   const st = JSON.parse((await db.prepare('SELECT stage FROM Families WHERE family_id = ?').bind(FAM).first()).stage);
-  ok(st.nest && st.nest.x > 0.5 && st.nest.x < 0.7 && st.nest.skin === 'default', 'บันทึกตำแหน่งฐานไข่', st.nest);
+  ok(st.nest && st.nest.x > 0.5 && st.nest.x < 0.7 && st.nest.skin === 'nest_straw', 'บันทึกตำแหน่งฐานไข่', st.nest);
   ok(st.decor.length === 2 && st.decor[0].x > 0.8 && st.decor[1].x < 0.3 && st.decor[1].s === 1.2, 'บันทึกตำแหน่ง+ขนาด', st.decor);
   await mom.click('#modal-content .dq-btn.g'); await mom.waitForTimeout(800);
   ok(await mom.waitForFunction(() => document.querySelectorAll('#avatar-strip .dc').length === 2, null, { timeout: 8000 }).then(() => true, () => false), 'ของตกแต่งขึ้นในแถบห้อง');

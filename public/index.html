@@ -498,6 +498,7 @@
     #urg-fab.img{width:70px;height:76px;border-radius:0;background:center/contain no-repeat;box-shadow:none;font-size:0;filter:drop-shadow(0 6px 8px rgba(224,69,31,.35))}
     #urg-fab.img .ring{inset:-3px -9px -9px -9px}
     #urg-fab.img.drag{filter:drop-shadow(0 10px 14px rgba(224,69,31,.5))}
+    .wn-nests{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 4px;margin-top:8px}.wn-nests>div{padding-top:30px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;font-size:.62rem;color:var(--text-muted)}.wn-nests .nk.skin{width:100%;max-width:70px}.wn-nests .nk-egg{width:52%}
     .wn-date{font-size:.75rem;font-weight:800;color:var(--text-muted);margin:10px 2px 2px;letter-spacing:.02em}
     .wk-h{text-align:center}.wk-h small{color:var(--text-muted)}
     .wk-tabs{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap}.wk-tabs button{border:1.5px solid var(--border);background:#fff;border-radius:99px;padding:4px 12px;font:inherit;font-weight:700;font-size:.85rem}.wk-tabs .on{background:var(--primary);color:#fff;border-color:var(--primary)}
@@ -695,13 +696,45 @@
     #avatar-strip .strip-egg .eb i { display:block; height:100%; background:#FF7A8A; }
     #avatar-strip .strip-egg.nr .hug-b { left:auto; right:calc(100% + 6px); }
     #avatar-strip .strip-egg.nr .hug-b::after { left:auto; right:-10px; border-right-color:transparent; border-left-color:#fff; }
-    #avatar-strip .strip-nest { position:absolute; left:6px; bottom:4px; width:70px; z-index:39; pointer-events:none; }
-    #avatar-strip .strip-nest svg, .room-ed .ed-nest svg { display:block; width:100%; }
-    .room-ed .ed-nest { position:absolute; left:6px; bottom:4px; width:70px; z-index:30; text-align:center; touch-action:none; }
+    /* ฐานไข่ (nestBox): .nk = กล่องฐาน · nk-b ฐานเต็ม (หลังไข่) · nk-egg ไข่ · nk-f ฐานส่วนใต้ขอบหน้าแอ่ง (ทับก้นไข่) */
+    .nk { position:relative; width:70px; } .nk.skin { width:94px; }
+    .nk-b { display:block; width:100%; } .nk-b svg { display:block; width:100%; }
+    .nk-egg { position:absolute; left:50%; bottom:calc((1 - var(--rim) - .07) * 100%); transform:translateX(-50%); z-index:2; width:58%; } .nk.straw .nk-egg { width:77%; }
+    .nk-f { position:absolute; left:0; top:0; width:100%; z-index:3; pointer-events:none; clip-path:inset(calc(var(--rim) * 100%) 0 0 0); }
+    .nk.skin .nk-egg svg > ellipse:first-child { display:none; }   /* ไข่วางบนฐานแบบอื่น → ไม่ต้องมีฐานไม้ของไข่ */
+    #avatar-strip .strip-nest { position:absolute; bottom:4px; transform:translateX(-50%); z-index:40; pointer-events:none; }
+    #avatar-strip .nk-egg .strip-egg { position:relative; left:auto; bottom:auto; }
+    .room-ed .ed-nest { position:absolute; bottom:4px; transform:translateX(-50%); z-index:30; text-align:center; touch-action:none; }
     .room-ed.edit .ed-nest { cursor:grab; }
-    .room-ed .ed-nest.drag { transform:translateY(-6px); filter:drop-shadow(0 0 3px #2A9479); }
-    .room-ed .ed-nest .ed-egg { position:absolute; left:8px; bottom:8px; width:54px; }
-    .room-ed .ed-nest small { position:absolute; left:0; right:0; bottom:-2px; font-size:.55rem; font-weight:800; color:#fff; text-shadow:0 1px 2px #0008; }
+    .room-ed .ed-nest.drag .nk { transform:translateY(-6px); filter:drop-shadow(0 0 3px #2A9479); }
+    .room-ed .ed-nest .nk.straw .nk-egg { width:77%; }
+    /* ท่าในห้องของแต่ละฐาน */
+    .nk.nfx-basket { animation:nkSway 3.2s ease-in-out infinite; transform-origin:50% 100%; }
+    .nk.nfx-cloud { animation:nkFloat 3s ease-in-out infinite; }
+    .nk.nfx-mushroom { animation:nkBoing 1.8s ease-in-out infinite; transform-origin:50% 100%; }
+    .nk.nfx-ufo { animation:nkFloat 2.4s ease-in-out infinite; } .nk.nfx-ufo .nk-b, .nk.nfx-ufo .nk-f { animation:nkBlink 1.2s steps(2) infinite; }
+    .nk.nfx-pudding { animation:nkJelly 2.2s ease-in-out infinite; transform-origin:50% 100%; }
+    .nk.nfx-knit { animation:nkSquish 2.8s ease-in-out infinite; transform-origin:50% 100%; }
+    .nk.nfx-sakura::after, .nk.nfx-cloud::after { position:absolute; left:30%; top:-10px; font-size:11px; z-index:4; pointer-events:none; animation:nkPetal 3.2s linear infinite; }
+    .nk.nfx-sakura::after { content:"🌸"; } .nk.nfx-cloud::after { content:"✨"; left:70%; animation:nkTwinkle 2s ease-in-out infinite; }
+    @keyframes nkSway { 0%,100% { transform:rotate(-1.5deg) } 50% { transform:rotate(1.5deg) } }
+    @keyframes nkFloat { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-5px) } }
+    @keyframes nkBoing { 0%,60%,100% { transform:scale(1,1) } 70% { transform:scale(1.06,.92) } 82% { transform:scale(.96,1.05) } }
+    @keyframes nkBlink { 50% { filter:brightness(1.12) saturate(1.4) drop-shadow(0 0 5px #9ef) } }
+    @keyframes nkJelly { 0%,55%,100% { transform:scale(1,1) } 65% { transform:scale(1.07,.9) } 75% { transform:scale(.95,1.06) } 85% { transform:scale(1.02,.97) } }
+    @keyframes nkSquish { 0%,100% { transform:scale(1,1) } 50% { transform:scale(1.04,.95) } }
+    @keyframes nkPetal { 0% { opacity:0; transform:translate(0,0) rotate(0) } 15% { opacity:1 } 100% { opacity:0; transform:translate(-14px,60px) rotate(220deg) } }
+    @keyframes nkTwinkle { 0%,100% { opacity:0; transform:scale(.5) } 50% { opacity:1; transform:scale(1.1) } }
+    @media (prefers-reduced-motion: reduce) { .nk, .nk .nk-b, .nk .nk-f, .nk::after { animation:none !important; } }
+    .nfx-p { position:absolute; z-index:330; pointer-events:none; line-height:1; animation:nkP var(--d,1.3s) ease-out forwards; }
+    @keyframes nkP { 0% { opacity:0; transform:translate(-50%,-50%) scale(.4) } 15% { opacity:1 } 100% { opacity:0; transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(var(--s,1)) rotate(var(--r,0deg)) } }
+    .nfx-beam { position:absolute; z-index:329; width:60px; height:170px; pointer-events:none; background:linear-gradient(transparent,#9ef8,#fff); clip-path:polygon(35% 100%,65% 100%,100% 0,0 0); animation:nkBeam 1.5s ease-out forwards; transform-origin:50% 100%; }
+    @keyframes nkBeam { 0% { transform:scaleY(0); opacity:.9 } 40% { transform:scaleY(1); opacity:.9 } 100% { transform:scaleY(1); opacity:0 } }
+    .room-ed .ed-tag { position:absolute; left:0; right:0; bottom:-2px; z-index:5; font-size:.55rem; font-weight:800; color:#fff; text-shadow:0 1px 2px #0008; }
+    .nest-pick { display:flex; gap:8px; overflow-x:auto; padding:4px 2px 8px; }
+    .nest-pick button { flex:none; width:84px; border:2px solid transparent; background:#fff; border-radius:14px; padding:34px 4px 4px; font:inherit; font-size:.7rem; color:var(--text-muted); box-shadow:var(--shadow); cursor:pointer; }
+    .nest-pick button.on { border-color:var(--mint); color:var(--text); font-weight:700; }
+    .nest-pick .nk { width:64px; margin:0 auto 2px; } .nest-pick .nk.skin { width:70px; }
     #avatar-strip .strip-egg.want::after { background:radial-gradient(#FF9EC0aa, transparent 65%); }
     #avatar-strip .strip-egg .hug-want { position:absolute; inset:0; pointer-events:none; }
     #avatar-strip .strip-egg .hug-b { position:absolute; left:calc(100% + 6px); top:6px; background:#fff; border-radius:14px; padding:4px 9px; font-size:12px; font-weight:800; color:#E5487A; box-shadow:0 3px 8px #0002; white-space:nowrap; animation:hugB 2.4s ease-in-out infinite; }
@@ -736,6 +769,9 @@
     #egg-pop .ep-rays.on { opacity:1; } @keyframes epSpin { to { transform:rotate(360deg); } }
     #egg-pop .ep-egg { width:130px; cursor:pointer; transform-origin:50% 90%; position:relative; }
     #egg-pop .ep-stage > * { grid-area:1/1; }
+    #egg-pop .ep-nest { position:absolute; left:50%; transform:translateX(-50%); z-index:0; } #egg-pop .ep-nest .nk { width:100%; }
+    #egg-pop .ep-stage.on-skin .ep-egg svg > ellipse:first-child { display:none; }
+    #egg-pop .ep-stage .ep-egg { z-index:1; }
     #egg-pop .ep-prize { max-height:150px; max-width:200px; opacity:0; transform:scale(.3) translateY(40px); transition:all .6s cubic-bezier(.3,1.6,.5,1); }
     #egg-pop .ep-prize.on { opacity:1; transform:scale(1); }
     #egg-pop .dq-btn { white-space:nowrap; padding:12px 24px; flex:none; }
@@ -3656,7 +3692,35 @@ function eggStage(c) { return c.status === 'ready' ? 3 : c.warm >= c.goal * 2 / 
 // tier: normal = ไข่ครีมจุดเขียว · rare = ไข่ม่วงลายดาวทอง + ประกาย
 // ฐานไข่ (รังฟาง) ค่าเริ่มต้นซ้ายสุด ย้ายได้ในหน้าจัดห้อง · มีไข่หรือไม่มีก็เห็นฐาน · ไข่อยู่หน้าสุดเสมอ (วางของทับฐานได้)
 function nestX(st) { var x = st && st.nest && Number(st.nest.x); return x >= 0.06 && x <= 0.94 ? x : 0.09; }
-function nestSkin(st) { return (st && st.nest && st.nest.skin) || 'default'; }
+function nestSkin(st) { return (st && st.nest && st.nest.skin) || 'nest_straw'; }
+function nestUrl(art) { return '/stage/nests/' + art + '.webp'; }
+// ฐานไข่ + ไข่ (2 ชั้น: ฐานเต็มอยู่หลังไข่ · ฐานส่วนใต้ขอบหน้าแอ่งวางทับก้นไข่ → ไข่นั่งในแอ่ง)
+// n = {art, rim, fx} (art ว่าง = รังฟางเดิม) · eggInner = html ไข่ · eggAttr = class/attr เพิ่มของกล่องไข่
+function nestBox(n, eggInner, eggCls, eggAttr) {
+  n = n || {};
+  var skin = !!n.art, rim = skin ? Number(n.rim) || .35 : .66;
+  return '<div class="nk' + (skin ? ' skin nfx-' + esc(n.fx || '') : ' straw') + '" style="--rim:' + rim + '">' +
+    (skin ? '<img class="nk-b" src="' + nestUrl(n.art) + '" alt="">' : '<div class="nk-b">' + nestSVG() + '</div>') +
+    (eggInner ? '<div class="nk-egg ' + (eggCls || '') + '"' + (eggAttr || '') + '>' + eggInner + '</div>' : '') +
+    (skin ? '<img class="nk-f" src="' + nestUrl(n.art) + '" alt="">' : '') + '</div>';
+}
+// เอฟเฟกต์ตอนฟักของแต่ละฐาน (อนุภาคพุ่งจากจุดไข่ใน box)
+function nestBurst(fx, box, cx, cy) {
+  if (!box || !fx) return;
+  var R = function (a, b) { return a + Math.random() * (b - a); };
+  var P = function (ch, o) { var e = document.createElement('span'); e.className = 'nfx-p'; e.textContent = ch;
+    e.style.left = cx + 'px'; e.style.top = cy + 'px'; for (var k in o) if (k !== 'c' && k !== 'fs') e.style.setProperty('--' + k, o[k]);
+    e.style.fontSize = (o.fs || 16) + 'px'; if (o.c) e.style.color = o.c; box.appendChild(e); setTimeout(function () { e.remove(); }, 2600); };
+  var i, a, cols;
+  if (fx === 'basket') for (i = 0; i < 18; i++) { a = R(0, 6.28); P(i % 2 ? '■' : '■', { dx: Math.cos(a) * R(50, 120) + 'px', dy: Math.sin(a) * R(40, 90) - 30 + 'px', r: R(-300, 300) + 'deg', fs: 10, c: i % 2 ? '#FFE27A' : '#FFB3C8' }); }
+  if (fx === 'cloud') for (i = 0; i < 12; i++) { a = R(0, 6.28); P('☁️', { dx: Math.cos(a) * R(60, 130) + 'px', dy: Math.sin(a) * R(30, 70) + 'px', s: 2.2, fs: 18, d: '1.6s' }); }
+  if (fx === 'mushroom') { cols = ['#FFE27A', '#9BF6C9', '#FFB3E6']; for (i = 0; i < 16; i++) P(i % 3 ? '●' : '✦', { dx: R(-24, 24) + 'px', dy: -R(80, 140) + 'px', fs: i % 3 ? 10 : 14, d: R(1.2, 2) + 's', c: cols[i % 3] }); }
+  if (fx === 'sakura') for (i = 0; i < 20; i++) { a = i / 20 * 6.28; P('🌸', { dx: Math.cos(a) * R(60, 130) + 'px', dy: Math.sin(a) * R(40, 80) + 'px', r: '540deg', fs: 15, d: '1.6s' }); }
+  if (fx === 'ufo') { var b = document.createElement('div'); b.className = 'nfx-beam'; b.style.left = (cx - 30) + 'px'; b.style.top = (cy - 170) + 'px'; box.appendChild(b); setTimeout(function () { b.remove(); }, 1600);
+    for (i = 0; i < 8; i++) P('✦', { dx: R(-14, 14) + 'px', dy: -R(90, 150) + 'px', fs: 13, d: '1.2s', c: '#9EF' }); }
+  if (fx === 'pudding') { cols = ['#C9772E', '#E89B4A', '#8A4A1C']; for (i = 0; i < 18; i++) { a = R(3.3, 6.1); P('●', { dx: Math.cos(a) * R(40, 120) + 'px', dy: Math.sin(a) * R(40, 90) + 'px', s: R(.6, 1.3), fs: 13, c: cols[i % 3] }); } }
+  if (fx === 'knit') for (i = 0; i < 10; i++) { a = R(3.4, 6); P(i % 2 ? '💚' : '🤍', { dx: Math.cos(a) * R(40, 110) + 'px', dy: Math.sin(a) * R(50, 100) + 'px', s: 1.4, fs: 16, d: '1.5s' }); }
+}
 function nestSVG(skin) {   // skin: ตอนนี้มีแค่ default (รังฟาง) · แบบใหม่ = ภาพ webp ในอนาคต
   return '<svg viewBox="0 0 64 28" aria-hidden="true"><ellipse cx="32" cy="17" rx="30" ry="10" fill="#C98F4E" stroke="#1F3B35" stroke-width="2"/>' +
     '<ellipse cx="32" cy="13" rx="23" ry="6" fill="#8A5A2B"/>' +
@@ -3758,9 +3822,19 @@ function eggPrizeHtml(p) {
   return p.kind === 'purple' ? '<div class="ep-prize" style="font-size:5rem;line-height:1">💜</div>' : p.kind === 'pet' ? petThumb(p, 130, 'ep-prize') : '<img class="ep-prize" src="' + decorUrl(p.art) + '" alt="">';
 }
 function eggPrizeText(p) { return !p ? '' : (p.kind === 'purple' ? 'ดาวม่วง ' + p.amount + ' ดวง' : p.kind === 'pet' ? 'สัตว์เลี้ยง ' + esc(p.name) : esc(p.name)) + (p.coupon ? ' + คูปองลด ' + p.coupon + '%' : '') + '!'; }
+// ฐานไข่ในป๊อปอัปฟัก (หลังไข่) · ฐานรังฟางเดิม = ไม่แสดง (ไข่มีฐานไม้อยู่แล้ว)
+function epNest() {
+  var n = dashboardData && dashboardData.stage && dashboardData.stage.nest; if (!n || !n.art) return '';
+  var w = 210, h = w * .56, top = 190 - (Number(n.rim) || .33) * h;
+  return '<div class="ep-nest" style="top:' + Math.round(top) + 'px;width:' + w + 'px">' + nestBox(n, '') + '</div>';
+}
+function epNestBurst() {
+  var n = dashboardData && dashboardData.stage && dashboardData.stage.nest, st = document.querySelector('#egg-pop .ep-stage');
+  if (n && n.art && st) nestBurst(n.fx, st, 120, 150);
+}
 function eggHatchStart() {
   EGG.taps = 0; EGG.res = null; EGG.busy = false;
-  eggPop('<div style="font-weight:700;color:var(--mint-dark,#1F6F5C)" id="ep-tag">แตะไข่ 3 ครั้ง!</div><div class="ep-stage"><div class="ep-rays" id="ep-rays"></div><div class="ep-egg" id="ep-egg" onclick="eggTap()">' + eggSVG(3, true, dashboardData && dashboardData.egg && dashboardData.egg.current && dashboardData.egg.current.tier) + '</div><span id="ep-prize"></span></div><div id="ep-msg" style="min-height:120px"></div>');
+  eggPop('<div style="font-weight:700;color:var(--mint-dark,#1F6F5C)" id="ep-tag">แตะไข่ 3 ครั้ง!</div><div class="ep-stage' + (epNest() ? ' on-skin' : '') + '"><div class="ep-rays" id="ep-rays"></div>' + epNest() + '<div class="ep-egg" id="ep-egg" onclick="eggTap()">' + eggSVG(3, true, dashboardData && dashboardData.egg && dashboardData.egg.current && dashboardData.egg.current.tier) + '</div><span id="ep-prize"></span></div><div id="ep-msg" style="min-height:120px"></div>');
 }
 function eggTap() {
   if (EGG.taps >= 3 || EGG.busy) return;
@@ -3781,6 +3855,7 @@ function eggReveal(prize, title, sub, seenKey) {
   if (egg) egg.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.4)', opacity: 0 }], { duration: 300, fill: 'forwards' });
   setTimeout(function () {
     if (egg) egg.style.display = 'none';
+    epNestBurst();
     document.getElementById('ep-prize').innerHTML = eggPrizeHtml(prize);
     var pz = document.querySelector('#egg-pop .ep-prize'); if (pz) requestAnimationFrame(function () { pz.classList.add('on'); });
     document.getElementById('ep-rays').classList.add('on'); document.getElementById('ep-tag').textContent = '';
@@ -3809,7 +3884,7 @@ function maybeEggEvent(d) {
       '<div style="color:var(--text-muted)">' + (ev.byMe ? 'หนูทำภารกิจจนเจอไข่!' : esc(ev.by) + ' ทำภารกิจจนเจอไข่!') + '<br>ช่วยกันกอดไข่ทุกวัน แล้วรอฟักนะ</div>' +
       '<button class="dq-btn p" style="margin-top:12px;padding:12px 30px" onclick="eggPopClose(\'' + ev.key + '\')">เอาไปไว้ในห้อง</button>');
   } else {
-    eggPop('<div style="font-weight:700;color:var(--mint-dark,#1F6F5C)" id="ep-tag"></div><div class="ep-stage"><div class="ep-rays" id="ep-rays"></div><div class="ep-egg" id="ep-egg">' + eggSVG(3, true, ev.tier) + '</div><span id="ep-prize"></span></div><div id="ep-msg" style="min-height:120px"></div>');
+    eggPop('<div style="font-weight:700;color:var(--mint-dark,#1F6F5C)" id="ep-tag"></div><div class="ep-stage' + (epNest() ? ' on-skin' : '') + '"><div class="ep-rays" id="ep-rays"></div>' + epNest() + '<div class="ep-egg" id="ep-egg">' + eggSVG(3, true, ev.tier) + '</div><span id="ep-prize"></span></div><div id="ep-msg" style="min-height:120px"></div>');
     setTimeout(function () { eggReveal(ev.prize, esc(ev.by) + ' ฟักไข่ได้ ' + eggPrizeText(ev.prize), '', ev.key); }, 700);
   }
 }
@@ -4050,6 +4125,9 @@ function ppBanner(html, goal, gained) {
 // ---------- มีอะไรใหม่ (ผู้ปกครอง · ขึ้นครั้งเดียวต่อรุ่น) ----------
 // เพิ่มรุ่นใหม่ไว้บนสุด (v เพิ่มทีละ 1) · ไม่เกิน 3 ข้อ · ข้อละบรรทัด (บอกประโยชน์ ไม่บอกวิธีทำงาน) · โชว์เฉพาะรุ่นล่าสุด · ถามผู้ใช้ก่อน deploy ทุกครั้งว่าจะแจ้งไหม
 var WHATS_NEW = [
+  { v: 5, date: '15 พ.ย.', items: [
+    ['🪺', 'ฐานไข่ 7 แบบใหม่', 'ซื้อในร้าน หมวด 🪺 ฐานไข่ · แต่ละแบบขยับไม่เหมือนกัน และมีเอฟเฟกต์ตอนฟักไข่', 'nests'],
+    ['↔️', 'ย้ายไข่ได้', 'ลากฐานไข่ในหน้าจัดห้อง (แท็บ 🎀 ตกแต่ง)']] },
   { v: 4, date: '13 พ.ย.', items: [
     ['🗓️', 'สรุปสัปดาห์', 'เด้งให้ดูทุกวันอาทิตย์ 5 โมงเย็น']] },
   { v: 3, date: '13 พ.ย.', items: [
@@ -4065,6 +4143,11 @@ var WHATS_NEW = [
     ['🐻', 'ครอบครัวหมี', 'ตัวละครชุดใหม่ในร้านค้า']] }
 ];
 var WN = { shown: 0 };
+// พรีวิวฐานไข่ในป๊อปอัปมีอะไรใหม่ (ไข่จริงบนฐานแต่ละแบบ ขยับเหมือนในห้อง)
+var WN_NESTS = [['basket', 'ตะกร้าสาน', .42], ['cloud', 'เมฆปุย', .40], ['mushroom', 'ดอกเห็ด', .27], ['sakura', 'กลีบดอกไม้', .40], ['ufo', 'จานบินจิ๋ว', .33], ['pudding', 'พุดดิ้ง', .25], ['knit', 'ไหมพรม', .33]];
+function wnNests() {
+  return '<div class="wn-nests">' + WN_NESTS.map(function (n) { return '<div>' + nestBox({ art: n[0], rim: n[2], fx: n[0] }, eggSVG(0)) + '<small>' + n[1] + '</small></div>'; }).join('') + '</div>';
+}
 function maybeWhatsNew(d) {
   if (!d || currentMember.role !== 'parent' || d.newsSeen == null) return;
   var top = WHATS_NEW[0]; if (!top || d.newsSeen >= top.v || WN.shown === top.v) return;
@@ -4077,7 +4160,7 @@ function maybeWhatsNew(d) {
     setTimeout(function () { if (dashboardData) maybeWhatsNew(dashboardData); }, 1500); return;
   }
   WN.shown = top.v;
-  var row = function (x) { return '<div class="wn-row"><div class="ic">' + x[0] + '</div><div><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span></div></div>'; };
+  var row = function (x) { return '<div class="wn-row"><div class="ic">' + x[0] + '</div><div style="min-width:0"><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span>' + (x[3] === 'nests' ? wnNests() : '') + '</div></div>'; };
   var multi = groups.length > 1;
   openModal('<div class="wn-hd"><div class="sp">✨</div><h2>มีอะไรใหม่</h2><small>' + (multi ? 'ตั้งแต่ครั้งก่อนที่เข้ามา' : 'อัปเดต ' + top.date) + '</small></div><div class="wn-list">' +
     groups.map(function (g, i) { return (multi ? '<div class="wn-date">' + (i ? '' : 'ล่าสุด · ') + esc(g.date) + '</div>' : '') + g.items.map(row).join(''); }).join('') +
@@ -4200,7 +4283,7 @@ function spriteReady() { return typeof SpriteActor !== 'undefined'; }
 
 // ---------- ร้านค้า ----------
 var SHOP = { data: null, tab: 'avatar', actors: [], inv: 'avatar' };
-var SHOP_KINDS = [['avatar', '🦖 ตัวละคร'], ['pet', '🐾 สัตว์เลี้ยง'], ['wall', '🧱 ผนัง'], ['floor', '🏞️ พื้น'], ['decor', '🎀 ตกแต่ง']];
+var SHOP_KINDS = [['avatar', '🦖 ตัวละคร'], ['pet', '🐾 สัตว์เลี้ยง'], ['wall', '🧱 ผนัง'], ['floor', '🏞️ พื้น'], ['decor', '🎀 ตกแต่ง'], ['nest', '🪺 ฐานไข่']];
 function floorUrl(art) { return '/stage/floors/' + art + '.webp'; }
 function decorUrl(art) { return '/stage/decor/' + art + '.webp'; }
 function wallUrl(art) { return '/stage/walls/' + art + '.webp'; }
@@ -4231,14 +4314,14 @@ function renderShop() {
   root.innerHTML = (dashboardData && dashboardData.daily ? '<div style="margin-bottom:6px">' + ppGoalBar(dashboardData.daily.goal) + '</div>' : '') + '<div class="shop-top"><h2>🛍️ ร้านค้า</h2><span class="wallet-pill">' + COIN + ' ' + d.wallet.gold + '</span><span class="wallet-pill">' + PSTAR + ' ' + d.wallet.purple + '</span></div>' +
     (d.coupons && d.coupons.length ? '<div class="cp-bar"><b>🎟️ คูปองของครอบครัว</b><br>' + couponPills(d.coupons) + (d.canBuy ? '' : '<div style="font-size:.75rem;color:var(--text-muted);margin-top:4px">ผู้ปกครองใช้ตอนซื้อของ</div>') + '</div>' : '') +
     (d.firstDiscount ? '<div class="shop-sale">🎉 ซื้อชิ้นแรกของครอบครัว ลด ' + d.discountPct + '% · เลือกได้ทุกอย่างในร้าน</div>' : '') +
-    '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · สัตว์เลี้ยง ' + cnt('pet') + ' · ผนัง ' + cnt('wall') + ' · พื้น ' + cnt('floor') + ' · ตกแต่ง ' + cnt('decor') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
+    '<button type="button" class="inv-card" onclick="openInventory()"><span style="font-size:1.6rem">🎒</span><span style="flex:1"><b>ของของครอบครัว</b><small>ตัวละคร ' + cnt('avatar') + ' · สัตว์เลี้ยง ' + cnt('pet') + ' · ผนัง ' + cnt('wall') + ' · พื้น ' + cnt('floor') + ' · ตกแต่ง ' + cnt('decor') + ' · ฐานไข่ ' + cnt('nest') + '</small></span><span class="inv-go">' + (d.canBuy ? 'จัดการ ›' : 'ดู ›') + '</span></button>' +
     '<div class="shop-tabs">' + tabs.map(function (t) { return '<button class="' + (SHOP.tab === t[0] ? 'on' : '') + '" onclick="shopTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
     '<div class="shop-grid">' + items.map(function (it) {
       var tag = it.assigned_to ? '<span class="shop-tag">' + esc(it.assigned_to.name) + ' ใช้อยู่</span>' : it.inUse === true ? '<span class="shop-tag">' + (it.kind === 'decor' || it.kind === 'pet' ? 'อยู่ในห้อง' : 'ใช้อยู่') + '</span>' : it.owned ? '<span class="shop-tag">' + (it.free ? 'ฟรี' : 'มีแล้ว') + '</span>' : it.egg ? '<span class="shop-tag" style="background:' + (it.tier === 'rare' ? 'linear-gradient(90deg,#B98CFF,#FFC24B);color:#fff' : '#FFC24B;color:#1F3B35') + '">🥚 ' + (it.tier === 'rare' ? 'ไข่หายาก' : 'จากไข่') + '</span>' : '';
       var wish = !it.owned && (it.iWish || (d.canBuy && it.wishedBy.length)) ? '<span class="shop-tag w">💜 ' + (d.canBuy ? esc(it.wishedBy.join(', ')) + ' อยากได้' : 'อยากได้') + '</span>' : '';
       return '<button type="button" class="shop-item" onclick="openShopItem(\'' + it.id + '\')">' + tag + wish +
         shopArt(it) + '<b>' + esc(it.name) + '</b>' + shopPrice(it) + '</button>';
-    }).join('') + (items.length < 2 ? '<div class="shop-soon">✨ ' + (SHOP.tab === 'decor' ? 'ของตกแต่ง' : SHOP.tab === 'pet' ? 'สัตว์เลี้ยงตัวใหม่' : SHOP.tab === 'floor' ? 'พื้นแบบใหม่' : SHOP.tab === 'wall' ? 'ผนังแบบใหม่' : 'ตัวละครใหม่') + ' เร็ว ๆ นี้</div>' : '') + '</div>' +
+    }).join('') + (items.length < 2 ? '<div class="shop-soon">✨ ' + (SHOP.tab === 'decor' ? 'ของตกแต่ง' : SHOP.tab === 'pet' ? 'สัตว์เลี้ยงตัวใหม่' : SHOP.tab === 'floor' ? 'พื้นแบบใหม่' : SHOP.tab === 'wall' ? 'ผนังแบบใหม่' : SHOP.tab === 'nest' ? 'ฐานไข่แบบใหม่' : 'ตัวละครใหม่') + ' เร็ว ๆ นี้</div>' : '') + '</div>' +
     '<div class="shop-note">' + (d.canBuy ? (SHOP.tab === 'avatar' ? 'ซื้อแล้วเลือกได้ว่าให้ใครในบ้านใช้ ตัวละครจะเดินอยู่ด้านล่างจอของทุกคนในครอบครัว' : SHOP.tab === 'pet' ? 'สัตว์เลี้ยงเป็นของทั้งบ้าน · อยู่ในห้องได้พร้อมกัน 2 ตัว · เดินเล่นนิดหน่อยแล้วนั่งเล่น/งีบหลับ' : 'ผนัง พื้น และของตกแต่งจะอยู่ด้านล่างจอของทุกคนในครอบครัว')
       : 'ผู้ปกครองเป็นคนซื้อ · กด "อยากได้" ให้พ่อแม่รู้ได้นะ 💜') + '<br>เหรียญทอง: เร็ว ๆ นี้</div>';
   feReplace(root); ppSprites(root);
@@ -4255,6 +4338,7 @@ function renderShop() {
 function shopArt(it, big) {
   if (it.kind === 'floor') return '<div class="shop-floor" style="--fl:url(' + floorUrl(it.art) + ')' + (big ? ';height:110px' : '') + '"></div>';
   if (it.kind === 'wall') return '<div class="shop-floor" style="--fl:url(' + wallUrl(it.art) + ');background-size:auto 100%' + (big ? ';height:110px' : '') + '"></div>';
+  if (it.kind === 'nest') return '<div class="shop-stage" style="display:grid;place-items:end center;padding-bottom:6px">' + nestBox({ art: it.art, rim: it.rim, fx: it.fx }, eggSVG(0)) + '</div>';
   if (it.kind === 'decor') return '<div class="shop-stage" style="display:grid;place-items:center"><div class="dc ' + esc(it.fx || '') + '" style="position:relative;transform:none"><img src="' + decorUrl(it.art) + '" alt="" style="max-height:' + (big ? 120 : 84) + 'px;max-width:' + (big ? 180 : 110) + 'px;' + (it.egg && !it.owned ? 'filter:brightness(0) opacity(.25)' : '') + '"></div></div>';
   return '<div class="shop-stage" data-sprite="' + it.sprite + '"' + (it.egg && !it.owned ? ' data-locked="1"' : '') + '></div>';
 }
@@ -4302,10 +4386,10 @@ function openStageItem(it) {
   var lack = !it.owned && d.wallet.purple < pay0 ? pay0 - d.wallet.purple : 0, actions;
   if (!d.canBuy) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.owned ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '💔 ยกเลิกอยากได้' : '💜 อยากได้!') + '</button>');
   else if (it.owned && it.kind === 'pet') actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button><button class="dq-btn p" style="flex:1.6" onclick="petToggle(this,\'' + it.id + '\')">' + (it.inUse ? 'พาออกจากห้อง' : 'พาเข้าห้อง') + '</button>';
-  else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' || it.kind === 'wall' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\',\'' + it.kind + '\')">ใช้' + (it.kind === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปจัดห้อง</button>');
+  else if (it.owned) actions = '<button class="dq-btn g" onclick="closeModal()">ปิด</button>' + (it.kind === 'floor' || it.kind === 'wall' || it.kind === 'nest' ? (it.inUse === true ? '' : '<button class="dq-btn p" style="flex:1.6" onclick="useFloor(this,\'' + it.id + '\',\'' + it.kind + '\')">ใช้' + (it.kind === 'wall' ? 'ผนัง' : it.kind === 'nest' ? 'ฐาน' : 'พื้น') + 'นี้</button>') : '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();openInventory(\'decor\')">ไปจัดห้อง</button>');
   else actions = '<button class="dq-btn g" onclick="closeModal()">ยกเลิก</button><button class="dq-btn p" style="flex:1.6" ' + (lack ? 'disabled style="flex:1.6;opacity:.5"' : '') + ' id="shop-buy" onclick="shopBuy(this,\'' + it.id + '\')">ซื้อ ' + pay0 + ' ดาวม่วง</button>' + '</div><div style="text-align:center;margin-top:8px"><button type="button" class="u-chip' + (it.iWish ? ' on' : '') + '" onclick="shopWish(this,\'' + it.id + '\')">' + (it.iWish ? '🎯 เป็นเป้าหมายอยู่ · ยกเลิก' : '🎯 ตั้งเป็นเป้าหมายของบ้าน') + '</button>';
   openModal('<div style="text-align:center"><h2>' + esc(it.name) + '</h2>' + shopArt(it, true) +
-    '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : it.kind === 'wall' ? 'ผนังหลังตัวละคร' : it.kind === 'pet' ? 'สัตว์เลี้ยงของทั้งบ้าน เดินเล่นในห้อง' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
+    '<div style="font-size:.85rem;color:var(--text-muted);margin-top:8px">' + (it.kind === 'floor' ? 'พื้นที่ตัวละครเดิน' : it.kind === 'wall' ? 'ผนังหลังตัวละคร' : it.kind === 'nest' ? 'ฐานที่ไข่ปริศนานั่ง · ขยับเองในห้อง และมีเอฟเฟกต์ตอนฟักไข่' : it.kind === 'pet' ? 'สัตว์เลี้ยงของทั้งบ้าน เดินเล่นในห้อง' : 'ของตกแต่งวางบนพื้น') + ' · ทุกคนในครอบครัวเห็น · ' + (it.free ? 'ฟรี' : 'ซื้อครั้งเดียวใช้ได้ตลอด') + '</div>' +
     (it.owned || cpHtml ? '' : '<div style="margin:8px 0 2px">' + shopPrice(it) + '</div>') + cpHtml +
     '<div style="display:flex;gap:8px;margin-top:10px">' + actions + '</div>' +
     (d.canBuy && lack ? '<div style="font-size:.8rem;color:var(--text-muted);margin-top:8px">มี ' + d.wallet.purple + ' ดาวม่วง · ขาดอีก ' + lack + '</div>' : '') + '</div>');
@@ -4332,9 +4416,9 @@ function petToggle(btn, id) {
 }
 function useFloor(btn, id, kind) {
   if (btn) btn.disabled = true;
-  var run = google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; renderShop(); if (INV.open) renderInventory(); else closeModal(); toast(kind === 'wall' ? '✅ เปลี่ยนผนังแล้ว' : '✅ เปลี่ยนพื้นแล้ว'); Live.request(); })
+  var run = google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; renderShop(); if (INV.open) renderInventory(); else closeModal(); toast(kind === 'nest' ? '✅ เปลี่ยนฐานไข่แล้ว' : kind === 'wall' ? '✅ เปลี่ยนผนังแล้ว' : '✅ เปลี่ยนพื้นแล้ว'); Live.request(); })
     .withFailureHandler(function (e) { if (btn) btn.disabled = false; toast(e.message || 'ไม่สำเร็จ'); });
-  if (kind === 'wall') run.setWall(currentMember.memberId, id); else run.setFloor(currentMember.memberId, id);
+  if (kind === 'nest') run.setNest(currentMember.memberId, id); else if (kind === 'wall') run.setWall(currentMember.memberId, id); else run.setFloor(currentMember.memberId, id);
 }
 
 // ---------- ของของครอบครัว: จัดการตัวละคร / พื้น / ของตกแต่ง (ผู้ปกครองแก้ได้ · เด็กดูอย่างเดียว) ----------
@@ -4359,6 +4443,11 @@ function renderInventory() {
       return '<div class="inv-row"><div class="inv-ic stage-floor" style="--fl:url(' + (k === 'wall' ? wallUrl(it.art) : floorUrl(it.art)) + ');height:46px"></div><div class="inv-t">' + esc(it.name) + '<small>' + (it.inUse === true ? 'ใช้อยู่' : it.free ? 'ฟรี' : 'มีแล้ว') + '</small></div>' +
         (it.inUse === true ? '<span class="shop-tag" style="position:static">ใช้อยู่</span>' : edit ? '<button class="inv-btn" onclick="useFloor(this,\'' + it.id + '\',\'' + k + '\')">ใช้' + (k === 'wall' ? 'ผนัง' : 'พื้น') + 'นี้</button>' : '') + '</div>';
     }).join('');
+  } else if (k === 'nest') {
+    body = mine.map(function (it) {
+      return '<div class="inv-row"><div class="inv-ic" style="display:grid;place-items:end center">' + nestBox({ art: it.art, rim: it.rim }, eggSVG(0)).replace('class="nk', 'style="width:56px" class="nk') + '</div><div class="inv-t">' + esc(it.name) + '<small>' + (it.inUse === true ? 'ใช้อยู่' : 'มีแล้ว') + '</small></div>' +
+        (it.inUse === true ? '<span class="shop-tag" style="position:static">ใช้อยู่</span>' : edit ? '<button class="inv-btn" onclick="useFloor(this,\'' + it.id + '\',\'nest\')">ใช้ฐานนี้</button>' : '') + '</div>';
+    }).join('') + '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">ย้ายตำแหน่งไข่ได้ในแท็บ 🎀 ตกแต่ง</div>';
   } else if (k === 'pet') {
     body = mine.length ? mine.map(function (it) {
       return '<div class="inv-row"><div class="inv-ic" data-sprite="' + it.sprite + '"></div><div class="inv-t">' + esc(it.name) +
@@ -4367,7 +4456,7 @@ function renderInventory() {
     }).join('') + '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">อยู่ในห้องได้พร้อมกัน ' + (d.stage.petMax || 2) + ' ตัว</div>'
       : '<div class="shop-soon" style="box-shadow:none">ยังไม่มีสัตว์เลี้ยง · ซื้อได้ที่ร้านค้า</div>';
   } else {
-    body = roomEditorHtml(d, mine, edit);
+    body = roomEditorHtml(d, mine, edit) + (edit ? roomNestPick() : '');
   }
   openModal('<h2>🎒 ของของครอบครัว</h2><div class="shop-tabs">' + SHOP_KINDS.map(function (t) { return '<button class="' + (k === t[0] ? 'on' : '') + '" onclick="invTab(\'' + t[0] + '\')">' + t[1] + '</button>'; }).join('') + '</div>' +
     '<div>' + body + '</div>' + (k !== 'decor' ? stagePreview(d.stage) : '') +
@@ -4405,11 +4494,25 @@ function decorHtml(list, roomH, groundY, kh) {
 var ROOM = { list: [], sel: -1, dirty: false };
 function roomEditorHtml(d, mine, edit) {
   ROOM.list = d.stage.decor.map(function (x) { return { id: x.id, art: x.art, name: x.name, h: x.h, fx: x.fx, x: x.x, s: x.s }; });
-  ROOM.nest = { x: nestX(d.stage), skin: nestSkin(d.stage) }; ROOM.sel = -1; ROOM.max = d.stage.max || 8; ROOM.smin = d.stage.scaleMin || .6; ROOM.smax = d.stage.scaleMax || 1.6; ROOM.mine = mine; ROOM.st = d.stage;
+  ROOM.nest = Object.assign({}, d.stage.nest || {}, { x: nestX(d.stage), skin: nestSkin(d.stage) }); ROOM.sel = -1; ROOM.max = d.stage.max || 8; ROOM.smin = d.stage.scaleMin || .6; ROOM.smax = d.stage.scaleMax || 1.6; ROOM.mine = mine; ROOM.st = d.stage;
   if (!mine.length) return '<div class="shop-soon" style="box-shadow:none">ยังไม่มีของตกแต่ง<br><small>🎄 ชุดคริสต์มาสซื้อได้ที่ร้านค้า · 🥚 ชุดอื่นลุ้นจากไข่ปริศนา</small></div>' + stagePreview(d.stage);
   return '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">' + (edit ? 'แตะของด้านล่างเพื่อวาง · ลากซ้าย-ขวา · แตะของในห้องเพื่อปรับขนาด/ลบ · ฐานไข่ลากย้ายได้' : 'ห้องของครอบครัว · ผู้ปกครองเป็นคนจัด') + '</div>' +
-    '<div class="room-ed" id="room-ed">' + stageBase(d.stage) + '<div class="ed-nest" id="ed-nest" style="left:calc(' + (nestX(d.stage) * 100) + '% - 35px)">' + nestSVG(nestSkin(d.stage)) + (roomEggOn() ? '<div class="ed-egg">' + eggSVG(0) + '</div>' : '') + '<small>ที่ของไข่</small></div>' + '<div class="room-tool" id="room-tool"><button onclick="roomSize(-1)">➖</button><span id="room-pct"></span><button onclick="roomSize(1)">➕</button><button onclick="roomZ(1)">⬆️</button><button onclick="roomZ(-1)">⬇️</button><button onclick="roomDel()">🗑️</button></div></div>' +
+    '<div class="room-ed" id="room-ed">' + stageBase(d.stage) + '<div class="ed-nest" id="ed-nest" style="left:clamp(52px,' + (nestX(d.stage) * 100) + '%,calc(100% - 52px))">' + roomNestInner() + '</div>' + '<div class="room-tool" id="room-tool"><button onclick="roomSize(-1)">➖</button><span id="room-pct"></span><button onclick="roomSize(1)">➕</button><button onclick="roomZ(1)">⬆️</button><button onclick="roomZ(-1)">⬇️</button><button onclick="roomDel()">🗑️</button></div></div>' +
     (edit ? '<div style="font-size:.75rem;color:var(--text-muted);margin-top:6px;text-align:right" id="room-cnt"></div><div class="room-pal" id="room-pal"></div>' : '');
+}
+function roomNestInner() { return nestBox(ROOM.nest, roomEggOn() ? eggSVG(0) : '') + '<small class="ed-tag">ที่ของไข่</small>'; }
+// เลือกแบบฐานไข่ (ของที่มี) ใต้ห้อง · บันทึกพร้อมห้อง
+function roomNestPick() {
+  var d = SHOP.data; if (!d) return '';
+  var mine = d.items.filter(function (i) { return i.kind === 'nest' && i.owned; });
+  return '<div style="font-size:.8rem;font-weight:700;margin:10px 2px 4px">🪺 ฐานไข่ <small style="font-weight:400;color:var(--text-muted)">แตะเพื่อเปลี่ยน · ซื้อแบบใหม่ได้ที่ร้าน</small></div><div class="nest-pick" id="nest-pick">' +
+    mine.map(function (it) { return '<button type="button" class="' + (ROOM.nest.skin === it.id ? 'on' : '') + '" onclick="roomNestSet(\'' + it.id + '\')">' + nestBox({ art: it.art, rim: it.rim, fx: '' }, eggSVG(0)) + esc(it.name) + '</button>'; }).join('') + '</div>';
+}
+function roomNestSet(id) {
+  var it = SHOP.data.items.find(function (x) { return x.id === id; }); if (!it) return;
+  ROOM.nest.skin = it.id; ROOM.nest.art = it.art; ROOM.nest.rim = it.rim; ROOM.nest.fx = it.fx; ROOM.dirty = true;
+  var n = document.getElementById('ed-nest'); if (n) n.innerHTML = roomNestInner();
+  var p = document.getElementById('nest-pick'); if (p) p.outerHTML = roomNestPick().replace(/^[\s\S]*?(<div class="nest-pick")/, '$1');
 }
 function roomEditorInit(edit) {
   ROOM.edit = edit; roomRender();
@@ -4421,7 +4524,7 @@ function roomEditorInit(edit) {
   n.addEventListener('pointerdown', function (ev) { ev.preventDefault(); n.setPointerCapture(ev.pointerId); sx = ev.clientX; ox = ROOM.nest.x; n.classList.add('drag');
     ROOM.sel = -1; ed.querySelectorAll('.dc').forEach(function (d) { d.classList.remove('sel'); }); roomTool(); });
   n.addEventListener('pointermove', function (ev) { if (!n.classList.contains('drag')) return;
-    var x = Math.max(.06, Math.min(.94, ox + (ev.clientX - sx) / ed.clientWidth)); ROOM.nest.x = Math.round(x * 1000) / 1000; n.style.left = 'calc(' + (x * 100) + '% - 35px)'; ROOM.dirty = true; });
+    var x = Math.max(.06, Math.min(.94, ox + (ev.clientX - sx) / ed.clientWidth)); ROOM.nest.x = Math.round(x * 1000) / 1000; n.style.left = 'clamp(52px,' + (x * 100) + '%,calc(100% - 52px))'; ROOM.dirty = true; });
   n.addEventListener('pointerup', function () { n.classList.remove('drag'); });
 }
 function roomRender() {
@@ -4480,7 +4583,7 @@ function roomSave(btn) {
   btn.disabled = true;
   google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; ROOM.dirty = false; btn.disabled = false; toast('✅ บันทึกห้องแล้ว · ทุกคนในบ้านเห็นแล้ว'); Live.request(); renderShop(); })
     .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'บันทึกไม่สำเร็จ'); })
-    .saveRoom(currentMember.memberId, JSON.stringify(ROOM.list.map(function (x) { return { id: x.id, x: x.x, s: x.s }; })), JSON.stringify(ROOM.nest || {}));
+    .saveRoom(currentMember.memberId, JSON.stringify(ROOM.list.map(function (x) { return { id: x.id, x: x.x, s: x.s }; })), JSON.stringify({ x: ROOM.nest.x, skin: ROOM.nest.skin }));
 }
 
 function shopPick(btn, id) {
@@ -4555,9 +4658,8 @@ function stripUpdate(avatars, stage, egg) {
   el.classList.add('on'); document.body.classList.add('has-strip'); if (typeof urgFabShow === 'function') urgFabShow();
   // ผนัง + พื้น + ของตกแต่ง (หลังตัวละคร) · ไข่ · ป้ายชวนซื้อตัวละคร (ห้องยังไม่มีใครเดิน)
   el.innerHTML = stageBase(stage) + decorHtml(decor, el.clientHeight || 96, 16) +
-    '<div class="strip-nest" style="left:calc(' + (nestX(stage) * 100) + '% - 35px)">' + nestSVG(nestSkin(stage)) + '</div>' +
-    (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + (nestX(stage) > .5 ? ' nr' : '') + '" style="left:calc(' + (nestX(stage) * 100) + '% - 27px)" onclick="eggStripTap(this)" role="button" aria-label="ไข่ปริศนา">' +
-      '<div class="eb"><i style="width:' + Math.min(100, cur.warm / cur.goal * 100) + '%"></i></div>' + eggSVG(eggStage(cur), cur.status === 'ready', cur.tier) + (cur.status === 'ready' ? '<div class="ed"></div><span class="esp" style="left:-6px;top:12px;--dx:-8px">✨</span><span class="esp" style="right:-6px;top:6px;--dx:8px;animation-delay:.5s">✨</span><span class="esp" style="left:40%;top:-14px;--dx:2px;animation-delay:1s">⭐</span>' : '') + '</div>' : '') +
+    '<div class="strip-nest" style="left:clamp(52px,' + (nestX(stage) * 100) + '%,calc(100% - 52px))">' + nestBox(stage && stage.nest, (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + (nestX(stage) > .5 ? ' nr' : '') + (stage && stage.nest && stage.nest.art ? ' on-skin' : '') + '" onclick="eggStripTap(this)" role="button" aria-label="ไข่ปริศนา">' +
+      '<div class="eb"><i style="width:' + Math.min(100, cur.warm / cur.goal * 100) + '%"></i></div>' + eggSVG(eggStage(cur), cur.status === 'ready', cur.tier) + (cur.status === 'ready' ? '<div class="ed"></div><span class="esp" style="left:-6px;top:12px;--dx:-8px">✨</span><span class="esp" style="right:-6px;top:6px;--dx:8px;animation-delay:.5s">✨</span><span class="esp" style="left:40%;top:-14px;--dx:2px;animation-delay:1s">⭐</span>' : '') + '</div>' : ''), '', '') + '</div>' +
     (list.length ? '' : '<button type="button" class="strip-sign"' + (Math.abs(nestX(stage) - .5) < .27 ? ' style="' + (nestX(stage) < .5 ? 'left:auto;right:8px' : 'left:8px') + ';transform:none"' : '') + ' onclick="goShop()">🛒 พาตัวละครมาอยู่ในห้องสิ</button>');
   eggWantUpdate(cur);
   if (!list.length) return;
