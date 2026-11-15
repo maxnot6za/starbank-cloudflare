@@ -2034,7 +2034,14 @@ export function createCore(S) {
     var floor = shopItem_(st.floor), wall = shopItem_(st.wall);
     return { floor: floor && floor.kind === 'floor' && owns_(familyId, floor) ? floor.id : DEFAULT_FLOOR,
       wall: wall && wall.kind === 'wall' && owns_(familyId, wall) ? wall.id : DEFAULT_WALL,
-      decor: cleanRoom_(familyId, st.decor), pets: cleanPets_(familyId, st.pets) };
+      decor: cleanRoom_(familyId, st.decor), pets: cleanPets_(familyId, st.pets), nest: cleanNest_(st.nest) };
+  }
+  // ฐานไข่: ย้ายซ้าย-ขวาได้ (x 0–1) ปรับขนาด/ลบไม่ได้ · skin = แบบฐาน (ตอนนี้มีแค่ default · อนาคต: ซื้อในร้าน / แบบหายากจากไข่หายาก)
+  var NEST_SKINS = ['default'], NEST_X_DEFAULT = 0.09;
+  function cleanNest_(n) {
+    n = n && typeof n === 'object' ? n : {};
+    var x = Number(n.x); x = (n.x !== undefined && n.x !== null && n.x !== '' && isFinite(x)) ? Math.round(Math.max(0.06, Math.min(0.94, x)) * 1000) / 1000 : NEST_X_DEFAULT;
+    return { x: x, skin: NEST_SKINS.indexOf(n.skin) >= 0 ? n.skin : 'default' };
   }
   function cleanPets_(familyId, list) {
     var out = [];
@@ -2058,7 +2065,7 @@ export function createCore(S) {
     var st = stageRaw_(familyId), f = shopItem_(st.floor), w = shopItem_(st.wall);
     return { floor: { id: f.id, art: f.art }, wall: { id: w.id, art: w.art }, max: ROOM_MAX, scaleMin: SCALE_MIN, scaleMax: SCALE_MAX,
       decor: st.decor.map(function(d) { var it = shopItem_(d.id); return { id: it.id, art: it.art, name: it.name, h: it.h, fx: it.fx, x: d.x, s: d.s }; }),
-      petMax: PET_MAX, pets: st.pets.map(function(id) { var it = shopItem_(id); return { id: it.id, sprite: it.sprite, name: it.name }; }) };
+      petMax: PET_MAX, pets: st.pets.map(function(id) { var it = shopItem_(id); return { id: it.id, sprite: it.sprite, name: it.name }; }), nest: st.nest };
   }
   function saveStage_(familyId, st) { updateRow_('Families', 'family_id', familyId, { stage: JSON.stringify(st) }); }
 
@@ -2072,13 +2079,15 @@ export function createCore(S) {
   function setFloor(memberId, itemId) { return setStageBase_(memberId, itemId, 'floor', 'พื้น'); }
   function setWall(memberId, itemId) { return setStageBase_(memberId, itemId, 'wall', 'ผนัง'); }
   // บันทึกการจัดห้องทั้งห้อง (ผู้ปกครอง) · list = [{id, x, s}] เรียงหลัง→หน้า
-  function saveRoom(memberId, list) {
+  function saveRoom(memberId, list, nest) {
     var parent = requireParent_(memberId);
     if (typeof list === 'string') { try { list = JSON.parse(list); } catch (e) { list = null; } }
     if (!Array.isArray(list)) throw new Error('ข้อมูลห้องไม่ถูกต้อง');
     if (list.length > ROOM_MAX) throw new Error('วางได้สูงสุด ' + ROOM_MAX + ' ชิ้น');
     list.forEach(function(d) { var it = d && shopItem_(d.id); if (!it || it.kind !== 'decor') throw new Error('ไม่พบของตกแต่งนี้'); if (!owns_(parent.family_id, it)) throw new Error('ยังไม่มี' + it.name); });
-    var st = stageRaw_(parent.family_id); st.decor = cleanRoom_(parent.family_id, list); saveStage_(parent.family_id, st);
+    var st = stageRaw_(parent.family_id); st.decor = cleanRoom_(parent.family_id, list);
+    if (nest) { if (typeof nest === 'string') { try { nest = JSON.parse(nest); } catch (e) { nest = null; } } if (nest) st.nest = cleanNest_(Object.assign({}, st.nest, nest)); }
+    saveStage_(parent.family_id, st);
     return { stage: familyStage_(parent.family_id), shop: getShop(memberId) };
   }
 

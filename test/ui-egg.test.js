@@ -48,15 +48,23 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await mom.mouse.move(nb.x + nb.width / 2, b1.y + b1.height / 2, { steps: 8 }); await mom.mouse.up(); await mom.waitForTimeout(400);
   ok(await mom.evaluate(() => { const n = document.querySelector('#room-ed .ed-nest').getBoundingClientRect(); const x = n.left + n.width / 2, y = n.bottom - 14; return !!document.elementFromPoint(x, y).closest('.ed-nest') || getComputedStyle(document.querySelector('#room-ed .ed-nest')).zIndex > 20; }), 'ของทับฐานไข่ได้ ไข่อยู่หน้าสุด');
   await mom.screenshot({ path: OUT + 'e1a-room-nest.png' });
+  // ลากฐานไข่ไปกลางห้อง (ปรับขนาดไม่ได้ · ไม่มีแถบเครื่องมือ)
+  const nb2 = await mom.locator('#ed-nest').boundingBox(), edb = await mom.locator('#room-ed').boundingBox();
+  await mom.mouse.move(nb2.x + nb2.width / 2, nb2.y + nb2.height - 10); await mom.mouse.down();
+  await mom.mouse.move(edb.x + edb.width * 0.6, nb2.y + nb2.height - 10, { steps: 8 }); await mom.mouse.up(); await mom.waitForTimeout(300);
+  ok(!(await mom.isVisible('#room-tool.on')), 'แตะ/ลากฐานไข่ → ไม่มีแถบปรับขนาด');
+  await mom.screenshot({ path: OUT + 'e1c-nest-moved.png' });
   await mom.locator('#room-ed .dc').nth(1).click();
   await mom.click('#room-tool button:nth-child(3)'); await mom.click('#room-tool button:nth-child(3)');
   ok(await mom.textContent('#room-pct') === '120%', 'ขยาย → 120%');
   await mom.screenshot({ path: OUT + 'e1-room-editor.png' });
   await mom.click('text=💾 บันทึกห้อง'); await mom.waitForSelector('text=บันทึกห้องแล้ว');
   const st = JSON.parse((await db.prepare('SELECT stage FROM Families WHERE family_id = ?').bind(FAM).first()).stage);
+  ok(st.nest && st.nest.x > 0.5 && st.nest.x < 0.7 && st.nest.skin === 'default', 'บันทึกตำแหน่งฐานไข่', st.nest);
   ok(st.decor.length === 2 && st.decor[0].x > 0.8 && st.decor[1].x < 0.3 && st.decor[1].s === 1.2, 'บันทึกตำแหน่ง+ขนาด', st.decor);
   await mom.click('#modal-content .dq-btn.g'); await mom.waitForTimeout(800);
   ok(await mom.waitForFunction(() => document.querySelectorAll('#avatar-strip .dc').length === 2, null, { timeout: 8000 }).then(() => true, () => false), 'ของตกแต่งขึ้นในแถบห้อง');
+  ok(await mom.evaluate(() => { const st = document.getElementById('avatar-strip').getBoundingClientRect(), e = document.querySelector('#avatar-strip .strip-egg').getBoundingClientRect(); const c = (e.left + e.width / 2 - st.left) / st.width; return c > 0.5 && c < 0.7; }), 'แถบห้อง: ไข่ย้ายตามฐาน');
 
   // กอดไข่
   ok(await mom.isVisible('#avatar-strip .strip-egg.want .hug-b'), 'ยังไม่ได้กอดวันนี้ → ไข่ขอกอด');

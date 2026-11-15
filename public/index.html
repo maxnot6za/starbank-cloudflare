@@ -693,9 +693,13 @@
     @media (prefers-reduced-motion: reduce) { #avatar-strip .strip-egg, #avatar-strip .strip-egg svg, #avatar-strip .strip-egg::after { animation:none !important; } }
     #avatar-strip .strip-egg .eb { position:absolute; top:-9px; left:3px; right:3px; height:5px; border-radius:9px; background:#fff; box-shadow:0 0 0 1.5px #1F3B35; overflow:hidden; }
     #avatar-strip .strip-egg .eb i { display:block; height:100%; background:#FF7A8A; }
+    #avatar-strip .strip-egg.nr .hug-b { left:auto; right:calc(100% + 6px); }
+    #avatar-strip .strip-egg.nr .hug-b::after { left:auto; right:-10px; border-right-color:transparent; border-left-color:#fff; }
     #avatar-strip .strip-nest { position:absolute; left:6px; bottom:4px; width:70px; z-index:39; pointer-events:none; }
     #avatar-strip .strip-nest svg, .room-ed .ed-nest svg { display:block; width:100%; }
-    .room-ed .ed-nest { position:absolute; left:6px; bottom:4px; width:70px; z-index:30; pointer-events:none; text-align:center; }
+    .room-ed .ed-nest { position:absolute; left:6px; bottom:4px; width:70px; z-index:30; text-align:center; touch-action:none; }
+    .room-ed.edit .ed-nest { cursor:grab; }
+    .room-ed .ed-nest.drag { transform:translateY(-6px); filter:drop-shadow(0 0 3px #2A9479); }
     .room-ed .ed-nest .ed-egg { position:absolute; left:8px; bottom:8px; width:54px; }
     .room-ed .ed-nest small { position:absolute; left:0; right:0; bottom:-2px; font-size:.55rem; font-weight:800; color:#fff; text-shadow:0 1px 2px #0008; }
     #avatar-strip .strip-egg.want::after { background:radial-gradient(#FF9EC0aa, transparent 65%); }
@@ -3650,8 +3654,10 @@ var __dqPopped = {};
 // ทุกคนในบ้านเห็นตอนเจอ/ฟัก (เปิดแอปอยู่ = เห็นทันทีทาง Live · ไม่ได้เปิด = เห็นตอนเปิดครั้งถัดไป) · Members.egg_seen กันเด้งซ้ำ
 function eggStage(c) { return c.status === 'ready' ? 3 : c.warm >= c.goal * 2 / 3 ? 2 : c.warm >= c.goal / 3 ? 1 : 0; }
 // tier: normal = ไข่ครีมจุดเขียว · rare = ไข่ม่วงลายดาวทอง + ประกาย
-// ฐานไข่ (รังฟาง) ตำแหน่งตายตัวซ้ายสุดของห้อง · มีไข่หรือไม่มีก็เห็นฐาน · ไข่อยู่หน้าสุดเสมอ (วางของทับฐานได้)
-function nestSVG() {
+// ฐานไข่ (รังฟาง) ค่าเริ่มต้นซ้ายสุด ย้ายได้ในหน้าจัดห้อง · มีไข่หรือไม่มีก็เห็นฐาน · ไข่อยู่หน้าสุดเสมอ (วางของทับฐานได้)
+function nestX(st) { var x = st && st.nest && Number(st.nest.x); return x >= 0.06 && x <= 0.94 ? x : 0.09; }
+function nestSkin(st) { return (st && st.nest && st.nest.skin) || 'default'; }
+function nestSVG(skin) {   // skin: ตอนนี้มีแค่ default (รังฟาง) · แบบใหม่ = ภาพ webp ในอนาคต
   return '<svg viewBox="0 0 64 28" aria-hidden="true"><ellipse cx="32" cy="17" rx="30" ry="10" fill="#C98F4E" stroke="#1F3B35" stroke-width="2"/>' +
     '<ellipse cx="32" cy="13" rx="23" ry="6" fill="#8A5A2B"/>' +
     '<path d="M6 16q8 5 16 1M20 22q8 3 16 0M38 20q9 2 18-4M10 20q6 3 12 3M44 23q6-1 12-5" stroke="#F2C98A" stroke-width="2" fill="none" stroke-linecap="round"/>' +
@@ -4399,13 +4405,25 @@ function decorHtml(list, roomH, groundY, kh) {
 var ROOM = { list: [], sel: -1, dirty: false };
 function roomEditorHtml(d, mine, edit) {
   ROOM.list = d.stage.decor.map(function (x) { return { id: x.id, art: x.art, name: x.name, h: x.h, fx: x.fx, x: x.x, s: x.s }; });
-  ROOM.sel = -1; ROOM.max = d.stage.max || 8; ROOM.smin = d.stage.scaleMin || .6; ROOM.smax = d.stage.scaleMax || 1.6; ROOM.mine = mine; ROOM.st = d.stage;
+  ROOM.nest = { x: nestX(d.stage), skin: nestSkin(d.stage) }; ROOM.sel = -1; ROOM.max = d.stage.max || 8; ROOM.smin = d.stage.scaleMin || .6; ROOM.smax = d.stage.scaleMax || 1.6; ROOM.mine = mine; ROOM.st = d.stage;
   if (!mine.length) return '<div class="shop-soon" style="box-shadow:none">ยังไม่มีของตกแต่ง<br><small>🎄 ชุดคริสต์มาสซื้อได้ที่ร้านค้า · 🥚 ชุดอื่นลุ้นจากไข่ปริศนา</small></div>' + stagePreview(d.stage);
-  return '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">' + (edit ? 'แตะของด้านล่างเพื่อวาง · ลากซ้าย-ขวา · แตะของในห้องเพื่อปรับขนาด/ลบ' : 'ห้องของครอบครัว · ผู้ปกครองเป็นคนจัด') + '</div>' +
-    '<div class="room-ed" id="room-ed">' + stageBase(d.stage) + '<div class="ed-nest">' + nestSVG() + (roomEggOn() ? '<div class="ed-egg">' + eggSVG(0) + '</div>' : '') + '<small>ที่ของไข่</small></div>' + '<div class="room-tool" id="room-tool"><button onclick="roomSize(-1)">➖</button><span id="room-pct"></span><button onclick="roomSize(1)">➕</button><button onclick="roomZ(1)">⬆️</button><button onclick="roomZ(-1)">⬇️</button><button onclick="roomDel()">🗑️</button></div></div>' +
+  return '<div style="font-size:.78rem;color:var(--text-muted);margin-top:6px">' + (edit ? 'แตะของด้านล่างเพื่อวาง · ลากซ้าย-ขวา · แตะของในห้องเพื่อปรับขนาด/ลบ · ฐานไข่ลากย้ายได้' : 'ห้องของครอบครัว · ผู้ปกครองเป็นคนจัด') + '</div>' +
+    '<div class="room-ed" id="room-ed">' + stageBase(d.stage) + '<div class="ed-nest" id="ed-nest" style="left:calc(' + (nestX(d.stage) * 100) + '% - 35px)">' + nestSVG(nestSkin(d.stage)) + (roomEggOn() ? '<div class="ed-egg">' + eggSVG(0) + '</div>' : '') + '<small>ที่ของไข่</small></div>' + '<div class="room-tool" id="room-tool"><button onclick="roomSize(-1)">➖</button><span id="room-pct"></span><button onclick="roomSize(1)">➕</button><button onclick="roomZ(1)">⬆️</button><button onclick="roomZ(-1)">⬇️</button><button onclick="roomDel()">🗑️</button></div></div>' +
     (edit ? '<div style="font-size:.75rem;color:var(--text-muted);margin-top:6px;text-align:right" id="room-cnt"></div><div class="room-pal" id="room-pal"></div>' : '');
 }
-function roomEditorInit(edit) { ROOM.edit = edit; roomRender(); }
+function roomEditorInit(edit) {
+  ROOM.edit = edit; roomRender();
+  var n = document.getElementById('ed-nest'), ed = document.getElementById('room-ed');
+  if (!n || !edit) return;
+  ed.classList.add('edit');
+  // ฐานไข่: ลากซ้าย-ขวาได้อย่างเดียว (ไม่มีปรับขนาด/ลบ)
+  var sx, ox;
+  n.addEventListener('pointerdown', function (ev) { ev.preventDefault(); n.setPointerCapture(ev.pointerId); sx = ev.clientX; ox = ROOM.nest.x; n.classList.add('drag');
+    ROOM.sel = -1; ed.querySelectorAll('.dc').forEach(function (d) { d.classList.remove('sel'); }); roomTool(); });
+  n.addEventListener('pointermove', function (ev) { if (!n.classList.contains('drag')) return;
+    var x = Math.max(.06, Math.min(.94, ox + (ev.clientX - sx) / ed.clientWidth)); ROOM.nest.x = Math.round(x * 1000) / 1000; n.style.left = 'calc(' + (x * 100) + '% - 35px)'; ROOM.dirty = true; });
+  n.addEventListener('pointerup', function () { n.classList.remove('drag'); });
+}
 function roomRender() {
   var ed = document.getElementById('room-ed'); if (!ed) return;
   ed.querySelectorAll('.dc').forEach(function (e) { e.remove(); });
@@ -4462,7 +4480,7 @@ function roomSave(btn) {
   btn.disabled = true;
   google.script.run.withSuccessHandler(function (res) { SHOP.data = res.shop; ROOM.dirty = false; btn.disabled = false; toast('✅ บันทึกห้องแล้ว · ทุกคนในบ้านเห็นแล้ว'); Live.request(); renderShop(); })
     .withFailureHandler(function (e) { btn.disabled = false; toast(e.message || 'บันทึกไม่สำเร็จ'); })
-    .saveRoom(currentMember.memberId, JSON.stringify(ROOM.list.map(function (x) { return { id: x.id, x: x.x, s: x.s }; })));
+    .saveRoom(currentMember.memberId, JSON.stringify(ROOM.list.map(function (x) { return { id: x.id, x: x.x, s: x.s }; })), JSON.stringify(ROOM.nest || {}));
 }
 
 function shopPick(btn, id) {
@@ -4537,10 +4555,10 @@ function stripUpdate(avatars, stage, egg) {
   el.classList.add('on'); document.body.classList.add('has-strip'); if (typeof urgFabShow === 'function') urgFabShow();
   // ผนัง + พื้น + ของตกแต่ง (หลังตัวละคร) · ไข่ · ป้ายชวนซื้อตัวละคร (ห้องยังไม่มีใครเดิน)
   el.innerHTML = stageBase(stage) + decorHtml(decor, el.clientHeight || 96, 16) +
-    '<div class="strip-nest">' + nestSVG() + '</div>' +
-    (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + '" onclick="eggStripTap(this)" role="button" aria-label="ไข่ปริศนา">' +
+    '<div class="strip-nest" style="left:calc(' + (nestX(stage) * 100) + '% - 35px)">' + nestSVG(nestSkin(stage)) + '</div>' +
+    (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + (nestX(stage) > .5 ? ' nr' : '') + '" style="left:calc(' + (nestX(stage) * 100) + '% - 27px)" onclick="eggStripTap(this)" role="button" aria-label="ไข่ปริศนา">' +
       '<div class="eb"><i style="width:' + Math.min(100, cur.warm / cur.goal * 100) + '%"></i></div>' + eggSVG(eggStage(cur), cur.status === 'ready', cur.tier) + (cur.status === 'ready' ? '<div class="ed"></div><span class="esp" style="left:-6px;top:12px;--dx:-8px">✨</span><span class="esp" style="right:-6px;top:6px;--dx:8px;animation-delay:.5s">✨</span><span class="esp" style="left:40%;top:-14px;--dx:2px;animation-delay:1s">⭐</span>' : '') + '</div>' : '') +
-    (list.length ? '' : '<button type="button" class="strip-sign" onclick="goShop()">🛒 พาตัวละครมาอยู่ในห้องสิ</button>');
+    (list.length ? '' : '<button type="button" class="strip-sign"' + (Math.abs(nestX(stage) - .5) < .27 ? ' style="' + (nestX(stage) < .5 ? 'left:auto;right:8px' : 'left:8px') + ';transform:none"' : '') + ' onclick="goShop()">🛒 พาตัวละครมาอยู่ในห้องสิ</button>');
   eggWantUpdate(cur);
   if (!list.length) return;
   // จุดที่มีของตกแต่ง → ตัวละครเดินผ่านได้ แต่ไม่หยุดยืนทับ
