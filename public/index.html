@@ -610,7 +610,7 @@
     .u-in { width:100%; border:2px solid var(--border); border-radius:12px; padding:11px 12px; font:inherit; font-size:1rem; background:#fff; color:var(--text); }
     .u-dur-pill { display:inline-block; background:var(--gold-light); color:var(--gold-dark); border-radius:14px; padding:6px 16px; font-weight:700; font-size:1.2rem; margin:6px 0 4px; }
     .u-flabel { display:block; font-size:.82rem; font-weight:700; color:var(--text-muted); margin:12px 0 6px; }
-  body.ui2 #pend-box{background:#ffffffeb;border-radius:22px;padding:12px 14px;box-shadow:0 4px 14px #0000000f;margin-top:14px}
+  body.ui2 #pend-box{background:#fff;position:relative;z-index:1;border-radius:22px;padding:12px 14px;box-shadow:0 4px 14px #0000000f;margin-top:14px}
 body.ui2 #pend-box .section-title{margin:0 0 6px;background:none;box-shadow:none;padding:2px 2px 0;backdrop-filter:none}
 .u2-pe{padding:6px 2px 2px;color:var(--text-muted);font-size:.9rem}.u2-pe b{color:var(--success)}
 .u2-pr{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #0000000d}
@@ -2189,7 +2189,7 @@ function showSettings() {
     </div>
     <button type="button" class="set-link" onclick="closeModal();showWeekly()"><span style="font-size:1.3rem">🗓️</span><span style="flex:1;text-align:left">สรุปสัปดาห์<small>7 วันที่ผ่านมา เทียบกับสัปดาห์ก่อน</small></span>›</button>
     <button type="button" class="set-link" onclick="closeModal();openSummary()"><span style="font-size:1.3rem">📊</span><span style="flex:1;text-align:left">สรุปรายวัน<small>ลูกทำอะไรไปบ้างวันนี้</small></span>›</button>
-    <button type="button" class="set-link" onclick="ui2Toggle()"><span style="font-size:1.3rem">🧪</span><span style="flex:1;text-align:left">หน้าหลักแบบใหม่ (ทดลอง)<small>${ui2On() ? 'เปิดอยู่ในเครื่องนี้ · แตะเพื่อกลับแบบเดิม' : 'ลองดูก่อนได้ · เปลี่ยนแค่เครื่องนี้'}</small></span>${ui2On() ? '✅' : '›'}</button>
+    
     <div class="divider"></div>
     <div id="theme-slot">${themeCard()}</div>
     <div class="divider"></div>
@@ -3758,10 +3758,11 @@ function foldToggle(k) {
 
 // ===== หน้าหลักแบบใหม่ (ทดลอง · เปิดเฉพาะเครื่องที่กดในตั้งค่า) =====
 // layout แบบแอปการเงิน: การ์ดดาวม่วง+เป้าหมาย · ปุ่มทางลัด · การ์ดภารกิจประจำวัน · รออนุมัติ → ลูก ๆ
-function ui2On() { try { return localStorage.getItem('sb_ui2') === '1'; } catch (e) { return false; } }
+// หน้าหลักแบบใหม่เป็นค่าเริ่มต้น · sb_ui2 = '0' = แบบเดิม (ใช้ในเทสต์เก่า)
+function ui2On() { try { return localStorage.getItem('sb_ui2') !== '0'; } catch (e) { return true; } }
 function ui2Apply() { var on = ui2On() && !!currentMember && currentMember.role === 'parent'; document.body.classList.toggle('ui2', on); var c = document.getElementById('u2-pp'); if (c && !on) c.remove(); }
 function ui2Toggle() {
-  try { if (ui2On()) localStorage.removeItem('sb_ui2'); else localStorage.setItem('sb_ui2', '1'); } catch (e) {}
+  try { if (ui2On()) localStorage.setItem('sb_ui2', '0'); else localStorage.removeItem('sb_ui2'); } catch (e) {}
   closeModal(); ui2Apply(); if (dashboardData) { renderDaily(dashboardData); urgFabShow(); }
   toast(ui2On() ? '🧪 เปิดหน้าหลักแบบใหม่แล้ว' : 'กลับเป็นแบบเดิมแล้ว');
 }
