@@ -610,7 +610,17 @@
     .u-in { width:100%; border:2px solid var(--border); border-radius:12px; padding:11px 12px; font:inherit; font-size:1rem; background:#fff; color:var(--text); }
     .u-dur-pill { display:inline-block; background:var(--gold-light); color:var(--gold-dark); border-radius:14px; padding:6px 16px; font-weight:700; font-size:1.2rem; margin:6px 0 4px; }
     .u-flabel { display:block; font-size:.82rem; font-weight:700; color:var(--text-muted); margin:12px 0 6px; }
-  </style>
+  body.ui2 #pend-box{background:#ffffffeb;border-radius:22px;padding:12px 14px;box-shadow:0 4px 14px #0000000f;margin-top:14px}
+body.ui2 #pend-box .section-title{margin:0 0 6px;background:none;box-shadow:none;padding:2px 2px 0;backdrop-filter:none}
+.u2-pe{padding:6px 2px 2px;color:var(--text-muted);font-size:.9rem}.u2-pe b{color:var(--success)}
+.u2-pr{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #0000000d}
+.u2-pr:first-child{border-top:0}.u2-pr .av{font-size:1.5rem}.u2-pr .tx{flex:1;min-width:0}
+.u2-pr .tx b{display:block;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u2-pr .tx small{color:var(--text-muted);font-size:.76rem}
+.u2-pr button{width:38px;height:38px;border-radius:50%;border:0;font-size:1.1rem;font-weight:800;color:#fff;flex:none;cursor:pointer}
+.u2-pr .ok{background:var(--success)}.u2-pr .no{background:#fff;color:var(--danger);border:2px solid #f3c4c4}
+.u2-pall{display:block;width:100%;margin-top:6px;padding:9px;border:0;border-radius:12px;background:#0000000a;font-weight:700;color:var(--text);cursor:pointer}
+</style>
   <style>
     /* === ภารกิจประจำวัน + ดาวม่วง + ร้านค้า + ตัวละครเดินด้านล่าง === */
     :root { --purple:#8B5CF6; --purple-d:#6D3FD9; --purple-l:#EFE7FF; --strip-h:96px; --nav-h:64px; }
@@ -1110,11 +1120,13 @@
     <button onclick="doAcknowledgeRedemptions()" style="margin-top:12px;width:100%;padding:10px;background:var(--gold-dark);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer">✅ รับทราบแล้ว</button>
   </div>
 
+  <div id="pend-box">
   <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
     <span>⏳ รออนุมัติ</span>
     <span class="nav-badge" id="pending-count-home" style="display:none"></span>
   </div>
   <div id="parent-pending-home"></div>
+  </div>
 </div>
 
 <!-- ==================== PARENT: MISSIONS ==================== -->
@@ -1691,10 +1703,10 @@ function renderParentHome(d) {
   if (d.pending.length) {
     badge.style.display = 'inline-flex';
     badge.textContent = d.pending.length;
-    ph.innerHTML = pendingGroups(d.pending, 3);
+    ph.innerHTML = ui2On() ? ui2Pending(d.pending) : pendingGroups(d.pending, 3);
   } else {
     badge.style.display = 'none';
-    ph.innerHTML = '<div class="empty-state" style="padding:20px"><div class="es-icon">✅</div>ไม่มีรายการรออนุมัติ</div>';
+    ph.innerHTML = ui2On() ? '<div class="u2-pe">✅ ไม่มีรายการรออนุมัติ · <b>เรียบร้อยดี</b></div>' : '<div class="empty-state" style="padding:20px"><div class="es-icon">✅</div>ไม่มีรายการรออนุมัติ</div>';
   }
 
   // pending nav badge
@@ -1870,6 +1882,18 @@ function urgOnTime(k) {
   return '<span class="urg-ontime">✓ ส่งทันใน ' + Math.max(1, Math.round((b - a) / 60000)) + ' นาที</span> ';
 }
 // รออนุมัติ: ด่วนอยู่บนสุด แล้วตามด้วยภารกิจทั่วไป (ทั่วไปโชว์ไม่เกิน max)
+// หน้าหลักทดลอง: รออนุมัติแบบแถวกะทัดรัด (ด่วนขึ้นก่อน) สูงสุด 3 แถว + ปุ่มดูทั้งหมด
+function ui2Pending(list) {
+  var all = list.filter(urgSub).concat(list.filter(function (s) { return !urgSub(s); }));
+  return all.slice(0, 3).map(function (s) {
+    var c = dashboardData.members.find(function (m) { return m.member_id === s.child_id; }), u = urgSub(s);
+    var t = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    return '<div class="u2-pr' + (u ? ' urg' : '') + '"><span class="av">' + (c ? c.avatar : '👤') + '</span><div class="tx"><b>' +
+      (u ? '<span class="urg-tag">⚡ ด่วน</span>' : '') + esc(String(s.mission_title).replace(/^⚡\s*/, '')) + '</b><small>' + esc(c ? c.name : '?') + ' · ' + (u ? urgOnTime(u) : '') + t + '</small></div>' +
+      '<button class="ok" aria-label="อนุมัติ" onclick="doReview(\'' + s.submission_id + '\',\'approved\')">✓</button>' +
+      '<button class="no" aria-label="ไม่อนุมัติ" onclick="doReview(\'' + s.submission_id + '\',\'rejected\')">✕</button></div>';
+  }).join('') + (all.length > 3 ? '<button class="u2-pall" onclick="parentNav(\'approvals\')">ดูทั้งหมด (' + all.length + ') ›</button>' : '');
+}
 function pendingGroups(list, max) {
   var u = list.filter(urgSub), n = list.filter(function (s) { return !urgSub(s); });
   var h = '';
