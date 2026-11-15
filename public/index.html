@@ -529,6 +529,18 @@
     .u2-hero { position:relative; margin-top:6px; background:linear-gradient(150deg,#1E5A47,#2A7A5F); border-radius:26px; padding:16px 18px 14px; color:#fff; border:3px solid #fff; box-shadow:0 10px 20px #1E5A4740;
       background-image:radial-gradient(circle at 15% 25%,#ffffff22 2px,transparent 3px),radial-gradient(circle at 70% 15%,#ffffff22 2px,transparent 3px),radial-gradient(circle at 45% 80%,#ffffff1a 2px,transparent 3px),linear-gradient(150deg,#1E5A47,#2A7A5F); background-size:60px 60px,60px 60px,60px 60px,auto; }
     .u2-hero small { opacity:.85; font-size:.78rem; }
+    .u2-car { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; margin:6px -4px 0; padding:16px 4px 6px; }
+    .u2-car::-webkit-scrollbar { display:none; }
+    .u2-slide { flex:0 0 100%; scroll-snap-align:center; margin-top:0 !important; }
+    .u2-slide.fam { background-image:radial-gradient(circle at 15% 25%,#ffffff22 2px,transparent 3px),radial-gradient(circle at 70% 15%,#ffffff22 2px,transparent 3px),linear-gradient(150deg,#5B3AA8,#8B5CF6) !important; box-shadow:0 10px 20px #5B3AA840; }
+    .u2-kid { display:flex; align-items:center; gap:8px; font-size:.95rem; }
+    .u2-kav { width:34px; height:34px; border-radius:50%; background:#ffffff26; display:grid; place-items:center; font-size:1.2rem; border:2px solid #ffffff55; }
+    .u2-goal button.q { background:#ffffff26; color:#fff; box-shadow:none; }
+    .u2-dots { display:flex; justify-content:center; gap:6px; margin:2px 0 0; }
+    .u2-dots i { width:7px; height:7px; border-radius:9px; background:#1E5A4733; cursor:pointer; transition:width .2s; } .u2-dots i.on { width:20px; background:#1E5A47; } .u2-dots i.p.on { background:#8B5CF6; }
+    body.ui2 #parent-family-name, body.ui2 #parent-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:34vw; }
+    .u2-pp { border:0; border-radius:99px; background:#F1ECFF; color:#5B3AA8; font:inherit; font-weight:800; font-size:.82rem; padding:0 10px; height:36px; white-space:nowrap; box-shadow:0 2px 6px #0001; cursor:pointer; }
+    body.ui2 #screen-parent-home > .fold-h, body.ui2 #parent-children-list { display:none !important; }
     .u2-big { font-size:2.3rem; font-weight:800; margin:0 0 8px; display:flex; align-items:baseline; gap:8px; } .u2-big span { font-size:.95rem; opacity:.75; font-weight:600; }
     .u2-mascot { position:absolute; right:-4px; top:-14px; width:96px; filter:drop-shadow(0 6px 8px #0003); animation:u2bob 3s ease-in-out infinite; pointer-events:none; }
     @keyframes u2bob { 50% { transform:translateY(-5px) rotate(-3deg) } }
@@ -3649,7 +3661,7 @@ function foldToggle(k) {
 // ===== หน้าหลักแบบใหม่ (ทดลอง · เปิดเฉพาะเครื่องที่กดในตั้งค่า) =====
 // layout แบบแอปการเงิน: การ์ดดาวม่วง+เป้าหมาย · ปุ่มทางลัด · การ์ดภารกิจประจำวัน · รออนุมัติ → ลูก ๆ
 function ui2On() { try { return localStorage.getItem('sb_ui2') === '1'; } catch (e) { return false; } }
-function ui2Apply() { document.body.classList.toggle('ui2', ui2On() && !!currentMember && currentMember.role === 'parent'); }
+function ui2Apply() { var on = ui2On() && !!currentMember && currentMember.role === 'parent'; document.body.classList.toggle('ui2', on); var c = document.getElementById('u2-pp'); if (c && !on) c.remove(); }
 function ui2Toggle() {
   try { if (ui2On()) localStorage.removeItem('sb_ui2'); else localStorage.setItem('sb_ui2', '1'); } catch (e) {}
   closeModal(); ui2Apply(); if (dashboardData) { renderDaily(dashboardData); urgFabShow(); }
@@ -3668,13 +3680,45 @@ function ui2Top(d, dl) {
   var promo = q ? '<div class="u2-promo" onclick="ui2Quests()"><div style="flex:1;min-width:0"><b>' + q.icon + ' ภารกิจประจำวัน</b><small>' + esc(q.title) + ' · ได้ ' + PSTAR + ' ' + q.reward + '</small>' +
       (q.status === 'done' ? '<button class="u2-pill" onclick="event.stopPropagation();claimQuestNow(this,\'' + escJs(q.quest_id) + '\')">รับ +' + q.reward + ' ' + PSTAR + '</button>' : '<span class="u2-pill">ดูภารกิจทั้งหมด · ' + nd + '/' + all.length + ' เสร็จ</span>') +
       '</div><div class="u2-num">' + (q.status === 'claimed' ? '✓' : Math.min(q.progress, q.target) + '/' + q.target) + '<small>วันนี้</small></div></div>' : '';
-  return '<div class="u2-hero">' + (mascot ? '<img class="u2-mascot" src="' + mascot + '" alt="">' : '') +
-      '<small>' + PSTAR + ' ดาวม่วงของครอบครัว</small><div class="u2-big">' + dl.wallet.purple + ' <span>ดวง</span></div>' + ui2Goal(dl.goal) + '</div>' +
+  ui2Chip(dl.wallet.purple);
+  return ui2Kids(d, dl, mascot) +
     '<div class="u2-acts">' +
       '<button class="u2-act u" onclick="showCreateUrgent()"><i>' + urgArt + '</i>ภารกิจด่วน</button>' +
       '<button class="u2-act a" onclick="showAddMission()"><i>📝</i>เพิ่มภารกิจ</button>' +
       '<button class="u2-act b" onclick="ui2Gift()"><i>🎁</i>ส่งของขวัญ</button>' +
       '<button class="u2-act c" onclick="showWeekly()"><i>🗓️</i>สรุปสัปดาห์</button></div>' + promo;
+}
+// การ์ดบนสุด = ดาวของลูกทีละคน ปัดซ้าย-ขวาเปลี่ยนคน · ใบสุดท้าย = กระเป๋าดาวม่วงของครอบครัว + เป้าหมาย
+var U2 = { i: 0 };
+function ui2Kids(d, dl, mascot) {
+  var kids = d.children || [];
+  var slides = kids.map(function (c) {
+    var wc = d.wheel && d.wheel.enabled ? wheelChildInfo(c.member_id) : null;
+    return '<div class="u2-hero u2-slide">' + (mascot ? '<img class="u2-mascot" src="' + mascot + '" alt="">' : '') +
+      '<div class="u2-kid"><span class="u2-kav">' + esc(c.avatar) + '</span><b>' + esc(c.name) + '</b></div>' +
+      '<div class="u2-big">⭐ ' + c.stats.balance + ' <span>ดาว</span></div>' +
+      '<div class="u2-goal"><div style="flex:1;min-width:0;font-size:.76rem">ได้รับ ' + c.stats.totalEarned + ' · ใช้ไป ' + c.stats.totalSpent +
+        (wc ? '<br>' + TW('icon') + ' ' + wc.run + '/5' + (wc.spins ? ' · 🎡 หมุนได้ ' + wc.spins : '') : '') + '</div>' +
+        '<button onclick="showSendGift(\'' + c.member_id + '\')">🎁 ของขวัญ</button><button class="q" onclick="showChildQr(\'' + c.member_id + '\',\'' + escJs(c.name) + '\')">QR</button></div></div>';
+  });
+  slides.push('<div class="u2-hero u2-slide fam"><small>' + PSTAR + ' ดาวม่วงของครอบครัว</small><div class="u2-big">' + dl.wallet.purple + ' <span>ดวง</span></div>' + ui2Goal(dl.goal) + '</div>');
+  if (U2.i >= slides.length) U2.i = 0;
+  return '<div class="u2-car" id="u2-car" onscroll="ui2Dots(this)">' + slides.join('') + '</div>' +
+    '<div class="u2-dots" id="u2-dots">' + slides.map(function (_, i) { return '<i class="' + (i === U2.i ? 'on' : '') + (i === slides.length - 1 ? ' p' : '') + '" onclick="ui2Go(' + i + ')"></i>'; }).join('') + '</div>';
+}
+function ui2Dots(el) {
+  var i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); if (i === U2.i) return; U2.i = i;
+  document.querySelectorAll('#u2-dots i').forEach(function (d, k) { d.classList.toggle('on', k === i); });
+}
+function ui2Go(i) { var el = document.getElementById('u2-car'); if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }); }
+function ui2Restore() { var el = document.getElementById('u2-car'); if (el && U2.i) el.scrollLeft = U2.i * el.clientWidth; }
+// ดาวม่วงของครอบครัวอยู่ที่หัวจอเสมอ (แตะ = ไปการ์ดกระเป๋าครอบครัว)
+function ui2Chip(n) {
+  var top = document.querySelector('#screen-parent-home .top-strip'); if (!top) return;
+  var c = document.getElementById('u2-pp');
+  if (!c) { c = document.createElement('button'); c.id = 'u2-pp'; c.type = 'button'; c.className = 'u2-pp'; c.onclick = function () { ui2Go(document.querySelectorAll('#u2-car .u2-slide').length - 1); };
+    var right = top.lastElementChild; right.insertBefore(c, right.firstChild); }
+  c.innerHTML = PSTAR + ' ' + n;
 }
 function ui2Quests() {
   var dl = dashboardData && dashboardData.daily; if (!dl) return;
@@ -3707,6 +3751,7 @@ function renderDaily(d) {
     html += '</div>';
     if (ui2On()) html = ui2Top(d, dl);
   }
+  if (!isKid && ui2On()) setTimeout(ui2Restore, 0);
   el.innerHTML = html;
   ppSprites(el);
   foldApply();
