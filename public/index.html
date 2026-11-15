@@ -519,6 +519,47 @@
     .rh-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
     .rh-row.urg{border-left:4px solid #FF5A36;background:#FFF6F2;border-radius:8px;padding:10px 8px;margin:4px 0}
     .set-link{margin-top:12px;width:100%;display:flex;align-items:center;gap:10px;padding:14px;border:1.5px solid var(--border);background:#fff;border-radius:14px;font:inherit;font-weight:700;font-size:1rem;color:var(--text);cursor:pointer}
+    /* ===== หน้าหลักแบบใหม่ (ทดลอง) ===== */
+    body.ui2 #screen-parent-home.active { display:flex; flex-direction:column; }
+    body.ui2 #screen-parent-home > * { order:5; }
+    body.ui2 #screen-parent-home > .top-strip { order:0; } body.ui2 #parent-daily { order:1; }
+    body.ui2 #screen-parent-home > .section-title:not(.fold-h), body.ui2 #parent-pending-home { order:2; }
+    body.ui2 #screen-parent-home > .fold-h, body.ui2 #parent-children-list { order:3; }
+    body.ui2 #parent-avatar { width:46px; height:46px; border-radius:50%; background:#fff; display:grid; place-items:center; font-size:1.6rem !important; border:3px solid #fff; box-shadow:0 3px 8px #0001; }
+    body.ui2 .section-title { font-size:1.02rem; }
+    .u2-hero { position:relative; margin-top:6px; background:linear-gradient(150deg,#1E5A47,#2A7A5F); border-radius:26px; padding:16px 18px 14px; color:#fff; border:3px solid #fff; box-shadow:0 10px 20px #1E5A4740;
+      background-image:radial-gradient(circle at 15% 25%,#ffffff22 2px,transparent 3px),radial-gradient(circle at 70% 15%,#ffffff22 2px,transparent 3px),radial-gradient(circle at 45% 80%,#ffffff1a 2px,transparent 3px),linear-gradient(150deg,#1E5A47,#2A7A5F); background-size:60px 60px,60px 60px,60px 60px,auto; }
+    .u2-hero small { opacity:.85; font-size:.78rem; }
+    .u2-car { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; margin:6px -4px 0; padding:16px 4px 6px; }
+    .u2-car::-webkit-scrollbar { display:none; }
+    .u2-slide { flex:0 0 100%; scroll-snap-align:center; margin-top:0 !important; }
+    .u2-slide.fam { background-image:radial-gradient(circle at 15% 25%,#ffffff22 2px,transparent 3px),radial-gradient(circle at 70% 15%,#ffffff22 2px,transparent 3px),linear-gradient(150deg,#5B3AA8,#8B5CF6) !important; box-shadow:0 10px 20px #5B3AA840; }
+    .u2-kid { display:flex; align-items:center; gap:8px; font-size:.95rem; }
+    .u2-kav { width:34px; height:34px; border-radius:50%; background:#ffffff26; display:grid; place-items:center; font-size:1.2rem; border:2px solid #ffffff55; }
+    .u2-goal button.q { background:#ffffff26; color:#fff; box-shadow:none; }
+    .u2-dots { display:flex; justify-content:center; gap:6px; margin:2px 0 0; }
+    .u2-dots i { width:7px; height:7px; border-radius:9px; background:#1E5A4733; cursor:pointer; transition:width .2s; } .u2-dots i.on { width:20px; background:#1E5A47; } .u2-dots i.p.on { background:#8B5CF6; }
+    body.ui2 #parent-family-name, body.ui2 #parent-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:34vw; }
+    .u2-pp { border:0; border-radius:99px; background:#F1ECFF; color:#5B3AA8; font:inherit; font-weight:800; font-size:.82rem; padding:0 10px; height:36px; white-space:nowrap; box-shadow:0 2px 6px #0001; cursor:pointer; }
+    body.ui2 #screen-parent-home > .fold-h, body.ui2 #parent-children-list { display:none !important; }
+    .u2-big { font-size:2.3rem; font-weight:800; margin:0 0 8px; display:flex; align-items:baseline; gap:8px; } .u2-big span { font-size:.95rem; opacity:.75; font-weight:600; }
+    .u2-mascot { position:absolute; right:-4px; top:-14px; width:96px; filter:drop-shadow(0 6px 8px #0003); animation:u2bob 3s ease-in-out infinite; pointer-events:none; }
+    @keyframes u2bob { 50% { transform:translateY(-5px) rotate(-3deg) } }
+    .u2-goal { background:#ffffff1f; border-radius:16px; padding:9px 12px; display:flex; align-items:center; gap:10px; font-size:.8rem; }
+    .u2-bar { height:8px; border-radius:9px; background:#ffffff30; margin-top:5px; overflow:hidden; } .u2-bar b { display:block; height:100%; background:repeating-linear-gradient(45deg,#FFC24B 0 8px,#FFD978 8px 16px); border-radius:9px; }
+    .u2-goal button { border:0; border-radius:99px; background:#fff; color:#1E5A47; font:inherit; font-weight:800; font-size:.74rem; padding:6px 11px; box-shadow:0 2px 0 #0002; white-space:nowrap; cursor:pointer; }
+    .u2-acts { display:flex; justify-content:space-between; margin:14px 0 0; }
+    .u2-act { display:flex; flex-direction:column; align-items:center; gap:5px; font:inherit; font-size:.74rem; width:24%; background:none; border:0; color:var(--text); cursor:pointer; padding:0; }
+    .u2-act i { width:60px; height:60px; border-radius:22px; display:grid; place-items:center; font-style:normal; font-size:26px; background:#fff; border:3px solid #fff; box-shadow:0 4px 0 #D7E6E0,0 6px 12px #0000000f; }
+    .u2-act:active i { transform:translateY(3px); box-shadow:0 1px 0 #D7E6E0; }
+    .u2-act.u i { background:none; border:0; box-shadow:none; } .u2-act.u img { width:66px; margin:-4px; }
+    .u2-act.a i { background:#E3F5EE; } .u2-act.b i { background:#FFF0E6; } .u2-act.c i { background:#F1ECFF; }
+    .u2-promo { margin:14px 0 4px; border-radius:24px; padding:14px 16px; background:linear-gradient(120deg,#FFF6DD,#FFE6B3); border:3px solid #fff; box-shadow:0 6px 14px #E7B54A33; display:flex; align-items:center; gap:8px; cursor:pointer; }
+    .u2-promo b { font-size:.95rem; } .u2-promo small { display:block; color:#7a5a1f; font-size:.76rem; margin:2px 0 8px; }
+    .u2-pill { display:inline-block; border:0; background:#E5484D; color:#fff; border-radius:99px; font:inherit; font-size:.72rem; font-weight:700; padding:5px 12px; box-shadow:0 2px 0 #b83236; }
+    .u2-num { text-align:center; font-size:2.3rem; font-weight:800; color:#C98A00; line-height:1; text-shadow:0 3px 0 #F2CD72; }
+    .u2-num small { display:block; font-size:.68rem; text-shadow:none; margin:0; color:#7a5a1f; font-weight:600; }
+    body.ui2 #parent-pending-home .pending-item, body.ui2 #parent-children-list > * { border-radius:22px; border:3px solid #fff; box-shadow:0 4px 12px #0000000c; }
     .set-link small{display:block;font-weight:400;font-size:.8rem;color:var(--text-muted)}
     .u-card { position:relative; overflow:hidden; background:#fff; border:3px solid #FF5A36; border-radius:20px; padding:14px; margin-bottom:14px; box-shadow:0 6px 18px rgba(255,90,54,.15); }
     .u-card .u-tag { position:absolute; right:-34px; top:12px; background:#FF5A36; color:#fff; font-size:.72rem; font-weight:700; transform:rotate(35deg); padding:3px 38px; }
@@ -2088,6 +2129,7 @@ function showSettings() {
     </div>
     <button type="button" class="set-link" onclick="closeModal();showWeekly()"><span style="font-size:1.3rem">🗓️</span><span style="flex:1;text-align:left">สรุปสัปดาห์<small>7 วันที่ผ่านมา เทียบกับสัปดาห์ก่อน</small></span>›</button>
     <button type="button" class="set-link" onclick="closeModal();openSummary()"><span style="font-size:1.3rem">📊</span><span style="flex:1;text-align:left">สรุปรายวัน<small>ลูกทำอะไรไปบ้างวันนี้</small></span>›</button>
+    <button type="button" class="set-link" onclick="ui2Toggle()"><span style="font-size:1.3rem">🧪</span><span style="flex:1;text-align:left">หน้าหลักแบบใหม่ (ทดลอง)<small>${ui2On() ? 'เปิดอยู่ในเครื่องนี้ · แตะเพื่อกลับแบบเดิม' : 'ลองดูก่อนได้ · เปลี่ยนแค่เครื่องนี้'}</small></span>${ui2On() ? '✅' : '›'}</button>
     <div class="divider"></div>
     <div id="theme-slot">${themeCard()}</div>
     <div class="divider"></div>
@@ -3252,7 +3294,7 @@ function urgFabRing() {
 function urgFabShow() {
   var b = document.getElementById('urg-fab'); if (!b) return;
   var home = document.getElementById('screen-parent-home');
-  var on = !!(currentMember && currentMember.role !== 'child' && home && home.classList.contains('active'));
+  var on = !!(currentMember && currentMember.role !== 'child' && home && home.classList.contains('active')) && !document.body.classList.contains('ui2');
   b.hidden = !on; document.body.classList.toggle('urg-fab-on', on);
   if (on) urgFabPlace(b);
 }
@@ -3652,7 +3694,81 @@ function foldToggle(k) {
   foldApply();
 }
 
+// ===== หน้าหลักแบบใหม่ (ทดลอง · เปิดเฉพาะเครื่องที่กดในตั้งค่า) =====
+// layout แบบแอปการเงิน: การ์ดดาวม่วง+เป้าหมาย · ปุ่มทางลัด · การ์ดภารกิจประจำวัน · รออนุมัติ → ลูก ๆ
+function ui2On() { try { return localStorage.getItem('sb_ui2') === '1'; } catch (e) { return false; } }
+function ui2Apply() { var on = ui2On() && !!currentMember && currentMember.role === 'parent'; document.body.classList.toggle('ui2', on); var c = document.getElementById('u2-pp'); if (c && !on) c.remove(); }
+function ui2Toggle() {
+  try { if (ui2On()) localStorage.removeItem('sb_ui2'); else localStorage.setItem('sb_ui2', '1'); } catch (e) {}
+  closeModal(); ui2Apply(); if (dashboardData) { renderDaily(dashboardData); urgFabShow(); }
+  toast(ui2On() ? '🧪 เปิดหน้าหลักแบบใหม่แล้ว' : 'กลับเป็นแบบเดิมแล้ว');
+}
+function ui2Goal(g) {
+  var x = g && !g.none ? (g.home ? g : (g.kidGoals || [])[0]) : null;
+  if (!x) return '<div class="u2-goal"><div style="flex:1">🎯 ยังไม่มีเป้าหมาย · ให้ลูกกด 💜 อยากได้ ในร้าน</div><button onclick="goShop()">ไปร้าน ›</button></div>';
+  return '<div class="u2-goal"><div style="flex:1;min-width:0">🎯 เป้าหมาย <b>' + esc(x.name) + '</b> · ' + (x.left ? 'อีก ' + x.left : 'พอซื้อแล้ว!') +
+    '<div class="u2-bar"><b style="width:' + Math.min(100, x.have / x.price * 100) + '%"></b></div></div><button onclick="goShop()">ไปร้าน ›</button></div>';
+}
+function ui2Top(d, dl) {
+  var m = (THEME.mascot || THEME_DEFAULT.mascot || {}), mascot = m.yay ? themeUrl(m.yay) : '';
+  var urgArt = THEME.urgentBtn ? '<img src="' + themeUrl(THEME.urgentBtn) + '" alt="">' : '⚡';
+  var q = dl.parents, all = (dl.parents ? [dl.parents] : []).concat(dl.kids), nd = all.filter(function (x) { return x.status !== 'active'; }).length;
+  var promo = q ? '<div class="u2-promo" onclick="ui2Quests()"><div style="flex:1;min-width:0"><b>' + q.icon + ' ภารกิจประจำวัน</b><small>' + esc(q.title) + ' · ได้ ' + PSTAR + ' ' + q.reward + '</small>' +
+      (q.status === 'done' ? '<button class="u2-pill" onclick="event.stopPropagation();claimQuestNow(this,\'' + escJs(q.quest_id) + '\')">รับ +' + q.reward + ' ' + PSTAR + '</button>' : '<span class="u2-pill">ดูภารกิจทั้งหมด · ' + nd + '/' + all.length + ' เสร็จ</span>') +
+      '</div><div class="u2-num">' + (q.status === 'claimed' ? '✓' : Math.min(q.progress, q.target) + '/' + q.target) + '<small>วันนี้</small></div></div>' : '';
+  ui2Chip(dl.wallet.purple);
+  return ui2Kids(d, dl, mascot) +
+    '<div class="u2-acts">' +
+      '<button class="u2-act u" onclick="showCreateUrgent()"><i>' + urgArt + '</i>ภารกิจด่วน</button>' +
+      '<button class="u2-act a" onclick="showAddMission()"><i>📝</i>เพิ่มภารกิจ</button>' +
+      '<button class="u2-act b" onclick="ui2Gift()"><i>🎁</i>ส่งของขวัญ</button>' +
+      '<button class="u2-act c" onclick="showWeekly()"><i>🗓️</i>สรุปสัปดาห์</button></div>' + promo;
+}
+// การ์ดบนสุด = ดาวของลูกทีละคน ปัดซ้าย-ขวาเปลี่ยนคน · ใบสุดท้าย = กระเป๋าดาวม่วงของครอบครัว + เป้าหมาย
+var U2 = { i: 0 };
+function ui2Kids(d, dl, mascot) {
+  var kids = d.children || [];
+  var slides = kids.map(function (c) {
+    var wc = d.wheel && d.wheel.enabled ? wheelChildInfo(c.member_id) : null;
+    return '<div class="u2-hero u2-slide">' + (mascot ? '<img class="u2-mascot" src="' + mascot + '" alt="">' : '') +
+      '<div class="u2-kid"><span class="u2-kav">' + esc(c.avatar) + '</span><b>' + esc(c.name) + '</b></div>' +
+      '<div class="u2-big">⭐ ' + c.stats.balance + ' <span>ดาว</span></div>' +
+      '<div class="u2-goal"><div style="flex:1;min-width:0;font-size:.76rem">ได้รับ ' + c.stats.totalEarned + ' · ใช้ไป ' + c.stats.totalSpent +
+        (wc ? '<br>' + TW('icon') + ' ' + wc.run + '/5' + (wc.spins ? ' · 🎡 หมุนได้ ' + wc.spins : '') : '') + '</div>' +
+        '<button onclick="showSendGift(\'' + c.member_id + '\')">🎁 ของขวัญ</button><button class="q" onclick="showChildQr(\'' + c.member_id + '\',\'' + escJs(c.name) + '\')">QR</button></div></div>';
+  });
+  slides.push('<div class="u2-hero u2-slide fam"><small>' + PSTAR + ' ดาวม่วงของครอบครัว</small><div class="u2-big">' + dl.wallet.purple + ' <span>ดวง</span></div>' + ui2Goal(dl.goal) + '</div>');
+  if (U2.i >= slides.length) U2.i = 0;
+  return '<div class="u2-car" id="u2-car" onscroll="ui2Dots(this)">' + slides.join('') + '</div>' +
+    '<div class="u2-dots" id="u2-dots">' + slides.map(function (_, i) { return '<i class="' + (i === U2.i ? 'on' : '') + (i === slides.length - 1 ? ' p' : '') + '" onclick="ui2Go(' + i + ')"></i>'; }).join('') + '</div>';
+}
+function ui2Dots(el) {
+  var i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); if (i === U2.i) return; U2.i = i;
+  document.querySelectorAll('#u2-dots i').forEach(function (d, k) { d.classList.toggle('on', k === i); });
+}
+function ui2Go(i) { var el = document.getElementById('u2-car'); if (el) el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }); }
+function ui2Restore() { var el = document.getElementById('u2-car'); if (el && U2.i) el.scrollLeft = U2.i * el.clientWidth; }
+// ดาวม่วงของครอบครัวอยู่ที่หัวจอเสมอ (แตะ = ไปการ์ดกระเป๋าครอบครัว)
+function ui2Chip(n) {
+  var top = document.querySelector('#screen-parent-home .top-strip'); if (!top) return;
+  var c = document.getElementById('u2-pp');
+  if (!c) { c = document.createElement('button'); c.id = 'u2-pp'; c.type = 'button'; c.className = 'u2-pp'; c.onclick = function () { ui2Go(document.querySelectorAll('#u2-car .u2-slide').length - 1); };
+    var right = top.lastElementChild; right.insertBefore(c, right.firstChild); }
+  c.innerHTML = PSTAR + ' ' + n;
+}
+function ui2Quests() {
+  var dl = dashboardData && dashboardData.daily; if (!dl) return;
+  openModal('<h2>🌞 ภารกิจประจำวัน</h2>' + (dl.parents ? '<div class="dq-card"><h3>👨‍👩‍👧 ภารกิจร่วมผู้ปกครอง</h3>' + dqRow(dl.parents, true) + '</div>' : '') +
+    (dl.kids.length ? '<div class="dq-card"><h3>👧 ภารกิจของลูกวันนี้</h3>' + dl.kids.map(function (q) { return dqRow(q, true); }).join('') + '</div>' : '') +
+    '<div style="display:flex;margin-top:10px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div>');
+}
+function ui2Gift() {
+  var kids = (dashboardData && dashboardData.children) || [];
+  if (kids.length === 1) return showSendGift(kids[0].member_id);
+  openModal('<h2>🎁 ส่งของขวัญให้ใคร?</h2>' + kids.map(function (c) { return '<button class="set-link" onclick="closeModal();showSendGift(\'' + c.member_id + '\')"><span style="font-size:1.6rem">' + esc(c.avatar) + '</span><span style="flex:1;text-align:left">' + esc(c.name) + '</span>›</button>'; }).join(''));
+}
 function renderDaily(d) {
+  ui2Apply();
   var dl = d && d.daily; if (!dl) return;
   var isKid = currentMember && currentMember.role === 'child';
   var el = document.getElementById(isKid ? 'child-daily' : 'parent-daily');
@@ -3669,7 +3785,9 @@ function renderDaily(d) {
       (dl.parents ? '<div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">ภารกิจร่วมของผู้ปกครอง ใครทำก็นับ</div>' : '') + '</div>';
     if (dl.kids.length) html += '<div class="dq-card"><h3>👧 ภารกิจของลูกวันนี้</h3>' + dl.kids.map(function (q) { return dqRow(q, true); }).join('') + '</div>';
     html += '</div>';
+    if (ui2On()) html = ui2Top(d, dl);
   }
+  if (!isKid && ui2On()) setTimeout(ui2Restore, 0);
   el.innerHTML = html;
   ppSprites(el);
   foldApply();

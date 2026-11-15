@@ -3,6 +3,8 @@
 const path = require('path');
 const PNG1x1 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
 module.exports = async function routes(p) {
+  // สรุปสัปดาห์เด้งเองช่วงอาทิตย์ 17:00–อังคาร → ปิดในเทสต์อื่น (ui-weekly เปิดเองผ่านตั้งค่า)
+  await p.addInitScript(() => { try { var t = new Date(Date.now() + 7 * 3600000), d = t.getUTCDay(), b = (d === 0 && t.getUTCHours() >= 17) ? 0 : (d === 0 ? 7 : d); localStorage.setItem('sb_week_seen', new Date(t.getTime() - b * 86400000).toISOString().slice(0, 10)); } catch (e) {} });
   await p.route('**/cdn.jsdelivr.net/**', r => {
     const u = r.request().url();
     if (u.includes('qrcode-generator')) return r.fulfill({ path: path.join(__dirname, '../node_modules/qrcode-generator/qrcode.js'), contentType: 'application/javascript' });
