@@ -536,13 +536,16 @@
     .u2-hero.th-xmas::after { content:""; position:absolute; left:-4px; right:-4px; bottom:-2px; height:18px; z-index:0; pointer-events:none;
       background:radial-gradient(14px 10px at 12px 100%,#fff 98%,transparent) 0 100%/28px 18px repeat-x; opacity:.92; }
     .u2-hero > * { position:relative; z-index:1; }
+    .u2-hero.u2-slide.has-img { background-image:linear-gradient(90deg,#0000002e,transparent 55%),var(--cbg) !important; background-size:cover,cover !important; background-position:center,right bottom !important; overflow:hidden; }
+    .u2-hero.has-img::after { display:none; }
+    .u2-hero.has-img .u2-goal { background:#0000001a; }
     .u2-car { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; margin:6px -4px 0; padding:16px 4px 6px; }
     .u2-car::-webkit-scrollbar { display:none; }
     .u2-slide { flex:0 0 100%; scroll-snap-align:center; margin-top:0 !important; }
     .u2-slide.fam { background-image:radial-gradient(circle at 15% 25%,#ffffff22 2px,transparent 3px),radial-gradient(circle at 70% 15%,#ffffff22 2px,transparent 3px),linear-gradient(150deg,#5B3AA8,#8B5CF6) !important; box-shadow:0 10px 20px #5B3AA840; }
     .u2-kid { display:flex; align-items:center; gap:8px; font-size:.95rem; }
     .u2-kav { width:34px; height:34px; border-radius:50%; background:#ffffff26; display:grid; place-items:center; font-size:1.2rem; border:2px solid #ffffff55; }
-    .u2-goal button.q { background:#ffffff26; color:#fff; box-shadow:none; }
+    .u2-goal button.q { background:#1F3B35aa; color:#fff; box-shadow:none; }
     .u2-dots { display:flex; justify-content:center; gap:6px; margin:2px 0 0; }
     .u2-dots i { width:7px; height:7px; border-radius:9px; background:#1E5A4733; cursor:pointer; transition:width .2s; } .u2-dots i.on { width:20px; background:#1E5A47; } .u2-dots i.p.on { background:#8B5CF6; }
     body.ui2 #parent-family-name, body.ui2 #parent-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:34vw; }
@@ -2890,7 +2893,8 @@ var THEME_DEFAULT = {
   mascot: { go: 'mascot/dao-go.webp', sleep: 'mascot/dao-sleep.webp', timeout: 'mascot/dao-timeout.webp', yay: 'mascot/dao-yay.webp' },
   words: { icon: '🎄', board: 'ต้นคริสต์มาส', item: 'ลูกบอล', unit: 'ลูก', add: 'แขวน', full: 'ต้นไม้ครบ 5 ลูก ดาวสว่างแล้ว!',
     celebrateTag: '🎄 ภารกิจต้นคริสต์มาส', celebrateTitle: 'ครบ 5 วันแล้ว! 🎉', celebrateText: 'ต้นไม้ของหนูสว่างไสวเลย เก่งมาก!' },
-  progress: { type: 'builtin-xmas-tree' }, celebrate: { type: 'builtin-xmas-tree', dir: 'celebrate/' }, urgentBtn: 'urgent-btn.webp'
+  progress: { type: 'builtin-xmas-tree' }, celebrate: { type: 'builtin-xmas-tree', dir: 'celebrate/' }, urgentBtn: 'urgent-btn.webp',
+  card: { kid: 'card-kid.webp', family: 'card-family.webp' }
 };
 var THEME = THEME_DEFAULT, THEME_KEY = 'starbank_theme', THEME_LOADING = '';
 function themeUrl(f) { return '/themes/' + THEME.id + '/' + f; }
@@ -3761,14 +3765,14 @@ function ui2Kids(d, dl, mascot) {
   var kids = d.children || [];
   var slides = kids.map(function (c) {
     var wc = d.wheel && d.wheel.enabled ? wheelChildInfo(c.member_id) : null;
-    return '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + '">' +
+    return '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + ui2CardBg('kid') + '>' +
       '<div class="u2-kid"><span class="u2-kav">' + esc(c.avatar) + '</span><b>' + esc(c.name) + '</b></div>' +
       '<div class="u2-big">⭐ ' + c.stats.balance + ' <span>ดาว</span></div>' +
       '<div class="u2-goal"><div style="flex:1;min-width:0;font-size:.76rem">ได้รับ ' + c.stats.totalEarned + ' · ใช้ไป ' + c.stats.totalSpent +
         (wc ? '<br>' + TW('icon') + ' ' + wc.run + '/5' + (wc.spins ? ' · 🎡 หมุนได้ ' + wc.spins : '') : '') + '</div>' +
         '<button onclick="showSendGift(\'' + c.member_id + '\')">🎁 ของขวัญ</button><button class="q" onclick="showChildQr(\'' + c.member_id + '\',\'' + escJs(c.name) + '\')">QR</button></div></div>';
   });
-  slides.push('<div class="u2-hero u2-slide fam th-' + esc(THEME.id || '') + '"><small>' + PSTAR + ' ดาวม่วงของครอบครัว</small><div class="u2-big">' + dl.wallet.purple + ' <span>ดวง</span></div>' + ui2Goal(dl.goal) + '</div>');
+  slides.push('<div class="u2-hero u2-slide fam th-' + esc(THEME.id || '') + ui2CardBg('family') + '><small>' + PSTAR + ' ดาวม่วงของครอบครัว</small><div class="u2-big">' + dl.wallet.purple + ' <span>ดวง</span></div>' + ui2Goal(dl.goal) + '</div>');
   if (U2.i >= slides.length) U2.i = 0;
   return '<div class="u2-car" id="u2-car" onscroll="ui2Dots(this)">' + slides.join('') + '</div>' +
     '<div class="u2-dots" id="u2-dots">' + slides.map(function (_, i) { return '<i class="' + (i === U2.i ? 'on' : '') + (i === slides.length - 1 ? ' p' : '') + '" onclick="ui2Go(' + i + ')"></i>'; }).join('') + '</div>';
@@ -3788,6 +3792,11 @@ function ui2Chip(n) {
   c.innerHTML = PSTAR + ' ' + n;
 }
 // ปุ่มทางลัด: ธีมมีภาพไอคอน (theme.json → icons.add / gift / weekly) = ใช้ภาพขนาดเดียวกับปุ่มภารกิจด่วน · ไม่มี = อีโมจิในกล่อง
+// ภาพพื้นการ์ดตามธีม (theme.json → card.kid / card.family) · ไม่มี = สี+ลายจากโค้ด · ปิดท้ายด้วย " (ต่อ class)
+function ui2CardBg(k) {
+  var f = THEME.card && THEME.card[k];
+  return f ? ' has-img" style="--cbg:url(' + themeUrl(f) + ')"' : '"';
+}
 function ui2Act(cls, key, emoji, label, fn) {
   var ic = THEME.icons && THEME.icons[key];
   return '<button class="u2-act ' + (ic ? 'u' : cls) + '" onclick="' + fn + '"><i>' + (ic ? '<img src="' + themeUrl(ic) + '" alt="">' : emoji) + '</i>' + label + '</button>';

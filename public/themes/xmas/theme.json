@@ -5,9 +5,24 @@
   "preview": "preview.jpg",
   "bg": "bg.jpg",
   "music": "music.mp3",
-  "effect": { "type": "fall", "chars": ["❄", "❅", "❆", "✦"], "color": "#9CCFE0", "count": 25 },
+  "effect": {
+    "type": "fall",
+    "chars": [
+      "❄",
+      "❅",
+      "❆",
+      "✦"
+    ],
+    "color": "#9CCFE0",
+    "count": 25
+  },
   "urgentBtn": "urgent-btn.webp",
-  "mascot": { "go": "mascot/dao-go.webp", "sleep": "mascot/dao-sleep.webp", "timeout": "mascot/dao-timeout.webp", "yay": "mascot/dao-yay.webp" },
+  "mascot": {
+    "go": "mascot/dao-go.webp",
+    "sleep": "mascot/dao-sleep.webp",
+    "timeout": "mascot/dao-timeout.webp",
+    "yay": "mascot/dao-yay.webp"
+  },
   "words": {
     "icon": "🎄",
     "board": "ต้นคริสต์มาส",
@@ -19,6 +34,15 @@
     "celebrateTitle": "ครบ 5 วันแล้ว! 🎉",
     "celebrateText": "ต้นไม้ของหนูสว่างไสวเลย เก่งมาก!"
   },
-  "progress": { "type": "builtin-xmas-tree" },
-  "celebrate": { "type": "builtin-xmas-tree", "dir": "celebrate/" }
+  "progress": {
+    "type": "builtin-xmas-tree"
+  },
+  "celebrate": {
+    "type": "builtin-xmas-tree",
+    "dir": "celebrate/"
+  },
+  "card": {
+    "kid": "card-kid.webp",
+    "family": "card-family.webp"
+  }
 }
