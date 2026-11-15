@@ -44,5 +44,10 @@
   "card": {
     "kid": "card-kid.webp",
     "family": "card-family.webp"
+  },
+  "icons": {
+    "add": "icon-add.webp",
+    "gift": "icon-gift.webp",
+    "weekly": "icon-weekly.webp"
   }
 }
