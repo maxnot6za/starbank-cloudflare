@@ -25,6 +25,27 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await p.evaluate(() => { while (MODAL.stack.length) MODAL.stack.pop(); closeModal(); }); await p.waitForTimeout(500);
   await p.click('.k2-tree button'); await p.waitForTimeout(800);
   ok(await p.isVisible('#screen-child-wheel'), 'กดแล้วเข้ากงล้อ');
+  // ธีมอื่น: ต้นไม้/คำ/ภาพการ์ดเปลี่ยนตามธีม (ไม่ติดของคริสต์มาส)
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+  const TH = {
+    timg: { progress: { type: 'images', frames: ['p0.png', 'p1.png', 'p2.png', 'p3.png', 'p4.png', 'p5.png'] }, words: { icon: '💧', board: 'ขันน้ำ', unit: 'หยด' } },
+    tlay: { progress: { type: 'layers', base: 'b.png', star: 's.png', aspect: 1, balls: ['o.png'], spots: [[.2, .5], [.4, .5], [.6, .5], [.8, .5], [.5, .2]], ballW: .2, starAt: [.5, .05], starW: .3 }, words: { icon: '🌸', board: 'ต้นซากุระ', unit: 'ดอก' } },
+    tnone: { words: { icon: '🌱', board: 'ต้นไม้', unit: 'ใบ' } } };
+  await p.route(/\/themes\/t(img|lay|none)\//, rt => { const u = rt.request().url(), id = u.match(/themes\/(\w+)\//)[1];
+    if (u.endsWith('theme.json')) return rt.fulfill({ contentType: 'application/json', body: JSON.stringify(Object.assign({ id, name: id, bg: 'bg.png', effect: { type: 'none' }, mascot: { go: 'g.png', sleep: 'g.png', timeout: 'g.png', yay: 'g.png' } }, TH[id])) });
+    return rt.fulfill({ contentType: 'image/png', body: PNG }); });
+  const swap = async id => { await p.evaluate(id => { dashboardData.family.theme = id; Object.assign(dashboardData.wheel, { run: 3, spins: 0, pendingCount: 0, todayStatus: 'none' }); rerenderDashboard(); }, id);
+    await p.waitForFunction(id => THEME.id === id, id, { timeout: 5000 }); await p.waitForTimeout(500); await p.evaluate(() => { while (MODAL.stack.length) MODAL.stack.pop(); closeModal(); }); };
+  await p.evaluate(() => { if (window.closeWheel) closeWheel(); childNav('home'); }); await p.waitForTimeout(800);
+  await swap('timg');
+  ok(await p.locator('.k2-tree img[src="/themes/timg/p3.png"]').count() === 1 && /ขันน้ำของหนู/.test(await p.textContent('.k2-tree')) && /หยด/.test(await p.textContent('.k2-tree')), 'ธีมภาพ 6 รูป → ใช้รูปของธีม (3/5) + คำของธีม');
+  ok(!(await p.locator('.k2-tree [src*="/themes/xmas/"]').count()) && !(await p.locator('#k2-hero .has-img').count()), 'ไม่มีภาพคริสต์มาสค้าง · การ์ดไม่มีภาพ → ใช้สีจากโค้ด');
+  await swap('tlay');
+  ok(await p.locator('.k2-tree .pl-base[src="/themes/tlay/b.png"]').count() === 1 && await p.locator('.k2-tree .pl-ball.done[src="/themes/tlay/o.png"]').count() === 3 && /ต้นซากุระของหนู/.test(await p.textContent('.k2-tree')), 'ธีมซ้อนภาพ → ต้น+ของแขวนของธีม');
+  await swap('tnone');
+  ok(await p.locator('.k2-tree svg').count() === 1 && /ต้นไม้ของหนู/.test(await p.textContent('.k2-tree')), 'ธีมไม่มีภาพต้นไม้ → ต้นไม้วาดจากโค้ด');
+  await swap('xmas');
+  ok(await p.locator('.k2-tree .pl-base[src="/themes/xmas/tree-base.webp"]').count() === 1, 'กลับคริสต์มาส → ต้นไม้ 3D');
   ok(!errors.length, 'ไม่มี JS error', errors);
   await br.close(); await mf.dispose(); console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด'); process.exit(fails ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
