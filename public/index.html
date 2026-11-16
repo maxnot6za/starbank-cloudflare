@@ -1533,6 +1533,21 @@ function loadChildDashboard() {
 }
 
 // หน้าหลักลูกแบบใหม่: การ์ดดาว+เป้าหมาย → การ์ดต้นไม้/กงล้อ → ภารกิจประจำวัน ... → กล่องภารกิจวันนี้
+// ภารกิจประจำวันของลูก: การ์ดเหลืองแบบหน้าผู้ปกครอง (ข้อที่ยังไม่เสร็จขึ้นก่อน) · แตะ = ดูทั้งหมด + เป้าหมายของบ้าน
+function kid2Quest(dl) {
+  var all = dl.mine || [];
+  if (!all.length) return '';
+  var q = all.filter(function (x) { return x.status === 'done'; })[0] || all.filter(function (x) { return x.status === 'active'; })[0] || all[0];
+  var nd = all.filter(function (x) { return x.status !== 'active'; }).length;
+  return '<div class="u2-promo" onclick="kid2Quests()"><div style="flex:1;min-width:0"><b>' + q.icon + ' ภารกิจประจำวัน</b><small>' + esc(q.title) + ' · ได้ ' + PSTAR + ' ' + q.reward + '</small>' +
+    (q.status === 'done' ? '<button class="u2-pill" onclick="event.stopPropagation();claimQuestNow(this,\'' + escJs(q.quest_id) + '\')">รับ +' + q.reward + ' ' + PSTAR + '</button>' : '<span class="u2-pill">ดูภารกิจทั้งหมด · ' + nd + '/' + all.length + ' เสร็จ</span>') +
+    '</div><div class="u2-num">' + (q.status === 'claimed' ? '✓' : Math.min(q.progress, q.target) + '/' + q.target) + '<small>วันนี้</small></div></div>';
+}
+function kid2Quests() {
+  var dl = dashboardData && dashboardData.daily; if (!dl) return;
+  openModal('<h2>🌞 ภารกิจประจำวัน</h2><div class="dq-card">' + ppGoalBar(dl.goal) + dl.mine.map(function (q) { return dqRow(q, true); }).join('') + '</div>' +
+    '<div style="display:flex;margin-top:10px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div>');
+}
 function kid2Goal(d) {
   var bal = d.stats.balance, rs = (d.rewards || []).filter(function (r) { return Number(r.quantity) > 0; }).sort(function (a, b) { return a.stars_cost - b.stars_cost; });
   if (!rs.length) return '';
@@ -4001,7 +4016,9 @@ function renderDaily(d) {
   if (!el) return;
   var head = '<h3>🌞 ภารกิจประจำวัน <small>' + PSTAR + ' <span class="dq-wallet">' + dl.wallet.purple + '</span> ของครอบครัว</small></h3>';
   var html;
-  if (isKid) {
+  if (isKid && ui2On()) {
+    html = kid2Quest(dl);
+  } else if (isKid) {
     html = '<div class="dq-card">' + head + ppGoalBar(dl.goal) + (dl.mine.length ? dl.mine.map(function (q) { return dqRow(q, true); }).join('') : '<div class="dq-t" style="color:var(--text-muted)">วันนี้ยังไม่มีภารกิจ</div>') + '</div>';
   } else {
     var all = (dl.parents ? [dl.parents] : []).concat(dl.kids), nd = all.filter(function (q) { return q.status !== 'active'; }).length;
