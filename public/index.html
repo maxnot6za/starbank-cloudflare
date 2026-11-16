@@ -634,6 +634,40 @@ body.booting .screen,body.booting #nav-parent,body.booting #nav-child,body.booti
 .sfx-sp svg{display:block;width:100%;height:100%}
 @keyframes sfxFly{from{transform:scale(.4);opacity:1}to{transform:translate(var(--x),var(--y)) scale(1) rotate(160deg);opacity:0}}
 @media (prefers-reduced-motion:reduce){.sfx-press{animation:none}.sfx-sp{display:none}}
+.pl-tree{display:flex;align-items:center;justify-content:center;flex:none}
+.pl-in{position:relative}.pl-in>*{position:absolute}.pl-base{left:0;top:0;width:100%;height:100%;position:static!important;display:block}
+.pl-ball.pending{opacity:.4;filter:grayscale(.4)}
+.pl-ball.drop{animation:plDrop .9s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes plDrop{from{transform:translateY(-260%) rotate(-20deg);opacity:0}to{transform:translateY(-55%)}}
+.pl-today{border-radius:50%;border:2.5px dashed #E05A5A;background:#ffffff99;box-sizing:border-box;animation:plPulse 1.4s ease-in-out infinite}
+@keyframes plPulse{50%{transform:translateY(-40%) scale(1.12)}}
+.pl-star{transform:translateY(-50%);filter:drop-shadow(0 0 10px #FFD66B)}
+.pl-tree.lit .pl-star{animation:plGlow 2s ease-in-out infinite}
+@keyframes plGlow{50%{filter:drop-shadow(0 0 18px #FFE08A) brightness(1.08)}}
+@media (prefers-reduced-motion:reduce){.pl-ball.drop,.pl-today,.pl-tree.lit .pl-star{animation:none}}
+/* หน้าหลักลูกแบบใหม่ */
+body.ui2k #screen-child-home .star-hero,body.ui2k #screen-child-home .stats-grid,body.ui2k #screen-child-home>.section-title{display:none}
+#k2-hero:empty{display:none}
+.k2-goal{display:flex;flex-direction:column;gap:6px;background:#0000001f;border-radius:14px;padding:10px 12px;color:#fff;margin-top:6px;max-width:66%}
+.k2-goal small{font-size:.76rem;opacity:.92}.k2-goal b{font-size:.92rem}
+.k2-bar{height:8px;border-radius:9px;background:#ffffff40;overflow:hidden}.k2-bar i{display:block;height:100%;background:linear-gradient(90deg,#FFD66B,#FFB020);border-radius:9px}
+.k2-tree{display:flex;align-items:center;gap:10px;margin-top:14px;padding:14px 14px 14px 6px;border-radius:24px;background:linear-gradient(160deg,#E4F4EC,#FFFFFF 70%);box-shadow:0 4px 14px #0000000f}
+.k2-tree.rdy{background:linear-gradient(160deg,#FFF1C9,#FFFFFF 70%);box-shadow:0 0 0 3px #FFD66B,0 6px 18px #E8A21A40}
+.k2-tree .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.k2-tree .tx>small{font-weight:800;color:var(--text);font-size:.95rem}
+.k2-tree .n{font-size:2.2rem;font-weight:900;color:var(--text);line-height:1}.k2-tree .n span{font-size:.95rem;font-weight:700;color:var(--text-muted)}
+.k2-tree .dots{display:flex;gap:6px}.k2-tree .dots i{width:16px;height:16px;border-radius:50%;background:#E3E8E6;box-sizing:border-box}
+.k2-tree .dots i.done{background:radial-gradient(circle at 35% 35%,#FF8A8A,#D93A3A)}.k2-tree .dots i.pending{background:#FFD9D9}.k2-tree .dots i.today{background:#fff;border:2px dashed #E05A5A}
+.k2-tree p{margin:0;font-size:.85rem;color:var(--text-muted);line-height:1.45}.k2-tree p b,.k2-tree p strong{color:#D93A3A}
+.k2-tree button{border:0;border-radius:16px;padding:10px 12px;background:linear-gradient(135deg,#FFB020,#FF7A45);color:#fff;font:inherit;font-weight:900;font-size:1.05rem;box-shadow:0 4px 0 #C8660F;cursor:pointer}
+.k2-tree button small{display:block;font-size:.75rem;font-weight:600}
+.k2-box{background:#fff;border-radius:22px;padding:12px 14px;box-shadow:0 4px 14px #0000000f;margin-top:14px}
+.k2-box h3{margin:2px 2px 6px;font-size:1.05rem}
+.k2-m{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #0000000d;position:relative}.k2-m:first-of-type{border-top:0}
+.k2-m .ic{width:46px;height:46px;border-radius:14px;background:#FFF6DC;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex:none}
+.k2-m .tx{flex:1;min-width:0}.k2-m b{display:block;font-size:.98rem}.k2-m small{color:#C08A00;font-weight:700;font-size:.82rem}
+.k2-m .x2{color:#E05A5A}
+.k2-m button{border:0;border-radius:999px;padding:9px 16px;background:linear-gradient(135deg,#FF5A5A,#FF7A45);color:#fff;font-weight:800;font-family:inherit;font-size:.95rem;cursor:pointer;flex:none}
 </style>
   <style>
     /* === ภารกิจประจำวัน + ดาวม่วง + ร้านค้า + ตัวละครเดินด้านล่าง === */
@@ -1049,6 +1083,7 @@ body.booting .screen,body.booting #nav-parent,body.booting #nav-child,body.booti
     <button type="button" class="music-btn" data-no-fe onclick="toggleMusic()" aria-label="เปิด/ปิดเพลง">🔔</button>
   </div>
 
+  <div id="k2-hero"></div>
   <div class="star-hero">
     <div class="star-count" id="child-star-count">0</div>
     <div class="star-label">⭐ ดาวสะสม</div>
@@ -1497,6 +1532,28 @@ function loadChildDashboard() {
     .getChildDashboard(currentMember.memberId);
 }
 
+// หน้าหลักลูกแบบใหม่: การ์ดดาว+เป้าหมาย → การ์ดต้นไม้/กงล้อ → ภารกิจประจำวัน ... → กล่องภารกิจวันนี้
+function kid2Goal(d) {
+  var bal = d.stats.balance, rs = (d.rewards || []).filter(function (r) { return Number(r.quantity) > 0; }).sort(function (a, b) { return a.stars_cost - b.stars_cost; });
+  if (!rs.length) return '';
+  var next = rs.filter(function (r) { return Number(r.stars_cost) > bal; })[0];
+  if (!next) return '<div class="k2-goal"><small>🎁 แลกได้แล้ว!</small><b>' + esc(rs[rs.length - 1].title) + '</b></div>';
+  var pct = Math.max(4, Math.min(100, Math.round(bal / next.stars_cost * 100)));
+  return '<div class="k2-goal"><small>🎯 เป้าหมาย: ' + esc(next.title) + '</small><div class="k2-bar"><i style="width:' + pct + '%"></i></div><b>อีก ' + (next.stars_cost - bal) + ' ดาว!</b></div>';
+}
+function kid2Home(d) {
+  document.body.classList.add('ui2k');
+  var m = d.member, hero = document.getElementById('k2-hero');
+  hero.innerHTML = '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + ui2CardBg('kid') + ' style="min-height:0"><div class="u2-kid"><span class="u2-kav">' + esc(m.avatar) + '</span><b>' + esc(m.name) + '</b></div>' +
+    '<div class="u2-big">⭐ <span id="k2-bal" style="font-size:inherit;opacity:1">' + d.stats.balance + '</span> <span>ดาว</span></div>' + kid2Goal(d) + '</div>';
+  var wc = document.getElementById('child-wheel-card'); if (wc.previousElementSibling !== hero) hero.after(wc);
+  var list = document.getElementById('child-missions-list');
+  list.innerHTML = d.missions.length ? '<div class="k2-box"><h3>📋 ภารกิจวันนี้</h3>' + d.missions.map(function (x) {
+    var mul = Number(x.multiplier || 1), st = Number(x.base_stars) * mul;
+    return '<div class="k2-m"><span class="ic">' + esc(x.icon || '⭐') + '</span><div class="tx"><b>' + esc(x.title) + '</b><small>⭐ ' + st + ' ดาว' + (mul > 1 ? ' <span class="x2">🔥 x' + mul + ' แล้ว!</span>' : '') + '</small></div>' +
+      '<button data-sfx="send" onclick="submitMission(\'' + x.mission_id + '\')">ส่ง!</button></div>';
+  }).join('') + '</div>' : '<div class="k2-box"><h3>📋 ภารกิจวันนี้</h3><div class="u2-pe">📭 ยังไม่มีภารกิจ</div></div>';
+}
 function renderChildHome(d) {
   themeSet(d.family && d.family.theme);
   document.getElementById('child-avatar').textContent = d.member.avatar;
@@ -1510,6 +1567,8 @@ function renderChildHome(d) {
   renderGiftsKid(d);
   renderUrgentKid(d);
   renderKidPush();
+  if (ui2On()) return kid2Home(d);
+  document.getElementById('k2-hero').innerHTML = ''; document.body.classList.remove('ui2k');
 
   const list = document.getElementById('child-missions-list');
   if (!d.missions.length) {
@@ -2533,6 +2592,14 @@ function renderWheelCard(d) {
   var runKey = 'starbank_last_run_' + d.member.member_id, prevRun = Number(memoGet(runKey));
   var dropIdx = (memoGet(runKey) !== null && !isNaN(prevRun) && run > prevRun) ? run - 1 : -1;
   memoSet(runKey, run);
+  if (ui2On()) {
+    var rdy = w.spins > 0;
+    el.innerHTML = '<div class="k2-tree' + (rdy ? ' rdy' : '') + '">' + progressArt(states, rdy, 140, 176, dropIdx) +
+      '<div class="tx"><small>' + TW('icon') + ' ' + TW('board') + 'ของหนู</small><div class="n">' + (rdy ? 5 : run) + '<span> / 5 ' + TW('unit') + '</span></div>' +
+      '<div class="dots">' + (rdy ? ['done','done','done','done','done'] : states).map(function (s) { return '<i class="' + s + '"></i>'; }).join('') + '</div>' +
+      (rdy ? '<button type="button" data-sfx="redeem" onclick="openWheel()">🎡 หมุนกงล้อ!<small>หมุนได้ ' + w.spins + ' ครั้ง</small></button>' : '<p>' + msg + '</p>') + '</div></div>';
+    maybeTreePop(d); return;
+  }
   html += '<div class="card"><div class="tree-card">' + progressArt(states, false, 110, 128, dropIdx) +
     '<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div style="font-weight:800">' + TW('icon') + ' ' + TW('board') + 'ของหนู</div>' +
     '<div class="tree-count">' + run + '<small> / 5 ' + TW('unit') + '</small></div>' +
@@ -2953,7 +3020,7 @@ var THEME_DEFAULT = {
   mascot: { go: 'mascot/dao-go.webp', sleep: 'mascot/dao-sleep.webp', timeout: 'mascot/dao-timeout.webp', yay: 'mascot/dao-yay.webp' },
   words: { icon: '🎄', board: 'ต้นคริสต์มาส', item: 'ลูกบอล', unit: 'ลูก', add: 'แขวน', full: 'ต้นไม้ครบ 5 ลูก ดาวสว่างแล้ว!',
     celebrateTag: '🎄 ภารกิจต้นคริสต์มาส', celebrateTitle: 'ครบ 5 วันแล้ว! 🎉', celebrateText: 'ต้นไม้ของหนูสว่างไสวเลย เก่งมาก!' },
-  progress: { type: 'builtin-xmas-tree' }, celebrate: { type: 'builtin-xmas-tree', dir: 'celebrate/' }, urgentBtn: 'urgent-btn.webp',
+  progress: {"type":"layers","base":"tree-base.webp","star":"tree-star.webp","aspect":0.555,"balls":["ball-1.webp","ball-2.webp","ball-3.webp","ball-4.webp","ball-5.webp"],"spots":[[0.443,0.598],[0.747,0.647],[0.278,0.436],[0.81,0.471],[0.5,0.284]],"ballW":0.2,"starAt":[0.5,0.063],"starW":0.5}, celebrate: { type: 'builtin-xmas-tree', dir: 'celebrate/' }, urgentBtn: 'urgent-btn.webp',
   card: { kid: 'card-kid.webp', family: 'card-family.webp' },
   icons: { add: 'icon-add.webp', gift: 'icon-gift.webp', weekly: 'icon-weekly.webp' }
 };
@@ -2962,7 +3029,23 @@ function themeUrl(f) { return '/themes/' + THEME.id + '/' + f; }
 function TW(k) { return (THEME.words && THEME.words[k] != null) ? THEME.words[k] : THEME_DEFAULT.words[k]; }
 function themeMascot() { var m = THEME.mascot || THEME_DEFAULT.mascot; ['go', 'sleep', 'timeout', 'yay'].forEach(function (k) { URG_IMG[k] = themeUrl(m[k] || THEME_DEFAULT.mascot[k]); }); }
 // ความคืบหน้า 5 วัน: คริสต์มาสวาด SVG เอง · ธีมอื่นใช้ภาพ 6 รูป (0–5) ตาม theme.json progress.frames
+// ต้นไม้แบบซ้อนภาพ: ต้นเปล่า + ลูกบอลวางตามจุด (spots เป็นสัดส่วนของภาพต้น) + ดาวติดไฟเมื่อครบ
+// done = ลูกบอลจริง · pending = จาง · today = วงประรอแขวน · empty = ว่าง (เห็นหลุมบนกิ่ง)
+function progressLayers(P, states, lit, w, h, dropIdx) {
+  var ah = Math.min(h, w / P.aspect), aw = ah * P.aspect, all = lit || states.every(function (x) { return x === 'done'; });
+  var o = '<div class="pl-tree' + (all ? ' lit' : '') + '" style="width:' + w + 'px;height:' + h + 'px" role="img" aria-label="' + TW('board') + ' ' + states.filter(function (x) { return x === 'done'; }).length + '/5">' +
+    '<div class="pl-in" style="width:' + aw + 'px;height:' + ah + 'px"><img class="pl-base" src="' + themeUrl(P.base) + '" alt="">';
+  P.spots.forEach(function (sp, i) {
+    var st = lit ? 'done' : states[i], bw = P.ballW * 100;
+    var pos = 'left:' + (sp[0] * 100 - bw / 2) + '%;top:' + (sp[1] * 100) + '%;width:' + bw + '%';
+    if (st === 'done' || st === 'pending') o += '<img class="pl-ball ' + st + (i === dropIdx ? ' drop' : '') + '" src="' + themeUrl(P.balls[i % P.balls.length]) + '" alt="" style="' + pos + ';transform:translateY(-55%)">';
+    else if (st === 'today') o += '<i class="pl-today" style="' + pos + ';aspect-ratio:1;transform:translateY(-40%)"></i>';
+  });
+  if (all && P.star) o += '<img class="pl-star" src="' + themeUrl(P.star) + '" alt="" style="left:' + (P.starAt[0] * 100 - P.starW * 50) + '%;top:' + (P.starAt[1] * 100) + '%;width:' + (P.starW * 100) + '%">';
+  return o + '</div></div>';
+}
 function progressArt(states, lit, w, h, dropIdx) {
+  if (THEME.progress && THEME.progress.type === 'layers') return progressLayers(THEME.progress, states, lit, w, h, dropIdx);
   if (!THEME.progress || THEME.progress.type === 'builtin-xmas-tree') return treeSVG(states, lit, w, h, dropIdx);
   var n = lit ? 5 : states.filter(function (x) { return x === 'done'; }).length, fr = THEME.progress.frames || [];
   return '<img src="' + themeUrl(fr[Math.min(n, fr.length - 1)]) + '" alt="' + TW('board') + ' ' + n + '/5" style="width:' + w + 'px;height:' + h + 'px;object-fit:contain;flex:none">';

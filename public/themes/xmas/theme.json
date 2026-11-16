@@ -35,7 +35,45 @@
     "celebrateText": "ต้นไม้ของหนูสว่างไสวเลย เก่งมาก!"
   },
   "progress": {
-    "type": "builtin-xmas-tree"
+    "type": "layers",
+    "base": "tree-base.webp",
+    "star": "tree-star.webp",
+    "aspect": 0.555,
+    "balls": [
+      "ball-1.webp",
+      "ball-2.webp",
+      "ball-3.webp",
+      "ball-4.webp",
+      "ball-5.webp"
+    ],
+    "spots": [
+      [
+        0.443,
+        0.598
+      ],
+      [
+        0.747,
+        0.647
+      ],
+      [
+        0.278,
+        0.436
+      ],
+      [
+        0.81,
+        0.471
+      ],
+      [
+        0.5,
+        0.284
+      ]
+    ],
+    "ballW": 0.2,
+    "starAt": [
+      0.5,
+      0.063
+    ],
+    "starW": 0.5
   },
   "celebrate": {
     "type": "builtin-xmas-tree",

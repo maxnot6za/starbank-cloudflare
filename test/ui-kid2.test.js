@@ -1,0 +1,30 @@
+// หน้าหลักลูกแบบใหม่: การ์ดดาว+เป้าหมาย · การ์ดต้นไม้ซ้อนภาพ (ลูกบอลตามจำนวน, ครบ → ดาวติดไฟ+ปุ่มหมุน) · กล่องภารกิจ
+const { chromium } = require('playwright');
+const { seedFamily, C, FAM } = require('./lib/fixture.js');
+const { start, sessionFor } = require('./lib/mf.js');
+const routes = require(process.env.SB_ROUTES || './lib/routes.js');
+let fails = 0;
+const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? '' : JSON.stringify(x).slice(0, 300)); if (!c) fails++; };
+(async () => {
+  const { mf, db } = await start({ port: 0 }); await seedFamily(db);
+  await db.prepare("UPDATE Members SET quest_seen = 'x', news_seen = 99, tree_seen = '9999'").run();
+  await db.prepare("UPDATE Families SET wheel_enabled = 1, wheel_started_at = ? WHERE family_id = ?").bind(new Date(Date.now() - 5 * 86400000).toISOString(), FAM).run();
+  const base = String(await mf.ready).replace(/\/$/, ''); const br = await chromium.launch(), errors = [];
+  const ctx = await br.newContext({ viewport: { width: 390, height: 844 } });
+  await ctx.addCookies([{ name: 'sb_s', value: await sessionFor(db, C), url: base }]);
+  await ctx.addInitScript(() => { try { localStorage.setItem('sb_ui2', '1'); } catch (e) {} });
+  const p = await ctx.newPage(); p.on('pageerror', e => errors.push(e.message)); await routes(p);
+  await p.goto(base + '/'); await p.waitForSelector('.k2-tree', { timeout: 15000 }); await p.waitForTimeout(1500);
+  ok(await p.isVisible('#k2-hero .u2-hero') && !(await p.isVisible('.star-hero')) && !(await p.isVisible('.stats-grid')), 'การ์ดดาวใหม่แทนกล่องเดิม');
+  ok(await p.locator('.k2-box .k2-m button[data-sfx=send]').count() === 2, 'กล่องภารกิจ + ปุ่มส่ง');
+  ok(await p.evaluate(() => document.getElementById('k2-hero').nextElementSibling.id === 'child-wheel-card'), 'การ์ดต้นไม้อยู่ใต้การ์ดดาว');
+  await p.evaluate(() => { Object.assign(dashboardData.wheel, { run: 3, pendingCount: 0, spins: 0, todayStatus: 'none', broke: false }); renderChildHome(dashboardData); });
+  ok(await p.locator('.k2-tree .pl-ball.done').count() === 3 && await p.locator('.k2-tree .pl-today').count() === 1 && !(await p.isVisible('.k2-tree button')), '3/5: ลูกบอล 3 + ช่องวันนี้ ยังไม่มีปุ่มหมุน');
+  await p.evaluate(() => { Object.assign(dashboardData.wheel, { run: 5, spins: 1 }); renderChildHome(dashboardData); });
+  ok(await p.locator('.k2-tree.rdy .pl-ball').count() === 5 && await p.isVisible('.k2-tree .pl-star') && await p.isVisible('.k2-tree button'), 'ครบ: ลูกบอล 5 + ดาวติดไฟ + ปุ่มหมุน');
+  await p.evaluate(() => { while (MODAL.stack.length) MODAL.stack.pop(); closeModal(); }); await p.waitForTimeout(500);
+  await p.click('.k2-tree button'); await p.waitForTimeout(800);
+  ok(await p.isVisible('#screen-child-wheel'), 'กดแล้วเข้ากงล้อ');
+  ok(!errors.length, 'ไม่มี JS error', errors);
+  await br.close(); await mf.dispose(); console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด'); process.exit(fails ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });
