@@ -98,7 +98,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   ok(/:h$/.test((await db.prepare('SELECT egg_seen FROM Members WHERE member_id = ?').bind(P1).first()).egg_seen), 'เห็นแล้ว → ไม่เด้งซ้ำ');
 
   // พ่อ (ยังไม่เห็น) → ป๊อปอัปการฟักพร้อมคูปองลด 50%
-  await db.prepare("UPDATE Eggs SET prize = prize || '+c50'").run();
+  await db.prepare("UPDATE Eggs SET prize = (CASE WHEN instr(prize, '+c') > 0 THEN substr(prize, 1, instr(prize, '+c') - 1) ELSE prize END) || '+c50'").run();   // ตอนฟักอาจสุ่มได้คูปองอยู่แล้ว → แทนที่
   const dad = await open(P2);
   await dad.waitForSelector('#egg-pop .cp-card.on', { timeout: 15000 });
   ok(/คูปองลด 50%/.test(await dad.textContent('#egg-pop')), 'ป๊อปอัปฟักไข่โชว์คูปอง');

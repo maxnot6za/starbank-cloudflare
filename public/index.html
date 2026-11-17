@@ -668,6 +668,8 @@ body.ui2k #screen-child-home .star-hero,body.ui2k #screen-child-home .stats-grid
 .k2-m .tx{flex:1;min-width:0}.k2-m b{display:block;font-size:.98rem}.k2-m small{color:#C08A00;font-weight:700;font-size:.82rem}
 .k2-m .x2{color:#E05A5A}
 .k2-m button{border:0;border-radius:999px;padding:9px 16px;background:linear-gradient(135deg,#FF5A5A,#FF7A45);color:#fff;font-weight:800;font-family:inherit;font-size:.95rem;cursor:pointer;flex:none}
+.egg-pity{position:absolute;bottom:40px;transform:translateX(-50%);z-index:45;pointer-events:auto;cursor:pointer;border:0;background:#fff;border-radius:99px;padding:4px 10px;font:inherit;font-size:12px;font-weight:800;line-height:1.2;color:#1F3B35;box-shadow:0 2px 0 #0000001a,0 0 0 2px #FFC24B;white-space:nowrap}
+.egg-pity b{color:#E5487A}.egg-pity::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:#fff}
 </style>
   <style>
     /* === ภารกิจประจำวัน + ดาวม่วง + ร้านค้า + ตัวละครเดินด้านล่าง === */
@@ -5040,6 +5042,17 @@ function roomKApply() {
   return k;
 }
 window.addEventListener('resize', function () { var old = STRIP.k, k = roomKApply(); if (old && Math.abs(old - k) > .02 && dashboardData) { STRIP.key = ''; stripUpdate(dashboardData.avatars || [], dashboardData.stage, dashboardData.egg); } });
+// ป้ายเหนือฐานไข่ว่าง: อีกไม่เกินกี่ภารกิจได้ไข่ → แตะดูรายละเอียด (กดเองเท่านั้น ไม่เด้งเอง)
+function eggPityPop() {
+  var p = dashboardData && dashboardData.egg && dashboardData.egg.pity; if (!p) return;
+  var done = p.of - p.left;
+  openModal('<div style="text-align:center;font-size:3.4rem;line-height:1">🥚</div><h2 style="text-align:center;margin:6px 0">ไข่ปริศนาจะมาเมื่อไหร่?</h2>' +
+    '<div class="dq-card" style="display:flex;flex-direction:column;gap:10px">' +
+    '<div>ทุกครั้งที่ผู้ปกครองอนุมัติภารกิจ <b>มีโอกาสเจอไข่</b> · ถ้ายังไม่เจอ ครบ ' + p.of + ' ภารกิจได้ไข่แน่นอน</div>' +
+    '<div style="display:flex;gap:6px">' + Array.apply(null, Array(p.of)).map(function (_, i) { return '<i style="flex:1;height:12px;border-radius:9px;background:' + (i < done ? '#FFC24B' : '#E9EEEC') + '"></i>'; }).join('') + '</div>' +
+    '<div style="text-align:center;font-size:1.05rem">อนุมัติไปแล้ว <b>' + done + '</b> ภารกิจ · <b style="color:#E5487A">อีกไม่เกิน ' + p.left + ' ภารกิจ ได้ไข่แน่นอน!</b></div></div>' +
+    '<div style="display:flex;margin-top:10px"><button class="dq-btn g" onclick="closeModal()">เข้าใจแล้ว</button></div>');
+}
 function stripUpdate(avatars, stage, egg) {
   var el = document.getElementById('avatar-strip');
   if (!el) return;
@@ -5048,12 +5061,12 @@ function stripUpdate(avatars, stage, egg) {
   var cur = egg && egg.current, decor = (stage && stage.decor) || [];
   // สัตว์เลี้ยง = ตัวละครประเภทที่ 4 เดินในห้องด้วย (ไม่มีเจ้าของรายคน)
   ((stage && stage.pets) || []).forEach(function (p) { list.push({ sprite: p.sprite, name: p.name, member_id: 'pet:' + p.id, pet: true }); });
-  var key = list.map(function (a) { return a.sprite + ':' + a.member_id; }).join(',') + '|' + JSON.stringify(stage || '') + '|' + (cur ? cur.status + cur.warm : '');
+  var key = list.map(function (a) { return a.sprite + ':' + a.member_id; }).join(',') + '|' + JSON.stringify(stage || '') + '|' + (cur ? cur.status + cur.warm : 'p' + (egg && egg.pity ? egg.pity.left : ''));
   if (key === STRIP.key) { eggWantUpdate(cur); return; }
   STRIP.key = key;
   if (STRIP.scene) { STRIP.scene.stop(); el.innerHTML = ''; STRIP.scene = null; }
   navHSync();
-  if (!stage || (!list.length && !cur && !decor.length)) { el.classList.remove('on'); document.body.classList.remove('has-strip'); el.innerHTML = ''; return; }
+  if (!stage || (!list.length && !cur && !decor.length && !(egg && egg.pity))) { el.classList.remove('on'); document.body.classList.remove('has-strip'); el.innerHTML = ''; return; }
   if (list.length && (!spriteReady() || typeof SpriteScene === 'undefined')) {
     setTimeout(function () { STRIP.key = ''; stripUpdate(avatars, stage, egg); }, 800);   // สคริปต์ตัวละครยังโหลดไม่เสร็จ
     return;
@@ -5063,6 +5076,7 @@ function stripUpdate(avatars, stage, egg) {
   el.innerHTML = stageBase(stage) + decorHtml(decor, el.clientHeight || 96, 16) +
     '<div class="strip-nest" style="left:clamp(52px,' + (nestX(stage) * 100) + '%,calc(100% - 52px))">' + nestBox(stage && stage.nest, (cur ? '<div class="strip-egg' + (cur.status === 'ready' ? ' ready' : '') + (nestX(stage) > .5 ? ' nr' : '') + (stage && stage.nest && stage.nest.art ? ' on-skin' : '') + '" onclick="eggStripTap(this)" role="button" aria-label="ไข่ปริศนา">' +
       '<div class="eb"><i style="width:' + Math.min(100, cur.warm / cur.goal * 100) + '%"></i></div>' + eggSVG(eggStage(cur), cur.status === 'ready', cur.tier) + (cur.status === 'ready' ? '<div class="ed"></div><span class="esp" style="left:-6px;top:12px;--dx:-8px">✨</span><span class="esp" style="right:-6px;top:6px;--dx:8px;animation-delay:.5s">✨</span><span class="esp" style="left:40%;top:-14px;--dx:2px;animation-delay:1s">⭐</span>' : '') + '</div>' : ''), '', '') + '</div>' +
+    (!cur && egg && egg.pity ? '<button type="button" class="egg-pity" style="left:clamp(78px,' + (nestX(stage) * 100) + '%,calc(100% - 78px))" onclick="eggPityPop()">🥚 อีกไม่เกิน <b>' + egg.pity.left + '</b> ภารกิจ</button>' : '') +
     (list.length ? '' : '<button type="button" class="strip-sign"' + (Math.abs(nestX(stage) - .5) < .27 ? ' style="' + (nestX(stage) < .5 ? 'left:auto;right:8px' : 'left:8px') + ';transform:none"' : '') + ' onclick="goShop()">🛒 พาตัวละครมาอยู่ในห้องสิ</button>');
   eggWantUpdate(cur);
   if (!list.length) return;

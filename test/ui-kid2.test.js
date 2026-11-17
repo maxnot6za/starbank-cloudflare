@@ -22,6 +22,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await p.evaluate(() => { Object.assign(dashboardData.wheel, { run: 3, pendingCount: 0, spins: 0, todayStatus: 'none', broke: false }); renderChildHome(dashboardData); });
   ok(await p.locator('.k2-tree .pl-ball.done').count() === 3 && await p.locator('.k2-tree .pl-today').count() === 1 && !(await p.isVisible('.k2-tree button')), '3/5: ลูกบอล 3 + ช่องวันนี้ ยังไม่มีปุ่มหมุน');
   await p.evaluate(() => { Object.assign(dashboardData.wheel, { run: 5, spins: 1 }); renderChildHome(dashboardData); });
+  await p.waitForSelector('.k2-tree.rdy .pl-star', { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(300);
   ok(await p.locator('.k2-tree.rdy .pl-ball').count() === 5 && await p.isVisible('.k2-tree .pl-star') && await p.isVisible('.k2-tree button'), 'ครบ: ลูกบอล 5 + ดาวติดไฟ + ปุ่มหมุน');
   await p.evaluate(() => { while (MODAL.stack.length) MODAL.stack.pop(); closeModal(); }); await p.waitForTimeout(500);
   await p.click('.k2-tree button'); await p.waitForTimeout(800);

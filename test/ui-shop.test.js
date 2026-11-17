@@ -42,7 +42,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await mom.click('#screen-parent-shop .shop-item:nth-child(3)'); await mom.waitForSelector('#shop-big .sa-actor', { state: 'attached' });
   await mom.waitForTimeout(600); await mom.screenshot({ path: OUT + 's4-buy.png' });
   await mom.click('text=ซื้อ 15 ดาวม่วง');
-  await mom.waitForFunction(() => document.getElementById('avatar-strip').classList.contains('on'), null, { timeout: 8000 });
+  await mom.waitForFunction(() => document.querySelectorAll('#avatar-strip .sa-actor').length > 0, null, { timeout: 8000 });
   ok(true, 'ซื้อลูกไดโนให้ลูก → ตัวละครเดินด้านล่างจอ');
   ok(/25/.test(await mom.textContent('.shop-top')), 'ดาวม่วงเหลือ 25');
   await mom.waitForTimeout(1500); await mom.screenshot({ path: OUT + 's5-after-buy.png' });
