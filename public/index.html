@@ -1563,6 +1563,16 @@ function kid2Home(d) {
   var m = d.member, hero = document.getElementById('k2-hero');
   hero.innerHTML = '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + ui2CardBg('kid') + ' style="min-height:0"><div class="u2-kid"><span class="u2-kav">' + esc(m.avatar) + '</span><b>' + esc(m.name) + '</b></div>' +
     '<div class="u2-big">⭐ <span id="k2-bal" style="font-size:inherit;opacity:1">' + d.stats.balance + '</span> <span>ดาว</span></div>' + kid2Goal(d) + '</div>';
+  // ปัดซ้าย → การ์ดดาวม่วงของครอบครัว (หน้าตาเดียวกับหน้าผู้ปกครอง)
+  var dl = d.daily;
+  if (dl && dl.wallet) {
+    var g = ui2Goal(dl.goal).replace('ให้ลูกกด 💜 อยากได้ ในร้าน', 'กด 💜 อยากได้ ในร้านเลย');
+    hero.innerHTML = '<div class="u2-car" id="u2-car" onscroll="ui2Dots(this)">' + hero.innerHTML.replace('class="u2-hero u2-slide', 'class="u2-hero u2-slide') +
+      '<div class="u2-hero u2-slide fam th-' + esc(THEME.id || '') + ui2CardBg('family') + ' style="min-height:0"><small>' + PSTAR + ' ดาวม่วงของครอบครัว</small><div class="u2-big">' + dl.wallet.purple + ' <span>ดวง</span></div>' + g + '</div></div>' +
+      '<div class="u2-dots" id="u2-dots">' + [0, 1].map(function (i) { return '<i class="' + (i === U2.i ? 'on' : '') + (i === 1 ? ' p' : '') + '" onclick="ui2Go(' + i + ')"></i>'; }).join('') + '</div>';
+    if (U2.i > 1) U2.i = 0;
+    setTimeout(ui2Restore, 0);
+  }
   var wc = document.getElementById('child-wheel-card'); if (wc.previousElementSibling !== hero) hero.after(wc);
   var list = document.getElementById('child-missions-list');
   list.innerHTML = d.missions.length ? '<div class="k2-box"><h3>📋 ภารกิจวันนี้</h3>' + d.missions.map(function (x) {
