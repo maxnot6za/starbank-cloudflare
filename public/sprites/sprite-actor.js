@@ -129,7 +129,13 @@
     }
     return next();
   };
-  P.play = function (name) { this.token++; return this._run(name, this.token).catch(function () {}); };
+  // เล่นท่า 1 ครั้งแล้วจบ · ท่าที่เป็น loop (เช่น โหม่งบอล) เล่นวนแค่ forMs (ค่าเริ่ม 2.5 วิ) แล้วจบ
+  // เดิมท่า loop ไม่มีวันจบ → แตะสัตว์เลี้ยงแล้วค้างโหม่งบอลตลอด ไม่กลับไปเดินเล่น
+  P.play = function (name, forMs) {
+    this.token++;
+    var a = this.m.anims[name];
+    return this._run(name, this.token, a && a.loop ? (forMs || 2500) : 0).catch(function () {});
+  };
   P.loop = function (name, forMs) {
     this.token++;
     var a = this.m.anims[name];
