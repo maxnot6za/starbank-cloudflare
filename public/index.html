@@ -956,6 +956,8 @@ body.ui2k #screen-child-home .star-hero,body.ui2k #screen-child-home .stats-grid
     .th-card.soon { cursor:default; opacity:.6; }
     .th-card.soon .th-pv { height:86px; display:grid; place-items:center; font-size:1.6rem; color:#bbb; background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 10px,#eee 10px,#eee 20px); }
     #avatar-strip { position:fixed; left:0; right:0; bottom:var(--nav-h); height:var(--strip-h); z-index:90; pointer-events:none; display:none; overflow:hidden; }
+    /* จอกว้าง (iPad): ห้องทั้งห้องขยาย k เท่า (ตัวละคร/ของ/ไข่ใหญ่ขึ้นพร้อมกัน) · ข้างในยังเป็นห้องสูง 96px กว้าง 100vw/k */
+    #avatar-strip.zk { right:auto; width:calc(100vw / var(--room-k)); height:96px; transform:scale(var(--room-k)); transform-origin:left bottom; }
     #avatar-strip.on { display:block; }
     #avatar-strip .sa-actor { bottom:4px; }
     body.has-strip .screen { padding-bottom:calc(var(--nav-h) + var(--strip-h) + 36px); }
@@ -5019,9 +5021,19 @@ function navHSync() {
   if (nav && nav.offsetHeight) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
 }
 if (window.ResizeObserver) { var NAV_RO = new ResizeObserver(function () { navHSync(); }); ['nav-parent', 'nav-child'].forEach(function (id) { var n = document.getElementById(id); if (n) NAV_RO.observe(n); }); }
+// ขนาดห้องตามความกว้างจอ: iPhone (≤430px) = 1 · กว้างขึ้นขยายตาม สูงสุด 1.6 เท่า
+function roomK() { return Math.max(1, Math.min(1.6, (window.innerWidth || 390) / 430)); }
+function roomKApply() {
+  var k = roomK(), el = document.getElementById('avatar-strip'), r = document.documentElement.style;
+  r.setProperty('--room-k', k); r.setProperty('--strip-h', Math.round(96 * k) + 'px');
+  if (el) el.classList.toggle('zk', k > 1);
+  return k;
+}
+window.addEventListener('resize', function () { var old = STRIP.k, k = roomKApply(); if (old && Math.abs(old - k) > .02 && dashboardData) { STRIP.key = ''; stripUpdate(dashboardData.avatars || [], dashboardData.stage, dashboardData.egg); } });
 function stripUpdate(avatars, stage, egg) {
   var el = document.getElementById('avatar-strip');
   if (!el) return;
+  STRIP.k = roomKApply();
   var list = (avatars || []).slice().sort(function (a, b) { return a.sprite < b.sprite ? -1 : 1; });
   var cur = egg && egg.current, decor = (stage && stage.decor) || [];
   // สัตว์เลี้ยง = ตัวละครประเภทที่ 4 เดินในห้องด้วย (ไม่มีเจ้าของรายคน)
@@ -5045,7 +5057,7 @@ function stripUpdate(avatars, stage, egg) {
   eggWantUpdate(cur);
   if (!list.length) return;
   // จุดที่มีของตกแต่ง → ตัวละครเดินผ่านได้ แต่ไม่หยุดยืนทับ
-  var blocked = function () { var w = el.clientWidth; return Array.prototype.map.call(el.querySelectorAll('.dc, .strip-nest'), function (d) { var r = d.getBoundingClientRect(), b = el.getBoundingClientRect(); return [r.left - b.left, r.right - b.left]; }).filter(function (b) { return w && b[1] > b[0]; }); };
+  var blocked = function () { var w = el.clientWidth; return Array.prototype.map.call(el.querySelectorAll('.dc, .strip-nest'), function (d) { var r = d.getBoundingClientRect(), b = el.getBoundingClientRect(); var k = roomK(); return [(r.left - b.left) / k, (r.right - b.left) / k]; }).filter(function (b) { return w && b[1] > b[0]; }); };
   // ฉากโต้ตอบ: ครอบครัวไดโน + ครอบครัวหมี + สัตว์เลี้ยง (ใช้เฉพาะฉากที่ตัวละครอยู่ในห้องครบ)
   var rulesP = STRIP.rules || (STRIP.rules = Promise.all(['family', 'bearfamily', 'petroom'].map(function (n) {
     return fetch('/sprites/scenes/' + n + '.json').then(function (r) { return r.json(); }).catch(function () { return { interactions: [] }; });

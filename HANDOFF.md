@@ -273,6 +273,7 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 - KC ไม่เอาปุ่มปรับดาว/โบนัสในหน้านี้ (ใช้ยาก) · แค่บอกภารกิจที่ยังไม่ได้ทำ + ข้อความชวนชม · เทสต์ `ui-weekly.test.js`
 
 ### 8.16 หน้าหลักแบบใหม่ (ทดลอง · ui2)
+- **ห้องบนจอกว้าง (2026-11-17):** `roomK()` = กว้างจอ/430 (1–1.6) · `#avatar-strip.zk` กว้าง 100vw/k สูง 96 แล้ว transform:scale(k) · --strip-h = 96k · blocked() หาร k · resize → วาดห้องใหม่ · iPhone ไม่เปลี่ยน
 - **แก้แตะสัตว์เลี้ยงแล้วค้าง (2026-11-17):** `SpriteActor.play()` ท่า loop (tap ของ petdino/petpink/petyellow = header, beardad = belly) เดิมวนไม่จบ → busy ค้าง ไม่กลับไป life · ตอนนี้ท่า loop เล่น 2.5 วิแล้วจบ · เทสต์ ui-pettap · sprite-actor.js?v=2
 - **หน้าหลักลูกแบบใหม่ (2026-11-16, `kid2Home`, body.ui2k):** การ์ดดาว (`#k2-hero` ภาพ card.kid) + เป้าหมาย = รางวัลถูกสุดที่ยังแลกไม่ได้ (`kid2Goal`) → การ์ดต้นไม้/กงล้อ (`.k2-tree` ใน renderWheelCard, ครบ → ปุ่มหมุน) → ภารกิจประจำวัน/ของขวัญ/ด่วน → กล่องภารกิจ `.k2-box` · ซ่อน star-hero/stats-grid · ไม่มีปุ่มทางลัด (KC สั่ง) · เทสต์ ui-kid2
 - **ต้นไม้ซ้อนภาพ `progress.type = 'layers'`:** base (ต้นเปล่า) + balls[5] วางที่ spots (สัดส่วนของภาพต้น) + star ติดไฟเมื่อครบ · `progressLayers()` · ธีม xmas: tree-base/ball-1..5/tree-star.webp
