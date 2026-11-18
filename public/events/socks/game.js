@@ -1,6 +1,6 @@
 // =====================================================================
 // มินิเกม "ถุงเท้าซานต้า" (กิจกรรมคริสต์มาส) — เกมล้วน ไม่คุยกับเซิร์ฟเวอร์
-//   SocksGame.start({ trial, kid, cfg, base, onEnd(result), onQuit(result) })
+//   SocksGame.start({ trial, cfg, base, onEnd(result), onQuit(result) })
 //   result = { socks, taps, golds, clocks, bad, played_ms, trial }
 // จิ้มของที่หล่นจากฟ้า · ปรับค่าทั้งหมดได้จาก cfg (มาจากเซิร์ฟเวอร์ ไม่ต้อง deploy)
 // =====================================================================
@@ -9,7 +9,6 @@
     seconds: 30, clockAdd: 5, clockMax: 15,         // เวลาเล่น · นาฬิกา +5 วิ (รวมไม่เกิน +15)
     spawnFrom: 1.3, spawnTo: 3.0,                    // ของหล่นต่อวินาที ตอนเริ่ม → ตอนท้าย
     fallFrom: 0.20, fallTo: 0.42,                    // ความเร็วตก (สัดส่วนความสูงจอต่อวินาที)
-    kidSlow: 0.85,
     rushSec: 10, rushX: 1.6,                         // 10 วิสุดท้าย: ของหล่นถี่และเร็วขึ้นอีก 1.6 เท่า                                   // ลูก: ตกช้ากว่า
     comboEvery: 5, comboBonus: 1,                    // เก็บถุงเท้าติดกัน 5 ชิ้น +1
     freezeMs: 1500, smokeMs: 3000,
@@ -133,7 +132,7 @@
     var W = root.clientWidth, H = root.clientHeight, size = Math.round(Math.min(84, Math.max(58, W / 6)));
     var scEl = hud.querySelector('.sg-sc'), scN = scEl.querySelector('span'), tmBar = hud.querySelector('.sg-tm i'), tmBox = hud.querySelector('.sg-tm'), secEl = hud.querySelector('.sg-sec');
     var st = { socks: 0, taps: 0, golds: 0, clocks: 0, bad: 0, combo: 0, added: 0, left: C.seconds * 1000, total: C.seconds * 1000, freezeTo: 0, items: [], spawnAcc: 0, t0: 0, last: 0, run: false, over: false, paused: false };
-    var slow = opt.kid ? C.kidSlow : 1, pool = Object.keys(C.items).map(function (k) { return [k, C.items[k].w || 0]; }), wsum = pool.reduce(function (a, b) { return a + b[1]; }, 0);
+    var slow = 1, pool = Object.keys(C.items).map(function (k) { return [k, C.items[k].w || 0]; }), wsum = pool.reduce(function (a, b) { return a + b[1]; }, 0);
     function pick() { var r = Math.random() * wsum; for (var i = 0; i < pool.length; i++) { r -= pool[i][1]; if (r <= 0) return pool[i][0]; } return 'sock'; }
     function setScore(n, bump) { st.socks = Math.max(0, n); scN.textContent = st.socks; if (bump) { scEl.classList.remove('bump'); void scEl.offsetWidth; scEl.classList.add('bump'); } }
     function pop(x, y, txt, color) { var p = el('div', 'sg-pop', txt); p.style.left = x - 20 + 'px'; p.style.top = y - 30 + 'px'; p.style.color = color; root.appendChild(p); setTimeout(function () { p.remove(); }, 800); }
