@@ -4321,7 +4321,8 @@ function ui2Toggle() {
   toast(ui2On() ? '🧪 เปิดหน้าหลักแบบใหม่แล้ว' : 'กลับเป็นแบบเดิมแล้ว');
 }
 function ui2Goal(g) {
-  var x = g && !g.none ? (g.home ? g : (g.kidGoals || [])[0]) : null;
+  // ผู้ปกครอง: เป้าหมายบ้าน หรือของลูกคนแรก · ลูก: เป้าหมายที่เซิร์ฟเวอร์เลือกให้แล้ว (ของตัวเอง → ของบ้าน) ไม่มี kidGoals
+  var x = g && !g.none ? (g.home || !g.kidGoals ? g : g.kidGoals[0]) : null;
   if (!x) return '<div class="u2-goal"><div style="flex:1">🎯 ยังไม่มีเป้าหมาย · ให้ลูกกด 💜 อยากได้ ในร้าน</div><button onclick="goShop()">ไปร้าน ›</button></div>';
   return '<div class="u2-goal"><div style="flex:1;min-width:0">🎯 เป้าหมาย <b>' + esc(x.name) + '</b> · ' + (x.left ? 'อีก ' + x.left : 'พอซื้อแล้ว!') +
     '<div class="u2-bar"><b style="width:' + Math.min(100, x.have / x.price * 100) + '%"></b></div></div><button onclick="goShop()">ไปร้าน ›</button></div>';
