@@ -13,7 +13,7 @@ export const PUBLIC_API = [
   'toggleSubmissionNotify', 'getDailySummary', 'getWeeklySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
   'sendGift', 'cancelGift', 'openGift', 'deductStars', 'undoDeduction', 'dedSeen', 'submitFix', 'reviewFix',
-  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'setNest', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'purpleSeen', 'newsSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
+  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'setNest', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'purpleSeen', 'newsSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem', 'socksState', 'socksStart', 'socksEnd', 'socksOpen'
 ];
 
 export function createCore(S) {
@@ -852,7 +852,7 @@ export function createCore(S) {
     const wheel = syncChildWheel_(member, family);   // ก่อน stats: อาจเพิ่มสิทธิ์หมุนใหม่
     urgentSweep(familyId);
     return {
-      urgent: childUrgent_(member), gifts: childGifts_(member), deds: childDeds_(member), rewardState: childRewardState_(member), daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member),
+      urgent: childUrgent_(member), gifts: childGifts_(member), deds: childDeds_(member), rewardState: childRewardState_(member), daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member), socks: socksView_(member),
       member, family: family, wheel: wheel, stats: getChildStats_(memberId),
       missions: getMissions_(familyId), rewards: getRewardsForChild_(familyId),
       recentSubmissions: getChildSubmissions_(memberId).slice(-20).reverse(),
@@ -931,7 +931,7 @@ export function createCore(S) {
       reviewHistory: getReviewHistory_(familyId),
       redemptionHistory: getRedemptionHistory_(familyId),
       wheel: wheel, urgent: urgent, gifts: parentGifts_(familyId), deds: parentDeds_(familyId), serverNow: new Date(nowMs_()).toISOString(),
-      daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member),
+      daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member), socks: socksView_(member),
       newsSeen: member.news_seen == null || member.news_seen === '' ? -1 : Number(member.news_seen)
     };
   }
@@ -2149,6 +2149,14 @@ export function createCore(S) {
    ['blocks', 'ตัวต่อ', .55, 'wiggle sparkle', 'toys'], ['drum', 'กลอง', .45, 'beat notes', 'toys'], ['tent', 'เต็นท์', 1, 'sway sparkle', 'toys']].forEach(function(d) {
     SHOP_ITEMS.push({ id: 'decor_' + d[0], kind: 'decor', set: d[4], name: d[1], art: d[0], h: d[2], fx: d[3], price: 0, currency: 'purple', egg: true });
   });
+  // ของจากกิจกรรมถุงเท้า (event: 'socks') ไม่ขายในร้าน · ex = รางวัลหมุดถุงเท้ายักษ์
+  [['nutcracker', 'ทหารนัทแครกเกอร์', .8, 'sway'], ['ginger', 'บ้านขนมปังขิง', .6, 'breathe sparkle'], ['cocoa', 'โต๊ะโกโก้ร้อน', .5, 'breathe'],
+   ['lantern', 'โคมไฟเทียน', .6, 'breathe lamp'], ['musicbox', 'กล่องดนตรี', .45, 'beat notes'], ['globe', 'ลูกแก้วหิมะ', .5, 'breathe snow'],
+   ['bells', 'กระดิ่งคู่', .5, 'wiggle'], ['train', 'รถไฟของเล่น', .45, 'slide'], ['poinsettia', 'กระถางดอกคริสต์มาส', .55, 'sway'], ['cookies', 'คุกกี้กับนมรอซานต้า', .5, 'hop sparkle'],
+   ['snowfam', 'ครอบครัวตุ๊กตาหิมะ', 1, 'sway snow', 1], ['reindeer', 'กวางเรนเดียร์จมูกแดง', 1, 'breathe sparkle', 1], ['santachair', 'ซานต้านั่งพัก', 1.1, 'breathe sparkle', 1]].forEach(function(d) {
+    SHOP_ITEMS.push({ id: 'decor_' + d[0], kind: 'decor', set: 'xmas', name: d[1], art: d[0], h: d[2], fx: d[3], price: 0, currency: 'purple', event: 'socks', ex: !!d[4] });
+  });
+  SHOP_ITEMS.push({ id: 'pet_penguin', kind: 'pet', name: 'เพนกวินซานต้า', sprite: 'petpenguin', price: 0, currency: 'purple', event: 'socks', ex: true, thumb: 'down', thumbFrames: 3 });
   var DEFAULT_FLOOR = 'floor_wood', DEFAULT_WALL = 'wall_cream', ROOM_MAX = 8, PET_MAX = 2, SCALE_MIN = 0.6, SCALE_MAX = 1.6;
   var FIRST_DISCOUNT = 0.5;   // ของชิ้นแรกของครอบครัว (ชนิดไหนก็ได้) ลด 50%
   function shopItem_(id) { return SHOP_ITEMS.find(function(i) { return i.id === String(id); }); }
@@ -2385,11 +2393,11 @@ export function createCore(S) {
       canBuy: m.role === 'parent', firstDiscount: first, discountPct: Math.round(FIRST_DISCOUNT * 100),
       wallet: { purple: Number(fam.purple || 0), gold: Number(fam.gold || 0) },
       members: members.map(function(x) { return { member_id: x.member_id, name: x.name, avatar: x.avatar, role: x.role }; }),
-      items: SHOP_ITEMS.map(function(it) {
+      items: SHOP_ITEMS.filter(function(it) { return !it.event || inv.some(function(r) { return r.item_id === it.id; }); }).map(function(it) {
         var own = it.free || inv.find(function(r) { return r.item_id === it.id; });
         var who = own && own.assigned_to ? getMember_(own.assigned_to) : null;   // ตัวละครเท่านั้น
         var ws = wishes.filter(function(w) { return w.item_id === it.id; });
-        return { id: it.id, kind: it.kind, name: it.name, type: it.type, sprite: it.sprite, art: it.art, free: !!it.free, egg: !!it.egg, tier: it.tier || 'normal', set: it.set, h: it.h, fx: it.fx, rim: it.rim, currency: it.currency, price: it.price,
+        return { id: it.id, kind: it.kind, name: it.name, type: it.type, sprite: it.sprite, art: it.art, free: !!it.free, egg: !!it.egg, event: it.event || '', tier: it.tier || 'normal', set: it.set, h: it.h, fx: it.fx, rim: it.rim, currency: it.currency, price: it.price,
           pay: first ? discPrice_(it.price, FIRST_DISCOUNT * 100) : it.price, owned: !!own,
           inUse: it.kind === 'floor' ? stage.floor === it.id : it.kind === 'wall' ? stage.wall === it.id : it.kind === 'decor' ? stage.decor.some(function(d) { return d.id === it.id; }) : it.kind === 'pet' ? stage.pets.indexOf(it.id) >= 0 : it.kind === 'nest' ? stage.nest.skin === it.id : undefined,
           assigned_to: who ? { member_id: who.member_id, name: who.name, avatar: who.avatar } : null,
@@ -2416,6 +2424,7 @@ export function createCore(S) {
     var familyId = parent.family_id, item = shopItem_(itemId);
     if (!item) throw new Error('ไม่พบสินค้านี้');
     if (item.egg) throw new Error('ของชิ้นนี้ได้จากไข่เท่านั้น');
+    if (item.event) throw new Error('ของชิ้นนี้ได้จากกิจกรรมเท่านั้น');
     if (owns_(familyId, item)) throw new Error('ครอบครัวนี้มีของชิ้นนี้แล้ว');
     var price = priceFor_(familyId, item), coupon = null;
     // คูปองไม่ซ้อนกับส่วนลดชิ้นแรก (ชิ้นแรกลด 50% อยู่แล้ว → ไม่ใช้คูปอง)
@@ -2460,7 +2469,7 @@ export function createCore(S) {
     if (!m) throw new Error('ไม่พบสมาชิก');
     var item = shopItem_(itemId);
     if (!item) throw new Error('ไม่พบสินค้านี้');
-    if (item.egg) throw new Error('ของชิ้นนี้ได้จากไข่เท่านั้น');
+    if (item.egg || item.event) throw new Error('ของชิ้นนี้ไม่มีขายในร้าน');
     if (owns_(m.family_id, item)) throw new Error('ครอบครัวมีของชิ้นนี้แล้ว');
     var mineAll = getAllRows_('Wishes').filter(function(w) { return String(w.child_id) === String(m.member_id); });
     var mine = mineAll.find(function(w) { return w.item_id === item.id; });
@@ -2473,8 +2482,175 @@ export function createCore(S) {
     return { wished: true, replaced: old ? old.name : '', shop: getShop(memberId) };
   }
 
+
+  // ==========================================
+  // กิจกรรมคริสต์มาส "ถุงเท้าซานต้า" (HANDOFF 8.18)
+  // เปิด/ปิด + ตัวเลขทั้งหมด: AppConfig key 'event_socks' (JSON ทับค่าใน SOCKS_DEF ทีละช่อง) · ไม่มีแถว/enabled=false = ปิด
+  // ==========================================
+  var SOCKS_DEF = {
+    enabled: false, season: '2026', start: '2026-12-01', end: '2026-12-25', santaHour: 18,
+    tiers: [15, 30, 45],            // ถุงเล็ก/กลาง/ใหญ่: คู่ต่อสมาชิก 1 คน
+    bigPerPerson: 650,              // ถุงเท้ายักษ์: คู่ต่อสมาชิก 1 คน ทั้งเทศกาล
+    maxSocks: 160, maxPerSec: 4,    // กันโกง: ต่อรอบ / ต่อวินาทีที่เล่นจริง
+    abandonMs: 180000,              // กดเล่นแล้วหายไปเกิน 3 นาที = จบรอบ (0 คู่)
+    dupPurple: 3, couponWeekly: 1,
+    // ช่องในถุง: แต่ละช่องสุ่ม 1 อย่าง [ชนิด, ค่า, โอกาส] · purple = ดาวม่วง · decor = ของตกแต่งที่ยังไม่มี · coupon = % ส่วนลด
+    bags: {
+      s: [[['purple', 2, .85], ['decor', 0, .15]]],
+      m: [[['purple', 3, 1]], [['purple', 2, .60], ['decor', 0, .35], ['coupon', 20, .05]]],
+      l: [[['purple', 4, 1]], [['decor', 0, 1]], [['purple', 3, .85], ['coupon', 20, .10], ['coupon', 30, .05]]]
+    },
+    decor: ['decor_nutcracker', 'decor_ginger', 'decor_cocoa', 'decor_lantern', 'decor_musicbox', 'decor_globe', 'decor_bells', 'decor_train', 'decor_poinsettia', 'decor_cookies'],
+    milestones: [[25, 'decor_snowfam'], [50, 'decor_reindeer'], [75, 'decor_santachair'], [100, 'pet_penguin']],
+    game: {}                        // ส่งให้ตัวเกม (public/events/socks/game.js) ทับค่า DEF ของเกม
+  };
+  function socksCfg_() {
+    var o = S.store.eventSocks; if (!o || typeof o !== 'object') return null;
+    var c = {}; Object.keys(SOCKS_DEF).forEach(function(k) { c[k] = o[k] !== undefined ? o[k] : SOCKS_DEF[k]; });
+    return c.enabled ? c : null;
+  }
+  function thaiHour_() { return new Date(nowMs_() + 7 * 3600000).getUTCHours(); }
+  function dayIdx_(a, b) { return Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000); }
+  function socksPlays_(c, familyId) { return getAllRows_('SocksPlays').filter(function(p) { return String(p.family_id) === String(familyId) && String(p.season) === String(c.season); }); }
+  function socksBags_(c, familyId) { return getAllRows_('SocksBags').filter(function(b) { return String(b.family_id) === String(familyId) && String(b.season) === String(c.season); }); }
+  function socksDone_(c, p) { return p.status === 'done' || (p.status === 'playing' && nowMs_() - Date.parse(p.started_at) > c.abandonMs); }
+  function socksTiers_(c, familyId) { var n = Math.max(1, getFamilyMembers_(familyId).length); return c.tiers.map(function(t) { return t * n; }); }
+  function socksTierOf_(total, tiers) { return total >= tiers[2] ? 'l' : total >= tiers[1] ? 'm' : total >= tiers[0] ? 's' : ''; }
+  function socksDayTotal_(c, familyId, day) {
+    return socksPlays_(c, familyId).filter(function(p) { return p.status === 'done' && p.day === day; }).reduce(function(a, p) { return a + Number(p.socks || 0); }, 0);
+  }
+  function socksBagRow_(c, familyId, day) { return socksBags_(c, familyId).find(function(b) { return b.kind === 'bag' && b.day === day; }); }
+  // วันที่ถุงเท้าจะเข้าตะกร้า: วันนี้ · ถ้าเปิดถุงของวันนี้ไปแล้ว → พรุ่งนี้
+  function socksCountDay_(c, familyId) { var t = todayKey_(); return socksBagRow_(c, familyId, t) ? addDaysKey_(t, 1) : t; }
+  function socksPlayable_(c) { var t = todayKey_(); return t >= c.start && t <= c.end; }
+  // ถุงที่รอลูกเปิด: วันที่ผ่านไปแล้ว หรือวันนี้หลังซานต้ามา · ไม่ถึงขั้น 1 = ไม่มีถุง
+  function socksPending_(c, familyId) {
+    var t = todayKey_(), santa = thaiHour_() >= c.santaHour, tiers = socksTiers_(c, familyId), days = {};
+    socksPlays_(c, familyId).forEach(function(p) { if (p.status === 'done' && p.day) days[p.day] = 1; });
+    return Object.keys(days).sort().filter(function(d) { return (d < t || (d === t && santa)) && !socksBagRow_(c, familyId, d); })
+      .map(function(d) { var tot = socksDayTotal_(c, familyId, d); return { day: d, total: tot, tier: socksTierOf_(tot, tiers) }; })
+      .filter(function(b) { return b.tier; });
+  }
+  function socksBig_(c, familyId) {
+    var total = socksPlays_(c, familyId).filter(function(p) { return p.status === 'done'; }).reduce(function(a, p) { return a + Number(p.socks || 0); }, 0);
+    var target = c.bigPerPerson * Math.max(1, getFamilyMembers_(familyId).length), got = socksBags_(c, familyId).filter(function(b) { return b.kind === 'milestone'; });
+    return { total: total, target: target, pct: Math.min(100, Math.floor(total * 100 / target)),
+      milestones: c.milestones.map(function(ms) { var g = got.find(function(b) { return b.tier === 'm' + ms[0]; }); return { pct: ms[0], item: prizeView1_(ms[1]), got: !!g, at: g ? g.opened_at : '' }; }) };
+  }
+  function socksItemView_(x) {
+    if (x.kind === 'item') { var v = prizeView1_(x.id); return v ? Object.assign({ kind: 'item' }, v, { itemKind: v.kind, kind: 'item' }) : null; }
+    return x;
+  }
+  function socksView_(m) {
+    var c = socksCfg_(); if (!c) return null;
+    var fid = m.family_id, t = todayKey_(), pend = socksPending_(c, fid), playable = socksPlayable_(c);
+    if (!playable && !pend.length && t < c.start) return null;
+    var plays = socksPlays_(c, fid), mine = plays.find(function(p) { return p.play_id === m.member_id + '|' + t; });
+    var cday = socksCountDay_(c, fid), tiers = socksTiers_(c, fid), total = socksDayTotal_(c, fid, cday);
+    var members = getFamilyMembers_(fid), kids = members.filter(function(x) { return x.role === 'child'; });
+    var todayBag = socksBagRow_(c, fid, t);
+    var best = plays.filter(function(p) { return String(p.member_id) === String(m.member_id) && p.status === 'done'; }).reduce(function(a, p) { return Math.max(a, Number(p.socks || 0)); }, 0);
+    return {
+      on: playable, season: c.season, start: c.start, end: c.end, santaHour: c.santaHour, santa: thaiHour_() >= c.santaHour, today: t,
+      countDay: cday, total: total, tiers: tiers, tier: socksTierOf_(total, tiers),
+      played: !!mine, canPlay: playable && !mine, best: best,
+      who: members.map(function(x) {
+        var p = plays.find(function(q) { return q.play_id === x.member_id + '|' + t; });
+        return { member_id: x.member_id, name: x.name, avatar: x.avatar, role: x.role, socks: p && socksDone_(c, p) ? Number(p.socks || 0) : null };
+      }),
+      pending: pend, canOpen: m.role === 'child' || !kids.length,
+      opened: todayBag ? { tier: todayBag.tier, total: Number(todayBag.total || 0), by: (getMember_(todayBag.opened_by) || {}).name || '', items: jsonArr_(todayBag.items).map(socksItemView_).filter(Boolean) } : null,
+      big: socksBig_(c, fid), game: c.game || {}
+    };
+  }
+  function jsonArr_(s) { try { var a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function socksState(memberId) { var m = getMember_(memberId); if (!m) throw new Error('ไม่พบสมาชิก'); return socksView_(m); }
+  function socksStart(memberId) {
+    var m = getMember_(memberId); if (!m) throw new Error('ไม่พบสมาชิก');
+    var c = socksCfg_(); if (!c || !socksPlayable_(c)) throw new Error('กิจกรรมถุงเท้ายังไม่เปิด');
+    var t = todayKey_(), id = m.member_id + '|' + t;
+    if (getAllRows_('SocksPlays').some(function(p) { return p.play_id === id; })) throw new Error('วันนี้เล่นไปแล้ว พรุ่งนี้มาใหม่นะ');
+    appendRow_('SocksPlays', { play_id: id, family_id: m.family_id, member_id: String(m.member_id), season: c.season, play_date: t, day: '', status: 'playing',
+      socks: 0, golds: 0, clocks: 0, bad: 0, taps: 0, played_ms: 0, started_at: msIso_(nowMs_()), ended_at: '' });
+    return { play_id: id, game: c.game || {} };
+  }
+  function socksEnd(memberId, r) {
+    var m = getMember_(memberId); if (!m) throw new Error('ไม่พบสมาชิก');
+    var c = socksCfg_(); if (!c) throw new Error('กิจกรรมถุงเท้ายังไม่เปิด');
+    r = r || {};
+    var p = getAllRows_('SocksPlays').find(function(q) { return String(q.member_id) === String(m.member_id) && q.status === 'playing' && String(q.season) === String(c.season); });
+    if (!p) throw new Error('ไม่พบรอบที่กำลังเล่น');
+    var elapsed = nowMs_() - Date.parse(p.started_at), n = function(v) { v = Math.floor(Number(v) || 0); return v < 0 ? 0 : v; };
+    // กันโกง: ไม่เกินเพดานต่อรอบ และไม่เกินความเร็วที่จิ้มได้จริง (นับจากเวลาที่เซิร์ฟเวอร์เห็น)
+    var socks = Math.min(n(r.socks), c.maxSocks, Math.floor(elapsed / 1000 * c.maxPerSec) + 5);
+    if (socksDone_(c, p) && p.status === 'playing' && elapsed > c.abandonMs) socks = Math.min(socks, 0);
+    var before = socksBig_(c, m.family_id), day = socksCountDay_(c, m.family_id), prevBest = 0;
+    socksPlays_(c, m.family_id).forEach(function(q) { if (String(q.member_id) === String(m.member_id) && q.status === 'done') prevBest = Math.max(prevBest, Number(q.socks || 0)); });
+    updateRow_('SocksPlays', 'play_id', p.play_id, { status: 'done', day: day, socks: socks, golds: n(r.golds), clocks: n(r.clocks), bad: n(r.bad), taps: n(r.taps),
+      played_ms: Math.min(n(r.played_ms), elapsed), ended_at: msIso_(nowMs_()) });
+    // หมุดถุงเท้ายักษ์: ผ่านแล้วได้ของทันที · 100% ต้องเต็มภายในวันสุดท้าย
+    var after = socksBig_(c, m.family_id), unlocked = [];
+    c.milestones.forEach(function(ms) {
+      if (after.pct < ms[0] || before.milestones.some(function(x) { return x.pct === ms[0] && x.got; })) return;
+      if (ms[0] === 100 && todayKey_() > c.end) return;
+      var it = shopItem_(ms[1]);
+      if (it && !owns_(m.family_id, it)) {
+        appendRow_('Inventory', { inv_id: genId_(), family_id: m.family_id, item_id: it.id, price: 0, currency: 'event', bought_by: String(m.member_id), bought_at: msIso_(nowMs_()), assigned_to: '' });
+        if (it.kind === 'pet') { var st0 = stageRaw_(m.family_id); if (st0.pets.length < PET_MAX) { st0.pets.push(it.id); saveStage_(m.family_id, st0); } }
+      }
+      appendRow_('SocksBags', { bag_id: m.family_id + '|' + c.season + '|m' + ms[0], family_id: m.family_id, season: c.season, day: todayKey_(), kind: 'milestone', tier: 'm' + ms[0],
+        total: after.total, items: JSON.stringify([{ kind: 'item', id: ms[1] }]), opened_by: String(m.member_id), opened_at: msIso_(nowMs_()), created_at: msIso_(nowMs_()) });
+      unlocked.push({ pct: ms[0], item: prizeView1_(ms[1]) });
+    });
+    return { socks: socks, best: prevBest, record: socks > prevBest && prevBest > 0, first: prevBest === 0 && !socksPlays_(c, m.family_id).some(function(q) { return String(q.member_id) === String(m.member_id) && q.status === 'done' && q.play_id !== p.play_id; }),
+      day: day, unlocked: unlocked, state: socksView_(m) };
+  }
+  function socksRoll_(slot) {
+    var r = Math.random(), acc = 0;
+    for (var i = 0; i < slot.length; i++) { acc += slot[i][2]; if (r < acc) return slot[i]; }
+    return slot[slot.length - 1];
+  }
+  // ลูกเปิดถุง (ถุงเก่าสุดก่อน) · ไม่มีลูกในบ้าน = ผู้ปกครองเปิดได้
+  function socksOpen(memberId, day) {
+    var m = getMember_(memberId); if (!m) throw new Error('ไม่พบสมาชิก');
+    var c = socksCfg_(); if (!c) throw new Error('กิจกรรมถุงเท้ายังไม่เปิด');
+    var fid = m.family_id, kids = getFamilyMembers_(fid).filter(function(x) { return x.role === 'child'; });
+    if (m.role !== 'child' && kids.length) throw new Error('ให้ลูกเป็นคนเปิดถุงนะ');
+    var pend = socksPending_(c, fid), b = day ? pend.find(function(x) { return x.day === String(day); }) : pend[0];
+    if (!b) throw new Error('ยังไม่มีถุงให้เปิด');
+    var items = [], fresh = c.decor.filter(function(id) { var it = shopItem_(id); return it && !owns_(fid, it); });
+    var week = Math.floor(Math.max(0, dayIdx_(c.start, b.day)) / 7), cref = 'socks:' + c.season + ':w' + week;
+    var weekCoupons = getAllRows_('Coupons').filter(function(x) { return String(x.family_id) === String(fid) && x.egg_id === cref; }).length;
+    (c.bags[b.tier] || []).forEach(function(slot) {
+      var g = socksRoll_(slot);
+      if (g[0] === 'decor') {
+        if (fresh.length) {
+          var id = fresh.splice(Math.floor(Math.random() * fresh.length), 1)[0];
+          appendRow_('Inventory', { inv_id: genId_(), family_id: fid, item_id: id, price: 0, currency: 'event', bought_by: String(m.member_id), bought_at: msIso_(nowMs_()), assigned_to: '' });
+          items.push({ kind: 'item', id: id }); return;
+        }
+        g = ['purple', c.dupPurple];
+      }
+      if (g[0] === 'coupon') {
+        if (weekCoupons < c.couponWeekly) {
+          weekCoupons++;
+          appendRow_('Coupons', { coupon_id: genId_(), family_id: fid, pct: g[1], egg_id: cref, created_at: msIso_(nowMs_()), used_at: '', used_on: '' });
+          items.push({ kind: 'coupon', pct: g[1] }); return;
+        }
+        g = ['purple', c.dupPurple];
+      }
+      var last = items[items.length - 1];
+      items.push({ kind: 'purple', n: Number(g[1]) || 0 });
+    });
+    var purple = items.reduce(function(a, x) { return a + (x.kind === 'purple' ? x.n : 0); }, 0);
+    if (purple) walletAdd_(fid, 'purple', purple, 'socks', fid + '|' + b.day, String(m.member_id));
+    appendRow_('SocksBags', { bag_id: fid + '|' + b.day, family_id: fid, season: c.season, day: b.day, kind: 'bag', tier: b.tier, total: b.total,
+      items: JSON.stringify(items), opened_by: String(m.member_id), opened_at: msIso_(nowMs_()), created_at: msIso_(nowMs_()) });
+    return { day: b.day, tier: b.tier, total: b.total, items: items.map(socksItemView_).filter(Boolean), more: pend.length - 1, state: socksView_(m) };
+  }
+
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, giveReward, rewardSeen, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, getWeeklySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift, deductStars, undoDeduction, dedSeen, submitFix, reviewFix,
-    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, setNest, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen, newsSeen };
+    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, setNest, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen, newsSeen , socksState, socksStart, socksEnd, socksOpen };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }

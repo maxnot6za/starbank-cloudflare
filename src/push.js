@@ -225,3 +225,23 @@ export async function filterLineOutbox(env, familyIds, outbox) {
   const skip = new Set(results.map(r => r.line_user_id));
   return outbox.filter(m => m.kind !== 'push' || !skip.has(m.to));
 }
+
+// กิจกรรมถุงเท้า: 18:00 (cron) แจ้งทุกเครื่องที่รับแจ้งเตือนว่าซานต้ามาแล้ว · ข้อความต่างกันตามว่าบ้านถึงขั้นถุงหรือยัง
+export async function notifySanta(env, nowMs) {
+  const row = await env.DB.prepare("SELECT value FROM AppConfig WHERE key = 'event_socks'").first();
+  let c = null; try { c = row ? JSON.parse(row.value) : null; } catch (e) {}
+  if (!c || !c.enabled) return 0;
+  const today = new Date((nowMs || Date.now()) + 7 * 3600000).toISOString().slice(0, 10);
+  const season = String(c.season || '2026');
+  if (today < (c.start || '2026-12-01') || today > (c.end || '2026-12-25')) return 0;
+  const { results: subs } = await env.DB.prepare('SELECT p.*, m.family_id AS fam FROM PushSubs p JOIN Members m ON m.member_id = p.member_id').all();
+  if (!subs.length) return 0;
+  const { results: tot } = await env.DB.prepare("SELECT family_id, SUM(socks) AS n FROM SocksPlays WHERE season = ? AND day = ? AND status = 'done' GROUP BY family_id").bind(season, today).all();
+  const has = new Set(tot.filter(r => r.n > 0).map(r => String(r.family_id)));
+  const by = { yes: [], no: [] };
+  subs.forEach(s => (has.has(String(s.fam)) ? by.yes : by.no).push(s));
+  const origin = c.origin || 'mailto:noreply@starbank.invalid';
+  if (by.yes.length) await deliver(env, by.yes, { title: '🎅 ซานต้ามาแล้ว!', body: 'มารับถุงเท้าของบ้าน · ลูกเปิดถุงของขวัญได้แล้ว', tag: 'santa-' + today, url: '/', kind: 'gift' }, origin);
+  if (by.no.length) await deliver(env, by.no, { title: '🎅 ซานต้ามาแล้ว!', body: 'ยังเก็บถุงเท้าได้ถึงเที่ยงคืน · เล่นวันละ 1 รอบ', tag: 'santa-' + today, url: '/', kind: 'gift' }, origin);
+  return subs.length;
+}

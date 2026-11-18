@@ -7,7 +7,7 @@ import { createCore, PUBLIC_API } from './core.js';
 export { FamilyHub } from './hub.js';
 
 import { handleAuth, getSession } from './auth.js';
-import { notifyApp, filterLineOutbox, pushAck } from './push.js';
+import { notifyApp, filterLineOutbox, pushAck, notifySanta } from './push.js';
 
 // คำสั่งที่ต้องเข้าสู่ระบบ: อาร์กิวเมนต์ตัวไหนคือ "ตัวผู้ใช้"
 // → เซิร์ฟเวอร์ใส่รหัสสมาชิกจากกุญแจเครื่อง (session) ทับเสมอ ไม่เชื่อค่าที่หน้าเว็บส่งมา
@@ -21,6 +21,7 @@ const MEMBER_ARG = {
   createUrgent: 0, cancelUrgent: 0, urgentSeen: 0, acceptUrgent: 0, submitUrgent: 0, declineUrgent: 0,
   sendGift: 0, cancelGift: 0, openGift: 0, deductStars: 0, undoDeduction: 0, dedSeen: 0, submitFix: 0, reviewFix: 0,
   questSeen: 0, treeSeen: 0, setTheme: 0, setFloor: 0, setWall: 0, setNest: 0, saveRoom: 0, setPets: 0, hugEgg: 0, hatchEgg: 0, eggSeen: 0, purpleSeen: 0, newsSeen: 0, claimQuest: 0, getShop: 0, buyItem: 0, assignAvatar: 0, wishItem: 0,
+  socksState: 0, socksStart: 0, socksEnd: 0, socksOpen: 0,
 };
 // คำสั่งเข้าระบบแบบเก่า (ลิงก์ ?auto=, รหัสครอบครัว) ถูกแทนด้วย /auth/* แล้ว
 
@@ -55,6 +56,10 @@ export default {
       }).transform(res);
     }
     return env.ASSETS.fetch(request);
+  },
+  // ตั้งเวลาใน wrangler.jsonc (triggers.crons) · 11:00 UTC = 18:00 เวลาไทย → ซานต้ามาแล้ว
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(notifySanta(env).catch(e => console.log('santa push error', e)));
   },
 };
 

@@ -21,12 +21,14 @@ export const TABLES = {
   Coupons:     { pk: 'coupon_id', cols: ['coupon_id','family_id','pct','egg_id','created_at','used_at','used_on'], bools: [] },
   Eggs:        { pk: 'egg_id', cols: ['egg_id','family_id','status','warm','goal','day','day_warm','contrib','hugs','found_by','found_at','hatched_by','hatched_at','prize','created_at','tier'], bools: [] },
   Deductions:  { pk: 'ded_id', cols: ['ded_id','family_id','child_id','stars','reason','created_by','created_at','status','undone_at','seen_at','fix_title','fix_icon','fix_until','fix_status','fix_sent_at','fix_by','fix_done_at'], bools: [] },
+  SocksPlays:  { pk: 'play_id', cols: ['play_id','family_id','member_id','season','play_date','day','status','socks','golds','clocks','bad','taps','played_ms','started_at','ended_at'], bools: [] },
+  SocksBags:   { pk: 'bag_id', cols: ['bag_id','family_id','season','day','kind','tier','total','items','opened_by','opened_at','created_at'], bools: [] },
   Spins:       { pk: 'spin_id', cols: ['spin_id','child_id','family_id','round_key','earned_at','used_at','prize_stars','prize_index','request_id'], bools: [], ignoreDup: true },
 };
 
 const NUM_COLS = new Set(['pct','base_stars','multiplier','stars_earned','stars_cost','quantity','stars_spent','prize_stars','prize_index',
   'stars_earned_today','stars_spent_today','balance','missions_completed_today','stars','duration_sec',
-  'purple','gold','target','progress','reward','price','amount','warm','goal','day_warm','egg_pity','egg_rare_pity','news_seen']);
+  'socks','golds','clocks','bad','taps','played_ms','total','purple','gold','target','progress','reward','price','amount','warm','goal','day_warm','egg_pity','egg_rare_pity','news_seen']);
 
 export class ConflictError extends Error {}
 
@@ -129,6 +131,8 @@ export class Store {
       stmts.push(this.db.prepare(`SELECT * FROM ${name} WHERE family_id IN (${q}) ORDER BY rowid`).bind(...ids));
       names.push(name);
     }
+    // ค่ากิจกรรมพิเศษ (เปิด/ปิด + ตัวเลขที่ปรับได้) · ไม่มีแถว = ปิด
+    stmts.push(this.db.prepare("SELECT value FROM AppConfig WHERE key = 'event_socks'")); names.push('__EventSocks');
     if (this.subWindowed && ids.length) {
       stmts.push(this.db.prepare(`SELECT cs.* FROM ChildStats cs JOIN Members m ON m.member_id = cs.child_id WHERE m.family_id IN (${q})`).bind(...ids));
       names.push('__ChildStats');
@@ -138,6 +142,11 @@ export class Store {
       const name = names[i];
       if (name === '__GiftSum') {
         this.giftSum = new Map((r.results || []).map(x => [String(x.child_id), Number(x.s || 0)]));
+        return;
+      }
+      if (name === '__EventSocks') {
+        const row = (r.results || [])[0];
+        try { this.eventSocks = row ? JSON.parse(row.value) : null; } catch (e) { this.eventSocks = null; }
         return;
       }
       if (name === '__ChildStats') {

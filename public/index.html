@@ -1690,6 +1690,11 @@ function kid2Home(d) {
   var ppb = document.getElementById('k2-prep'); if (!ppb) { ppb = document.createElement('div'); ppb.id = 'k2-prep'; }
   if (fxb.nextElementSibling !== ppb) fxb.after(ppb);
   kidPrepCards(d); fxb = ppb;
+  // กิจกรรมถุงเท้าซานต้า (ปิดกิจกรรม = ว่าง)
+  var sxb = document.getElementById('k2-socks'); if (!sxb) { sxb = document.createElement('div'); sxb.id = 'k2-socks'; }
+  if (fxb.nextElementSibling !== sxb) fxb.after(sxb);
+  sxb.innerHTML = window.socksCard ? socksCard(d.socks) : ''; fxb = sxb;
+  if (window.socksPop) setTimeout(function () { socksPop(d); }, 1800);
   var wc = document.getElementById('child-wheel-card'); if (wc.previousElementSibling !== fxb) fxb.after(wc);
   var list = document.getElementById('child-missions-list');
   list.innerHTML = d.missions.length ? '<div class="k2-box"><h3>📋 ภารกิจวันนี้</h3>' + d.missions.map(function (x) {
@@ -4338,7 +4343,7 @@ function ui2Top(d, dl) {
   return ui2Kids(d, dl, mascot) +
     '<div class="u2-acts">' +
       '<button class="u2-act u" data-sfx="urgent" onclick="showCreateUrgent()"><i>' + urgArt + '</i>ภารกิจด่วน</button>' +
-      ui2Act('a', 'add', '📝', 'เพิ่มภารกิจ', 'showAddMission()') + ui2Act('b', 'gift', '🎁', 'ส่งของขวัญ', 'ui2Gift()') + ui2Act('c', 'weekly', '🗓️', 'สรุปสัปดาห์', 'showWeekly()') + '</div>' + promo;
+      ui2Act('a', 'add', '📝', 'เพิ่มภารกิจ', 'showAddMission()') + ui2Act('b', 'gift', '🎁', 'ส่งของขวัญ', 'ui2Gift()') + ui2Act('c', 'weekly', '🗓️', 'สรุปสัปดาห์', 'showWeekly()') + '</div>' + promo + (window.socksCard ? socksCard(d.socks) : '');
 }
 // การ์ดบนสุด = ดาวของลูกทีละคน ปัดซ้าย-ขวาเปลี่ยนคน · ใบสุดท้าย = กระเป๋าดาวม่วงของครอบครัว + เป้าหมาย
 var U2 = { i: 0 };
@@ -5596,6 +5601,7 @@ function stripUpdate(avatars, stage, egg) {
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="/sprites/sprite-actor.js?v=2" defer></script>
 <script src="/sprites/scene.js" defer></script>
+<script src="/events/socks/ui.js?v=1" defer></script>
 <script>
 // ===================================================================
 // AUTH: ผู้ปกครองเข้าด้วย LINE · เด็กเข้าด้วยรหัสครอบครัว + รูป + PIN หรือ QR
