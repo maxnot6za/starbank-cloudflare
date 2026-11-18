@@ -9,7 +9,7 @@ export const TABLES = {
   Missions:    { pk: 'mission_id', cols: ['mission_id','family_id','title','description','base_stars','multiplier','icon','is_active','created_by','created_at'], bools: ['is_active'] },
   Submissions: { pk: 'submission_id', cols: ['submission_id','mission_id','child_id','family_id','mission_title','status','stars_earned','submitted_at','reviewed_by','reviewed_at'], bools: [] },
   Rewards:     { pk: 'reward_id', cols: ['reward_id','family_id','title','description','stars_cost','type','secret_data','quantity','icon','is_active','created_by','created_at'], bools: ['is_active'] },
-  Redemptions: { pk: 'redemption_id', cols: ['redemption_id','reward_id','child_id','family_id','reward_title','stars_spent','secret_revealed','redeemed_at','acknowledged_at','acknowledged_by'], bools: [] },
+  Redemptions: { pk: 'redemption_id', cols: ['redemption_id','reward_id','child_id','family_id','reward_title','stars_spent','secret_revealed','redeemed_at','acknowledged_at','acknowledged_by','kid_seen_at'], bools: [] },
   LineState:   { pk: 'user_id', cols: ['user_id','state','data','updated_at'], bools: [], global: true },
   DailyLog:    { pk: 'log_id', cols: ['log_id','family_id','date','child_id','child_name','stars_earned_today','stars_spent_today','balance','missions_completed_today','logged_at'], bools: [], upsert: true },
   Urgent:      { pk: 'urgent_id', cols: ['urgent_id','batch_id','family_id','child_id','title','icon','stars','duration_sec','open_until','created_by','created_at','status','seen_at','deadline_at','reminded_at','submission_id','ended_at','accepted_at'], bools: [] },

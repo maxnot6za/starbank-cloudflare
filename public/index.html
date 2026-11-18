@@ -746,6 +746,39 @@ body.touring #dd-go{pointer-events:none}
 .wn2-done{flex:none;width:54px;height:54px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.62rem;font-weight:900;color:#9A6B00;background:radial-gradient(circle,#FFF3C2,#FFD66B);transform:rotate(-12deg);box-shadow:0 0 0 3px #fff,0 0 0 5px #FFC24B}
 .wn2-done i{font-style:normal;font-size:1.2rem;line-height:1}
 @media (prefers-reduced-motion:reduce){.tr-hole::after{animation:none}.tr-hole,.tr-tip{transition:none}}
+/* การ์ดกำลังจัดเตรียมของรางวัล (ลูก) + ป๊อปอัปได้รับรางวัล */
+.pp-card{position:relative;margin-top:14px;border-radius:24px;padding:14px 16px 14px 12px;display:flex;align-items:center;gap:12px;overflow:hidden;background:repeating-linear-gradient(-45deg,#FFE9F0 0 14px,#FFF3F7 14px 28px);background-size:40px 40px;animation:ppStripe 2.4s linear infinite;box-shadow:0 0 0 2px #FFB3C7,0 6px 18px #E5487A22;transition:opacity .5s,transform .5s}
+.pp-card.out{opacity:0;transform:scale(.9)}
+@keyframes ppStripe{to{background-position:40px 0}}
+.pp-scene{position:relative;width:96px;height:96px;flex:none}
+.pp-box{position:absolute;left:14px;bottom:8px;width:68px;height:52px;animation:ppWob 1.6s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes ppWob{0%,100%{transform:rotate(0)}20%{transform:rotate(-5deg) scaleY(.95)}40%{transform:rotate(4deg)}60%{transform:rotate(-2deg)}}
+.pp-lid{position:absolute;left:8px;top:14px;width:80px;height:22px;animation:ppLid 1.6s ease-in-out infinite;transform-origin:20% 100%}
+@keyframes ppLid{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-14px) rotate(-12deg)}55%{transform:translateY(-4px) rotate(4deg)}70%{transform:translateY(0)}}
+.pp-peek{position:absolute;left:34px;top:26px;font-size:1.6rem;animation:ppPeek 1.6s ease-in-out infinite}
+@keyframes ppPeek{0%,100%{transform:translateY(16px);opacity:0}30%{transform:translateY(-2px);opacity:1}55%{transform:translateY(4px);opacity:1}70%{transform:translateY(16px);opacity:0}}
+.pp-st{position:absolute;font-size:.8rem;opacity:0;animation:ppSt 1.6s ease-out infinite}
+.pp-st.a{left:6px;top:20px;animation-delay:.35s}.pp-st.b{right:4px;top:12px;animation-delay:.5s}.pp-st.c{left:44px;top:0;animation-delay:.42s}
+@keyframes ppSt{0%{opacity:0;transform:translateY(8px) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px) scale(1.1) rotate(90deg)}}
+.pp-tx{flex:1;min-width:0}.pp-tx small{display:block;color:#C2185B;font-weight:800;font-size:.8rem}
+.pp-tx b{display:block;font-size:1.15rem;line-height:1.25;color:#1F3B35;margin:2px 0}
+.pp-bar{height:8px;border-radius:9px;background:#ffffffaa;overflow:hidden;margin-top:6px}.pp-bar i{display:block;height:100%;width:40%;border-radius:9px;background:linear-gradient(90deg,#FF8FB1,#FF5C8A);animation:ppBar 1.8s ease-in-out infinite}
+@keyframes ppBar{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+.pp-tx .w{font-size:.8rem;color:#7A5563;margin-top:5px}
+.gt-pop{text-align:center;position:relative}.gt-stage{position:relative;height:150px}
+.gt-box{position:absolute;left:50%;bottom:6px;width:110px;margin-left:-55px;animation:gtShake .5s ease-in-out 3,gtGone .2s 1.5s forwards}
+@keyframes gtShake{25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}@keyframes gtGone{to{transform:scale(1.3);opacity:0}}
+.gt-item{position:absolute;left:50%;bottom:20px;font-size:4.4rem;transform:translateX(-50%) scale(0);animation:gtPop .7s 1.55s cubic-bezier(.3,1.8,.5,1) forwards}
+@keyframes gtPop{to{transform:translateX(-50%) scale(1)}}
+.gt-ray{position:absolute;left:50%;top:50%;width:220px;height:220px;margin:-110px;border-radius:50%;opacity:0;background:repeating-conic-gradient(#FFD66B55 0 10deg,transparent 10deg 30deg);animation:gtRay .5s 1.5s forwards,gtSpin 12s linear infinite}
+@keyframes gtRay{to{opacity:1}}@keyframes gtSpin{to{transform:rotate(360deg)}}
+.gt-cf{position:absolute;width:8px;height:12px;border-radius:2px;left:50%;top:60%;opacity:0;animation:gtCf 1.1s 1.5s ease-out forwards}
+@keyframes gtCf{0%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
+.gt-h{margin:6px 0 2px;opacity:0;animation:gtIn .4s 1.9s forwards}.gt-t{font-size:1.25rem;font-weight:900;opacity:0;animation:gtIn .4s 2.05s forwards}.gt-s{color:var(--text-muted);opacity:0;animation:gtIn .4s 2.2s forwards}
+@keyframes gtIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rd-give{flex:none;border:0;border-radius:99px;padding:8px 12px;background:var(--success);color:#fff;font:inherit;font-weight:800;font-size:.85rem;cursor:pointer}
+.redemption-item{display:flex;align-items:center;gap:10px}
+@media (prefers-reduced-motion:reduce){.pp-card,.pp-box,.pp-lid,.pp-peek,.pp-st,.pp-bar i,.gt-ray{animation:none}.pp-peek{opacity:1;transform:none}.gt-box{display:none}.gt-item,.gt-h,.gt-t,.gt-s{animation:none;opacity:1;transform:translateX(-50%)}.gt-h,.gt-t,.gt-s{transform:none}}
 </style>
   <style>
     /* === ภารกิจประจำวัน + ดาวม่วง + ร้านค้า + ตัวละครเดินด้านล่าง === */
@@ -1264,7 +1297,7 @@ body.touring #dd-go{pointer-events:none}
       <span class="nav-badge" id="redemption-count-badge" style="background:var(--gold-dark)"></span>
     </div>
     <div id="redemption-alert-list"></div>
-    <button onclick="doAcknowledgeRedemptions()" style="margin-top:12px;width:100%;padding:10px;background:var(--gold-dark);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer">✅ รับทราบแล้ว</button>
+    <button onclick="doAcknowledgeRedemptions()" hidden style="margin-top:12px;width:100%;padding:10px;background:var(--gold-dark);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:0.9rem;cursor:pointer">✅ รับทราบแล้ว</button>
   </div>
 
   <div id="pend-box">
@@ -1654,6 +1687,9 @@ function kid2Home(d) {
   var fxb = document.getElementById('k2-fix'); if (!fxb) { fxb = document.createElement('div'); fxb.id = 'k2-fix'; }
   if (hero.nextElementSibling !== fxb) hero.after(fxb);
   kidFixCards(d);
+  var ppb = document.getElementById('k2-prep'); if (!ppb) { ppb = document.createElement('div'); ppb.id = 'k2-prep'; }
+  if (fxb.nextElementSibling !== ppb) fxb.after(ppb);
+  kidPrepCards(d); fxb = ppb;
   var wc = document.getElementById('child-wheel-card'); if (wc.previousElementSibling !== fxb) fxb.after(wc);
   var list = document.getElementById('child-missions-list');
   list.innerHTML = d.missions.length ? '<div class="k2-box"><h3>📋 ภารกิจวันนี้</h3>' + d.missions.map(function (x) {
@@ -1676,6 +1712,7 @@ function renderChildHome(d) {
   renderUrgentKid(d);
   renderKidPush();
   kidDedPop(d);
+  kidGotPop(d);
   if (ui2On()) return kid2Home(d);
   document.getElementById('k2-hero').innerHTML = ''; document.body.classList.remove('ui2k');
 
@@ -1950,6 +1987,7 @@ function renderRedemptionAlerts(d) {
         '<div style="font-weight:600">' + esc(r.child_name) + ' แลก "' + esc(r.reward_title) + '"</div>' +
         '<div style="font-size:0.8rem;color:var(--text-muted)">⭐ ' + r.stars_spent + ' ดาว · ' + timeStr + '</div>' +
       '</div>' +
+      '<button type="button" class="rd-give" onclick="giveReward(\'' + r.redemption_id + '\',this)">✓ ให้แล้ว</button>' +
     '</div>';
   }).join('');
 }
@@ -3850,6 +3888,58 @@ function gfSend() {
     closeModal(); toast('🎁 ส่งของขวัญให้ลูก ' + r.count + ' คนแล้ว!'); Live.request();
   }).withFailureHandler(function (e) { b.disabled = false; b.textContent = 'ตกลง'; toast(e.message, 4000); })
     .sendGift(currentMember.memberId, { childIds: f.kids, stars: f.stars, reason: f.reason, message: f.message });
+}
+// ===================================================================
+// รางวัลที่ลูกแลก: การ์ด "กำลังจัดเตรียม" (กล่องของขวัญขยับ) ในหน้าหลักลูก
+//   ผู้ปกครองกด "✓ ให้แล้ว" ทีละรายการ → ลูกเห็นป๊อปอัป "ได้รับรางวัลแล้ว" (ต้องเห็นทันที) → การ์ดหาย
+//   แลกหลายอย่าง: แยกใบ ไม่เกิน 2 · เกินนั้นรวมเป็นใบเดียว
+// ===================================================================
+var GV = { shown: {} };
+var PP_BOX = '<svg viewBox="0 0 68 52" aria-hidden="true"><rect x="2" y="4" width="64" height="46" rx="8" fill="#FF7FA3"/><rect x="2" y="4" width="64" height="12" rx="6" fill="#ff6b96"/><rect x="29" y="4" width="10" height="46" fill="#FFD66B"/></svg>';
+var PP_LID = '<svg viewBox="0 0 80 22" aria-hidden="true"><rect x="0" y="6" width="80" height="16" rx="7" fill="#FF5C8A"/><rect x="35" y="6" width="10" height="16" fill="#FFC93C"/><path d="M40 7c-6-9-17-8-14-1 2 4 9 3 14 1zM40 7c6-9 17-8 14-1-2 4-9 3-14 1z" fill="#FFC93C" stroke="#E8A21A" stroke-width="1.2"/></svg>';
+function ppScene(icon) {
+  return '<div class="pp-scene" aria-hidden="true"><span class="pp-peek">' + esc(icon) + '</span><div class="pp-box">' + PP_BOX + '</div><div class="pp-lid">' + PP_LID + '</div>' +
+    '<span class="pp-st a">⭐</span><span class="pp-st b">✨</span><span class="pp-st c">⭐</span></div>';
+}
+function kidPrepCards(d) {
+  var box = document.getElementById('k2-prep'); if (!box) return;
+  var rs = (d.rewardState && d.rewardState.preparing) || [];
+  // การ์ดที่กำลังจางออก (เพิ่งได้รับ) ไม่วาดทับ
+  if (box.querySelector('.pp-card.out')) return;
+  if (rs.length > 2) {
+    box.innerHTML = '<div class="pp-card" data-ids="' + rs.map(function (r) { return r.redemption_id; }).join(',') + '">' + ppScene(rs[0].icon) +
+      '<div class="pp-tx"><small>🎁 กำลังจัดเตรียมของรางวัล ' + rs.length + ' อย่าง</small><b>' + rs.map(function (r) { return esc(r.title); }).join(' · ') + '</b><div class="pp-bar"><i></i></div><div class="w">พ่อแม่กำลังเตรียมให้ · ได้แล้วจะบอกนะ</div></div></div>';
+  } else {
+    box.innerHTML = rs.map(function (r) {
+      return '<div class="pp-card" data-ids="' + r.redemption_id + '">' + ppScene(r.icon) +
+        '<div class="pp-tx"><small>🎁 กำลังจัดเตรียมของรางวัล</small><b>' + esc(r.title) + '</b><div class="pp-bar"><i></i></div><div class="w">พ่อแม่กำลังเตรียมให้ · ได้แล้วจะบอกนะ</div></div></div>';
+    }).join('');
+  }
+}
+function kidGotPop(d) {
+  var g = d.rewardState && d.rewardState.got && d.rewardState.got.find(function (x) { return !GV.shown[x.redemption_id]; });
+  if (!g) return;
+  GV.shown[g.redemption_id] = 1;
+  var cf = '', cols = ['#FF5C8A', '#FFC93C', '#4CC38A', '#5AA9FF', '#B57BFF'];
+  for (var i = 0; i < 18; i++) { var a = (i / 18) * 6.28, dd = 70 + Math.random() * 60;
+    cf += '<i class="gt-cf" style="background:' + cols[i % 5] + ';--x:' + (Math.cos(a) * dd - 4).toFixed(0) + 'px;--y:' + (Math.sin(a) * dd + 40).toFixed(0) + 'px;--r:' + (300 + i * 40) + 'deg"></i>'; }
+  openModalOver('<div class="gt-pop"><div class="gt-stage" aria-hidden="true"><div class="gt-ray"></div><div class="gt-box"><svg viewBox="0 0 110 96"><rect x="6" y="30" width="98" height="62" rx="10" fill="#FF7FA3"/><rect x="0" y="18" width="110" height="20" rx="8" fill="#FF5C8A"/><rect x="48" y="18" width="14" height="74" fill="#FFC93C"/><path d="M55 18c-9-14-26-12-21-2 3 6 14 5 21 2zM55 18c9-14 26-12 21-2-3 6-14 5-21 2z" fill="#FFC93C" stroke="#E8A21A" stroke-width="1.5"/></svg></div>' +
+    '<span class="gt-item">' + esc(g.icon) + '</span>' + cf + '</div>' +
+    '<h2 class="gt-h">ได้รับรางวัลแล้ว! 🎉</h2><div class="gt-t">' + esc(g.title) + '</div><div class="gt-s">' + (g.by_name ? 'จาก ' + esc(g.by_name) + ' · ' : '') + 'เก็บไว้ในประวัติแลกรางวัลแล้ว</div>' +
+    '<div style="display:flex;margin-top:14px"><button type="button" class="dq-btn g" onclick="closeModal()">เย้! ขอบคุณ</button></div></div>',
+    function () {
+      google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).rewardSeen(currentMember.memberId, g.redemption_id);
+      // การ์ดกำลังจัดเตรียมของรางวัลนี้ → ย่อแล้วจางหาย
+      var c = document.querySelector('.pp-card[data-ids="' + g.redemption_id + '"]');
+      if (c) { c.classList.add('out'); setTimeout(function () { c.remove(); if (dashboardData) kidPrepCards(dashboardData); }, 520); }
+      setTimeout(function () { if (dashboardData) kidGotPop(dashboardData); }, 600);
+    });
+}
+function giveReward(id, b) {
+  if (b) { b.disabled = true; b.textContent = '⏳'; }
+  google.script.run.withSuccessHandler(function () { toast('🎁 ให้แล้ว · ลูกได้แจ้งเตือน'); Live.request(); })
+    .withFailureHandler(function (e) { if (b) { b.disabled = false; b.textContent = '✓ ให้แล้ว'; } toast(e.message, 4000); })
+    .giveReward(currentMember.memberId, id);
 }
 // ===================================================================
 // การ์ดลูก (ผู้ปกครอง) + หักดาว + ภารกิจแก้ตัว

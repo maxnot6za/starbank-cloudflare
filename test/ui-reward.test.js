@@ -1,0 +1,41 @@
+// แลกรางวัล → การ์ด "กำลังจัดเตรียม" (ลูก) → ผู้ปกครอง ✓ ให้แล้ว ทีละรายการ → ลูกเห็นป๊อปอัปได้รับรางวัล → การ์ดหาย
+const { chromium } = require('playwright');
+const { seedFamily, P1, C, FAM } = require('./lib/fixture.js');
+const { start, sessionFor, call } = require('./lib/mf.js');
+const routes = require(process.env.SB_ROUTES || './lib/routes.js');
+let fails = 0;
+const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? '' : JSON.stringify(x).slice(0, 300)); if (!c) fails++; };
+(async () => {
+  const { mf, db } = await start({ port: 0 }); await seedFamily(db);
+  const today = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+  await db.prepare("UPDATE Members SET quest_seen = ?, news_seen = 99, tree_seen = '9999'").bind(today).run();
+  await db.prepare("UPDATE Redemptions SET acknowledged_at = '2026-01-01T00:00:00Z', kid_seen_at = '2026-01-01T00:00:00Z'").run();
+  await db.prepare("INSERT INTO Rewards (reward_id,family_id,title,description,stars_cost,type,secret_data,quantity,icon,is_active,created_by,created_at) VALUES ('rw9',?,'บัตร Roblox 200 บาท','',1,'item','',9,'🎮',1,?,'')").bind(FAM, P1).run();
+  await db.prepare("INSERT INTO Rewards (reward_id,family_id,title,description,stars_cost,type,secret_data,quantity,icon,is_active,created_by,created_at) VALUES ('rw8',?,'ไอติม','',1,'item','',9,'🍦',1,?,'')").bind(FAM, P1).run();
+  const base = String(await mf.ready).replace(/\/$/, ''); const br = await chromium.launch(), errors = [];
+  const open = async id => { const ctx = await br.newContext({ viewport: { width: 390, height: 844 } });
+    await ctx.addCookies([{ name: 'sb_s', value: await sessionFor(db, id), url: base }]);
+    await ctx.addInitScript(() => { try { localStorage.setItem('sb_ui2', '1'); } catch (e) {} });
+    const p = await ctx.newPage(); p.on('pageerror', e => errors.push(e.message)); await routes(p); await p.goto(base + '/'); return p; };
+  ok((await call(mf, 'redeemReward', 'rw9', C, FAM)).ok && (await call(mf, 'redeemReward', 'rw8', C, FAM)).ok, 'ลูกแลก 2 อย่าง');
+  const kid = await open(C);
+  await kid.waitForSelector('.pp-card', { timeout: 15000 }); await kid.waitForTimeout(800);
+  ok(await kid.locator('.pp-card').count() === 2 && /บัตร Roblox 200 บาท/.test(await kid.textContent('#k2-prep')) && /กำลังจัดเตรียม/.test(await kid.textContent('#k2-prep')), 'การ์ดกำลังจัดเตรียม 2 ใบ (แยกใบ)');
+  const par = await open(P1);
+  await par.waitForSelector('.rd-give', { timeout: 15000 }); await par.waitForTimeout(800);
+  ok(await par.locator('.rd-give').count() === 2, 'ผู้ปกครอง: ปุ่ม ✓ ให้แล้ว แยกทีละรางวัล');
+  await par.evaluate(() => { while (MODAL.stack.length) MODAL.stack.pop(); closeModal(); });
+  await par.locator('.redemption-item:has-text("Roblox") .rd-give').click(); await par.waitForTimeout(1500);
+  ok(await par.locator('.rd-give').count() === 1, 'ให้ 1 อย่าง → เหลือ 1 รายการ');
+  await kid.waitForSelector('.gt-pop', { timeout: 8000 }); await kid.waitForTimeout(2600);
+  ok(/ได้รับรางวัลแล้ว/.test(await kid.textContent('.gt-pop')) && /Roblox/.test(await kid.textContent('.gt-pop')) && /จาก พ่อ/.test(await kid.textContent('.gt-pop')), 'ลูกเห็นป๊อปอัปทันที: ได้รับรางวัล + ชื่อ + จากใคร');
+  await kid.click('.gt-pop .dq-btn.g'); await kid.waitForTimeout(1300);
+  ok(await kid.locator('.pp-card').count() === 1 && !/Roblox/.test(await kid.textContent('#k2-prep')), 'การ์ด Roblox หายไป · ไอติมยังรออยู่');
+  ok(!!(await db.prepare("SELECT kid_seen_at FROM Redemptions WHERE reward_id = 'rw9'").first()).kid_seen_at, 'จำว่าลูกเห็นแล้ว');
+  // แลกครั้งที่ 3, 4 → เกิน 2 รวมใบเดียว
+  await call(mf, 'redeemReward', 'rw9', C, FAM); await call(mf, 'redeemReward', 'rw8', C, FAM);
+  await kid.evaluate(() => Live.request()); await kid.waitForTimeout(2000);
+  ok(await kid.locator('.pp-card').count() === 1 && /3 อย่าง/.test(await kid.textContent('#k2-prep')), 'เกิน 2 อย่าง → รวมเป็นใบเดียว');
+  ok(!errors.length, 'ไม่มี JS error', errors);
+  await br.close(); await mf.dispose(); console.log(fails ? fails + ' ไม่ผ่าน' : 'ผ่านทั้งหมด'); process.exit(fails ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });

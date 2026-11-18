@@ -18,7 +18,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   ok(await p.isVisible('#k2-hero .u2-hero') && !(await p.isVisible('.star-hero')) && !(await p.isVisible('.stats-grid')), 'การ์ดดาวใหม่แทนกล่องเดิม');
   ok(await p.locator('.k2-box .k2-m button[data-sfx=send]').count() === 2, 'กล่องภารกิจ + ปุ่มส่ง');
   ok(await p.locator('#k2-hero .u2-car .u2-slide').count() === 2 && /ดาวม่วงของครอบครัว/.test(await p.textContent('#k2-hero .u2-slide.fam')) && await p.locator('#k2-hero .u2-dots i').count() === 2, 'ปัดดูการ์ดดาวม่วงของครอบครัวได้');
-  ok(await p.evaluate(() => document.getElementById('k2-hero').nextElementSibling.id === 'k2-fix' && document.getElementById('k2-fix').nextElementSibling.id === 'child-wheel-card'), 'การ์ดต้นไม้อยู่ใต้การ์ดดาว (มีช่องการ์ดแก้ตัวคั่น)');
+  ok(await p.evaluate(() => document.getElementById('k2-hero').nextElementSibling.id === 'k2-fix' && document.getElementById('k2-fix').nextElementSibling.id === 'k2-prep' && document.getElementById('k2-prep').nextElementSibling.id === 'child-wheel-card'), 'การ์ดต้นไม้อยู่ใต้การ์ดดาว (มีช่องการ์ดแก้ตัวคั่น)');
   await p.evaluate(() => { Object.assign(dashboardData.wheel, { run: 3, pendingCount: 0, spins: 0, todayStatus: 'none', broke: false }); renderChildHome(dashboardData); });
   ok(await p.locator('.k2-tree .pl-ball.done').count() === 3 && await p.locator('.k2-tree .pl-today').count() === 1 && !(await p.isVisible('.k2-tree button')), '3/5: ลูกบอล 3 + ช่องวันนี้ ยังไม่มีปุ่มหมุน');
   await p.evaluate(() => { Object.assign(dashboardData.wheel, { run: 5, spins: 1 }); renderChildHome(dashboardData); });

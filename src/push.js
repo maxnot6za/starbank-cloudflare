@@ -161,6 +161,12 @@ export async function notifyApp(env, origin, events) {
       if (subs.length) await deliver(env, subs, { title: `⭐ ${ev.parentName} มีเรื่องจะบอก`, body: 'แตะเพื่อดูในแอป', tag: 'ded-' + Date.now(), url: '/', kind: 'ded' }, origin);
       continue;
     }
+    // ผู้ปกครองให้รางวัลแล้ว: แจ้งเด็กคนนั้น
+    if (ev.type === 'reward_given') {
+      const { results: subs } = await env.DB.prepare('SELECT * FROM PushSubs WHERE member_id = ?').bind(String(ev.childId)).all();
+      if (subs.length) await deliver(env, subs, { title: '🎁 ได้รับรางวัลแล้ว!', body: ev.title, tag: 'reward-' + Date.now(), url: '/', kind: 'gift' }, origin);
+      continue;
+    }
     // เจอไข่: แจ้งเด็กคนที่ทำภารกิจจนเจอ (ไม่ได้เปิดแอปก็รู้ทันที)
     if (ev.type === 'egg_found') {
       const { results: subs } = await env.DB.prepare('SELECT * FROM PushSubs WHERE member_id = ?').bind(String(ev.childId)).all();

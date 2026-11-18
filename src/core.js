@@ -8,7 +8,7 @@ const NO_LOCK = { waitLock() {}, tryLock() { return true; }, releaseLock() {} };
 export const PUBLIC_API = [
   'getMemberByWebToken', 'webLookupFamily', 'webReconnect', 'webRegister', 'webJoinFamily',
   'getChildDashboard', 'submitMission', 'redeemReward', 'spinWheel',
-  'getParentDashboard', 'acknowledgeRedemptions', 'checkRejectImpact', 'reviewSubmission',
+  'getParentDashboard', 'acknowledgeRedemptions', 'giveReward', 'rewardSeen', 'checkRejectImpact', 'reviewSubmission',
   'webSaveMission', 'webSaveReward', 'webDeleteMission', 'webDeleteReward',
   'toggleSubmissionNotify', 'getDailySummary', 'getWeeklySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
@@ -747,6 +747,33 @@ export function createCore(S) {
   }
 
   // ผู้ปกครองกด "รับทราบแล้ว" — อัปเดต acknowledged_at ให้ทุกรายการที่ยังไม่รับทราบ
+  // ✓ ให้แล้ว (ทีละรายการ) → ลูกได้ป๊อปอัป "ได้รับรางวัลแล้ว"
+  function giveReward(parentId, redemptionId) {
+    var parent = requireParent_(parentId);
+    var r = getAllRows_('Redemptions').find(function(x) { return String(x.redemption_id) === String(redemptionId) && String(x.family_id) === String(parent.family_id); });
+    if (!r) throw new Error('ไม่พบรายการแลกรางวัลนี้');
+    if (r.acknowledged_at) return { given: true, already: true };
+    updateRow_('Redemptions', 'redemption_id', r.redemption_id, { acknowledged_at: msIso_(nowMs_()), acknowledged_by: parentId });
+    if (S.events) S.events.push({ type: 'reward_given', familyId: String(parent.family_id), childId: String(r.child_id), title: r.reward_title, parentName: parent.name });
+    return { given: true };
+  }
+  function rewardSeen(childId, redemptionId) {
+    var kid = requireChild_(childId);
+    var r = getAllRows_('Redemptions').find(function(x) { return String(x.redemption_id) === String(redemptionId) && String(x.child_id) === String(kid.member_id); });
+    if (r && r.acknowledged_at && !r.kid_seen_at) updateRow_('Redemptions', 'redemption_id', r.redemption_id, { kid_seen_at: msIso_(nowMs_()) });
+    return { seen: true };
+  }
+  // ลูก: รางวัลที่กำลังเตรียม (ยังไม่ให้) + ที่ให้แล้วแต่ยังไม่เห็นป๊อปอัป
+  function childRewardState_(member) {
+    var mine = getAllRows_('Redemptions').filter(function(r) { return String(r.child_id) === String(member.member_id); });
+    var icons = {}; getAllRows_('Rewards').forEach(function(w) { if (String(w.family_id) === String(member.family_id)) icons[String(w.reward_id)] = w.icon; });
+    var v = function(r) { return { redemption_id: r.redemption_id, title: r.reward_title, icon: icons[String(r.reward_id)] || '🎁', stars: Number(r.stars_spent) || 0,
+      redeemed_at: r.redeemed_at, given_at: r.acknowledged_at || null, by_name: r.acknowledged_by ? urgentNameOf_(r.acknowledged_by, 'ผู้ปกครอง') : '' }; };
+    return {
+      preparing: mine.filter(function(r) { return !r.acknowledged_at; }).sort(function(a, b) { return String(a.redeemed_at).localeCompare(String(b.redeemed_at)); }).map(v),
+      got: mine.filter(function(r) { return r.acknowledged_at && !r.kid_seen_at; }).map(v)
+    };
+  }
   function acknowledgeRedemptions(familyId, parentId) {
     familyId = requireParent_(parentId).family_id;
     var redemptions = getAllRows_('Redemptions').filter(function(r) {
@@ -757,6 +784,7 @@ export function createCore(S) {
       updateRow_('Redemptions', 'redemption_id', r.redemption_id, {
         acknowledged_at: now, acknowledged_by: parentId
       });
+      if (S.events) S.events.push({ type: 'reward_given', familyId: String(familyId), childId: String(r.child_id), title: r.reward_title });
     });
     return { acknowledged: redemptions.length };
   }
@@ -824,7 +852,7 @@ export function createCore(S) {
     const wheel = syncChildWheel_(member, family);   // ก่อน stats: อาจเพิ่มสิทธิ์หมุนใหม่
     urgentSweep(familyId);
     return {
-      urgent: childUrgent_(member), gifts: childGifts_(member), deds: childDeds_(member), daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member),
+      urgent: childUrgent_(member), gifts: childGifts_(member), deds: childDeds_(member), rewardState: childRewardState_(member), daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member),
       member, family: family, wheel: wheel, stats: getChildStats_(memberId),
       missions: getMissions_(familyId), rewards: getRewardsForChild_(familyId),
       recentSubmissions: getChildSubmissions_(memberId).slice(-20).reverse(),
@@ -2445,7 +2473,7 @@ export function createCore(S) {
     return { wished: true, replaced: old ? old.name : '', shop: getShop(memberId) };
   }
 
-  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, getWeeklySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift, deductStars, undoDeduction, dedSeen, submitFix, reviewFix,
+  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, giveReward, rewardSeen, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, getWeeklySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift, deductStars, undoDeduction, dedSeen, submitFix, reviewFix,
     questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, setNest, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen, newsSeen };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };

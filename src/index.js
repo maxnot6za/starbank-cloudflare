@@ -14,7 +14,7 @@ import { notifyApp, filterLineOutbox, pushAck } from './push.js';
 const MEMBER_ARG = {
   getChildDashboard: 0, getParentDashboard: 0,
   submitMission: 1, redeemReward: 1, spinWheel: 0,
-  reviewSubmission: 2, acknowledgeRedemptions: 1, checkRejectImpact: 1,
+  reviewSubmission: 2, acknowledgeRedemptions: 1, giveReward: 0, rewardSeen: 0, checkRejectImpact: 1,
   webSaveMission: 1, webSaveReward: 1, webDeleteMission: 1, webDeleteReward: 1,
   toggleSubmissionNotify: 0, getDailySummary: 2, getWeeklySummary: 0,
   setWheelEnabled: 0, setWheelPrizes: 0, getWheelStatus: 0,
