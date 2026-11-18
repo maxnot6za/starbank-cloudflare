@@ -155,6 +155,12 @@ export async function notifyApp(env, origin, events) {
         tag: 'gift-' + ev.giftId, url: '/#gift', kind: 'gift' }, origin);
       continue;
     }
+    // หักดาว: แจ้งเด็กคนนั้น (ไม่บอกจำนวนบนจอล็อก · เปิดแอปแล้วเห็นเหตุผล)
+    if (ev.type === 'ded_new') {
+      const { results: subs } = await env.DB.prepare('SELECT * FROM PushSubs WHERE member_id = ?').bind(String(ev.childId)).all();
+      if (subs.length) await deliver(env, subs, { title: `⭐ ${ev.parentName} มีเรื่องจะบอก`, body: 'แตะเพื่อดูในแอป', tag: 'ded-' + Date.now(), url: '/', kind: 'ded' }, origin);
+      continue;
+    }
     // เจอไข่: แจ้งเด็กคนที่ทำภารกิจจนเจอ (ไม่ได้เปิดแอปก็รู้ทันที)
     if (ev.type === 'egg_found') {
       const { results: subs } = await env.DB.prepare('SELECT * FROM PushSubs WHERE member_id = ?').bind(String(ev.childId)).all();
@@ -184,6 +190,8 @@ export async function notifyApp(env, origin, events) {
       payload = { title: `🎁 ${ev.childName} เปิดของขวัญแล้ว!`, body: `ได้ ⭐ ${ev.stars} ดาว`, tag: 'gift-' + ev.giftId, url: '/', kind: 'gift', badge };
     } else if (ev.type === 'urgent_declined') {
       payload = { title: `😴 ${ev.childName}: ไว้คราวหน้านะ ยุ่งอยู่`, body: `ภารกิจด่วน ${ev.icon} ${ev.title}`, tag: 'urgent-' + ev.urgentId, url: '/#urgent', kind: 'urgent', badge };
+    } else if (ev.type === 'fix_sent') {
+      payload = { title: `💪 ${ev.childName} ส่งภารกิจแก้ตัว`, body: `${ev.title} · อนุมัติแล้วลูกได้ดาวคืน`, tag: 'fix-' + Date.now(), url: '/#approvals', kind: 'submit', badge };
     } else if (ev.type === 'shop_wish') {
       payload = { title: `💜 ${ev.childName} อยากได้ ${ev.itemName}`, body: 'แตะเพื่อดูในร้านค้า', tag: 'wish-' + ev.itemName, url: '/#shop', kind: 'shop', badge };
     } else if (ev.type === 'urgent_expired') {

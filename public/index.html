@@ -670,6 +670,59 @@ body.ui2k #screen-child-home .star-hero,body.ui2k #screen-child-home .stats-grid
 .k2-m button{border:0;border-radius:999px;padding:9px 16px;background:linear-gradient(135deg,#FF5A5A,#FF7A45);color:#fff;font-weight:800;font-family:inherit;font-size:.95rem;cursor:pointer;flex:none}
 .egg-pity{position:absolute;bottom:40px;transform:translateX(-50%);z-index:45;pointer-events:auto;cursor:pointer;border:0;background:#fff;border-radius:99px;padding:4px 10px;font:inherit;font-size:12px;font-weight:800;line-height:1.2;color:#1F3B35;box-shadow:0 2px 0 #0000001a,0 0 0 2px #FFC24B;white-space:nowrap}
 .egg-pity b{color:#E5487A}.egg-pity::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:#fff}
+/* การ์ดลูก (ยกขึ้นจากหน้าหลัก) + หักดาว */
+.kc-ov{position:fixed;inset:0;z-index:300;background:#16302b00;transition:background .35s,backdrop-filter .35s,-webkit-backdrop-filter .35s;overflow-y:auto}
+.kc-ov.on{background:#16302b59;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+body.kc-lock{overflow:hidden}
+.kc{position:absolute;border-radius:24px;overflow:hidden;background:#fff;transform-origin:0 0;will-change:transform}
+.kc.lift{transition:transform .5s cubic-bezier(.2,1.25,.35,1),box-shadow .5s,border-radius .5s,height .5s cubic-bezier(.3,1.1,.4,1);box-shadow:0 26px 60px #0b231f66;border-radius:30px}
+.kc-top{position:relative;padding:18px 20px 16px;color:#fff;min-height:150px;background:linear-gradient(90deg,#00000040,transparent 62%),var(--cbg,linear-gradient(135deg,#2E7D5B,#1F5A45)) center/cover}
+.kc.nobg .kc-top{background:linear-gradient(135deg,#2E7D5B,#1F5A45)}
+.kc-x{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:0;background:#ffffff30;color:#fff;font-size:1rem;opacity:0;transition:opacity .25s .3s;cursor:pointer}
+.kc.open .kc-x{opacity:1}
+.kc-who{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.05rem}.kc-who span{font-size:1.6rem;background:#ffffff30;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+.kc-big{display:flex;align-items:baseline;gap:8px;margin-top:10px;font-weight:900;line-height:1}
+.kc-big .st{font-size:2.6rem;display:inline-block;transform-origin:50% 60%}.kc.open .kc-big .st{animation:kcStar .7s .1s cubic-bezier(.3,1.8,.5,1)}
+@keyframes kcStar{40%{transform:scale(1.35) rotate(-14deg)}}
+.kc-big .n{font-size:3.4rem;font-variant-numeric:tabular-nums}.kc-big small{font-size:1rem;font-weight:700;opacity:.85}
+.kc-sub{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;opacity:0;transform:translateY(6px);transition:all .3s .3s}.kc.open .kc-sub{opacity:1;transform:none}
+.kc-sub b{background:#00000033;border-radius:99px;padding:4px 10px;font-size:.78rem;font-weight:700}
+.kc-body{clip-path:inset(0 0 100% 0);transition:clip-path .5s cubic-bezier(.3,1.1,.4,1),opacity .16s}.kc.open .kc-body{clip-path:inset(0 0 0 0)}
+.kc-acts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px}
+.kc-a{border:0;border-radius:18px;padding:14px 6px 12px;font:inherit;font-weight:800;font-size:.9rem;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text);background:#EEF5F1;cursor:pointer;opacity:0;transform:translateY(16px) scale(.9)}
+.kc.open .kc-a{animation:kcPop .45s cubic-bezier(.3,1.6,.5,1) forwards}.kc.open .kc-a:nth-child(2){animation-delay:.06s}.kc.open .kc-a:nth-child(3){animation-delay:.12s}
+@keyframes kcPop{to{opacity:1;transform:none}}
+.kc-a i{font-style:normal;font-size:1.8rem}.kc-a.gift{background:#FFEFF3}.kc-a.minus{background:#FFEDEC;color:#C8322F}
+.kc-a:focus-visible,.kc-x:focus-visible{outline:3px solid #FFC24B;outline-offset:2px}
+.kc-hist{padding:0 18px 16px;opacity:0;transition:opacity .3s .2s}.kc.open .kc-hist{opacity:1}
+.kc-hist small{color:var(--text-muted);font-weight:700}.kc-hist div{display:flex;justify-content:space-between;gap:10px;padding:9px 2px;border-top:1px solid #1F3B3512;font-size:.88rem}
+.kc-hist div span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kc-hist .r{color:#C8322F;font-weight:800;flex:none}.kc-hist .g{color:#23966F;font-weight:800;flex:none}
+.kc-spark{position:absolute;width:10px;height:10px;pointer-events:none}.kc-spark svg{display:block;width:100%;height:100%}
+.u2-slide[data-kid]{cursor:pointer}
+.dd{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px}.dd-h{font-size:1.05rem}
+.dd-n{display:flex;align-items:center;gap:10px;margin-top:4px}.dd-n b{font-size:1.5rem;color:#C8322F;min-width:34px;text-align:center;font-variant-numeric:tabular-nums}
+.dd-fix{border:2px solid #FFD66B;background:#FFFBEA;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.dd-fix.off{background:#F6F8F7;border-color:#E3E8E6}.dd-fix.off .dd-fb{display:none}
+.dd-ck{display:flex;align-items:center;gap:8px;font-weight:800}.dd-ck input{width:20px;height:20px;accent-color:#23966F}
+.dd-ic{font-size:1.2rem;padding:2px 10px}
+.dd-go{background:linear-gradient(135deg,#FF7A6B,#D93A3A)!important;box-shadow:0 4px 0 #a52a28!important;margin-top:4px}
+.dd-note{text-align:center;font-size:.8rem;color:var(--text-muted);margin:4px 0 0}
+.dd-done{padding:22px 18px 18px;text-align:center}.dd-big{font-size:2.4rem;font-weight:900;color:#C8322F}.dd-sm{margin-top:6px;color:#9A6B00;font-weight:700;font-size:.9rem}
+.fix-tag{display:inline-block;background:#FFF1C9;color:#9A6B00;border-radius:6px;padding:0 6px;margin-right:4px;font-size:.78rem}
+.ded-pop{text-align:center}.ded-face{font-size:3.6rem;line-height:1}.ded-pop h2{margin:8px 0 4px}
+.ded-n{font-size:2.6rem;font-weight:900;color:#E5484D}
+.ded-why{background:#FFF1F1;border-radius:14px;padding:10px 12px;margin:10px 0}.ded-why small{color:var(--text-muted)}
+.ded-fix{background:#FFFBEA;border:2px dashed #FFC24B;border-radius:16px;padding:12px;text-align:left}.ded-fix>div{display:flex;align-items:center;gap:10px;margin-top:6px}.ded-fix span{font-size:1.8rem}.ded-fix small{color:#9A6B00;font-weight:700}
+.ded-cheer{color:var(--text-muted);margin:10px 0 0}
+.k2-fixc{margin-top:14px;border-radius:22px;padding:14px;background:linear-gradient(135deg,#FFF6DC,#FFFFFF);box-shadow:0 0 0 2px #FFC24B,0 4px 14px #0000000f;display:flex;align-items:center;gap:12px}
+.k2-fixc .ic{font-size:2.2rem;flex:none}.k2-fixc .tx{flex:1;min-width:0}.k2-fixc small{color:#9A6B00;font-weight:800;font-size:.8rem}.k2-fixc small.red{color:#D93A3A}.k2-fixc small.m{color:var(--text-muted);font-weight:600}
+.k2-fixc b{display:block;font-size:1rem}
+.k2-fixc button{border:0;border-radius:999px;padding:10px 16px;background:linear-gradient(135deg,#FF5A5A,#FF7A45);color:#fff;font-weight:800;font-family:inherit;font-size:.95rem;cursor:pointer;flex:none}
+.k2-wait{flex:none;background:#EEF5F1;border-radius:99px;padding:8px 12px;font-weight:800;font-size:.85rem;color:var(--text-muted)}
+@media (prefers-reduced-motion:reduce){.kc.lift,.kc-body,.kc-sub,.kc-hist,.kc-ov{transition:none}.kc.open .kc-a,.kc.open .kc-big .st{animation:none;opacity:1;transform:none}}
+.u2-more{flex:none;font-size:.78rem;font-weight:800;opacity:.85}
+.u2-fixbox{background:#fff;border-radius:18px;padding:4px 14px;margin-bottom:12px;box-shadow:0 0 0 2px #FFC24B}
 </style>
   <style>
     /* === ภารกิจประจำวัน + ดาวม่วง + ร้านค้า + ตัวละครเดินด้านล่าง === */
@@ -1575,7 +1628,10 @@ function kid2Home(d) {
     if (U2.i > 1) U2.i = 0;
     setTimeout(ui2Restore, 0);
   }
-  var wc = document.getElementById('child-wheel-card'); if (wc.previousElementSibling !== hero) hero.after(wc);
+  var fxb = document.getElementById('k2-fix'); if (!fxb) { fxb = document.createElement('div'); fxb.id = 'k2-fix'; }
+  if (hero.nextElementSibling !== fxb) hero.after(fxb);
+  kidFixCards(d);
+  var wc = document.getElementById('child-wheel-card'); if (wc.previousElementSibling !== fxb) fxb.after(wc);
   var list = document.getElementById('child-missions-list');
   list.innerHTML = d.missions.length ? '<div class="k2-box"><h3>📋 ภารกิจวันนี้</h3>' + d.missions.map(function (x) {
     var mul = Number(x.multiplier || 1), st = Number(x.base_stars) * mul;
@@ -1596,6 +1652,7 @@ function renderChildHome(d) {
   renderGiftsKid(d);
   renderUrgentKid(d);
   renderKidPush();
+  kidDedPop(d);
   if (ui2On()) return kid2Home(d);
   document.getElementById('k2-hero').innerHTML = ''; document.body.classList.remove('ui2k');
 
@@ -1712,11 +1769,20 @@ function renderChildHistory(d) {
   const list = document.getElementById('child-history-list');
   const items = (d.recentSubmissions || []).map(s => Object.assign({ _t: s.submitted_at }, s))
     .concat(((d.gifts && d.gifts.opened) || []).map(g => ({ _gift: g, _t: g.opened_at })))
+    .concat(((d.deds && d.deds.recent) || []).map(x => ({ _ded: x, _t: x.created_at })))
+    .concat(((d.deds && d.deds.recent) || []).filter(x => x.fix && x.fix.state === 'done').map(x => ({ _fixok: x, _t: x.fix.done_at })))
     .sort((a, b) => String(b._t || '').localeCompare(String(a._t || '')));
   if (!items.length) {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">📜</div>ยังไม่มีประวัติภารกิจ</div>';
   } else {
     list.innerHTML = items.map(s => {
+      if (s._ded || s._fixok) {
+        const x = s._ded || s._fixok, ts = new Date(s._t).toLocaleDateString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+        return s._ded ? `<div class="mission-item"><div class="mi-info" style="flex:1"><div class="mi-title">➖ โดนหักดาว (−${x.stars} ⭐)</div>
+          <div class="mi-desc">${esc(x.reason)} · ${esc(x.by_name)} · ${ts}</div></div><span class="tag tag-rejected">➖ หักดาว</span></div>`
+          : `<div class="mission-item"><div class="mi-info" style="flex:1"><div class="mi-title">💪 แก้ตัวสำเร็จ (+${x.stars} ⭐)</div>
+          <div class="mi-desc">${esc(x.fix.title)} · ${ts}</div></div><span class="tag tag-approved">💪 ได้คืน</span></div>`;
+      }
       if (s._gift) {
         const g = s._gift, ts = g.opened_at ? new Date(g.opened_at).toLocaleDateString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
         return `<div class="mission-item"><div class="mi-info" style="flex:1"><div class="mi-title">🎁 ของขวัญจาก${esc(g.from_name)} (+${g.stars} ⭐)</div>
@@ -1823,10 +1889,11 @@ function renderParentHome(d) {
   // pending preview
   const badge = document.getElementById('pending-count-home');
   const ph = document.getElementById('parent-pending-home');
-  if (d.pending.length) {
+  const fixes = (d.deds && d.deds.fixPending) || [];
+  if (d.pending.length || fixes.length) {
     badge.style.display = 'inline-flex';
-    badge.textContent = d.pending.length;
-    ph.innerHTML = ui2On() ? ui2Pending(d.pending) : pendingGroups(d.pending, 3);
+    badge.textContent = d.pending.length + fixes.length;
+    ph.innerHTML = fixRows(fixes) + (d.pending.length ? (ui2On() ? ui2Pending(d.pending) : pendingGroups(d.pending, 3)) : '');
   } else {
     badge.style.display = 'none';
     ph.innerHTML = ui2On() ? '<div class="u2-pe">✅ ไม่มีรายการรออนุมัติ · <b>เรียบร้อยดี</b></div>' : '<div class="empty-state" style="padding:20px"><div class="es-icon">✅</div>ไม่มีรายการรออนุมัติ</div>';
@@ -1834,7 +1901,7 @@ function renderParentHome(d) {
 
   // pending nav badge
   const nb = document.getElementById('pending-badge');
-  if (d.pending.length) { nb.style.display = 'inline-flex'; nb.textContent = d.pending.length; }
+  if (d.pending.length || fixes.length) { nb.style.display = 'inline-flex'; nb.textContent = d.pending.length + fixes.length; }
   else nb.style.display = 'none';
 }
 
@@ -1931,12 +1998,25 @@ function renderReviewHistory(d) {
   (d.urgent || []).forEach(function (g) { g.kids.forEach(function (k) {
     if (k.status === 'expired' || k.status === 'declined' || k.status === 'cancelled') items.push({ urg: k, g: g, t: k.ended_at || g.created_at });
   }); });
+  // ➖ หักดาว / 💪 แก้ตัวสำเร็จ
+  ((d.deds && d.deds.recent) || []).forEach(function (x) {
+    items.push({ ded: x, t: x.created_at });
+    if (x.fix && x.fix.state === 'done') items.push({ fixok: x, t: x.fix.done_at });
+  });
   items.sort(function (a, b) { return new Date(b.t) - new Date(a.t); });
   if (items.length === 0) {
     list.innerHTML = '<div class="empty-state"><div class="es-icon">📋</div>ยังไม่มีประวัติ</div>';
     return;
   }
   list.innerHTML = items.map(function(r) {
+    if (r.ded || r.fixok) {
+      var x = r.ded || r.fixok, ts = new Date(r.t).toLocaleString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      return '<div class="rh-row"><span style="font-size:1.3rem">' + esc(x.child_avatar) + '</span><div style="flex:1;min-width:0">' +
+        (r.ded ? '<div style="font-weight:600;color:#C8322F">➖ หัก ' + x.stars + ' ดาว — ' + esc(x.child_name) + '</div><div style="font-size:0.8rem;color:var(--text-muted)">' + esc(x.reason) + ' · ' + esc(x.by_name) + ' · ' + ts +
+          (x.fix ? ' · 💪 ' + esc(x.fix.title) + ' (' + ({ open: 'รอทำ', pending: 'รออนุมัติ', done: 'ได้คืนแล้ว', expired: 'หมดเวลา' }[x.fix.state] || '') + ')' : '') + '</div>'
+          : '<div style="font-weight:600;color:#23966F">💪 ' + esc(x.child_name) + ' แก้ตัวสำเร็จ +' + x.stars + ' ดาว</div><div style="font-size:0.8rem;color:var(--text-muted)">' + esc(x.fix.title) + ' · ' + ts + '</div>') +
+        '</div></div>';
+    }
     if (r.urg) {
       var k = r.urg, why = k.status === 'declined' ? '😴 ไว้คราวหน้า' : k.status === 'cancelled' ? '🚫 ยกเลิกแล้ว' : (k.seen_at ? '⏰ หมดเวลา' : '⏰ หมดเวลา · ไม่ได้เปิดดู');
       return '<div class="rh-row urg"><span style="font-size:1.3rem">' + esc(k.child_avatar) + '</span><div style="flex:1;min-width:0">' +
@@ -1987,11 +2067,12 @@ function renderParentMissions(d) {
 
 function renderParentPending(d) {
   const list = document.getElementById('parent-pending-list');
+  const fx = fixRows((d.deds && d.deds.fixPending) || []);
   if (!d.pending.length) {
-    list.innerHTML = '<div class="empty-state"><div class="es-icon">✅</div>ไม่มีรายการรออนุมัติ</div>';
+    list.innerHTML = fx ? '<div class="u2-fixbox">' + fx + '</div>' : '<div class="empty-state"><div class="es-icon">✅</div>ไม่มีรายการรออนุมัติ</div>';
     return;
   }
-  list.innerHTML = pendingGroups(d.pending, 999);
+  list.innerHTML = (fx ? '<div class="u2-fixbox">' + fx + '</div>' : '') + pendingGroups(d.pending, 999);
 }
 // ⚡ ภารกิจด่วนที่ลูกส่ง → หาแถว Urgent จาก submission_id (ไม่มี = ภารกิจทั่วไป)
 function urgSub(s) {
@@ -3747,6 +3828,218 @@ function gfSend() {
   }).withFailureHandler(function (e) { b.disabled = false; b.textContent = 'ตกลง'; toast(e.message, 4000); })
     .sendGift(currentMember.memberId, { childIds: f.kids, stars: f.stars, reason: f.reason, message: f.message });
 }
+// ===================================================================
+// การ์ดลูก (ผู้ปกครอง) + หักดาว + ภารกิจแก้ตัว
+//   แตะการ์ดลูกในหน้าหลัก → การ์ด "ยก" ขึ้นจากที่เดิม (FLIP) ข้างหลังเบลอ → ให้ของขวัญ / หักดาว / QR
+//   หักดาว: เหตุผล (พิมพ์เอง) + จำนวน (ไม่เกินที่มี) + แก้ตัวได้ดาวคืน (เวลา 30น./1ชม./3ชม./1วัน/เลือกเอง) · ยกเลิกได้ใน 5 นาที
+//   ลูก: ป๊อปอัปแจ้งทันที (ประเภท "ต้องเห็นทันที") + การ์ดภารกิจแก้ตัวในหน้าหลัก
+// ===================================================================
+var KC = { el: null, ov: null, from: null, slide: null, kid: null };
+var FIX_ICONS = ['💪', '🤗', '🧹', '🙏', '📚', '🎨', '🧸', '💛'];
+function kcKid(id) { return ((dashboardData && dashboardData.children) || []).find(function (c) { return c.member_id === id; }); }
+function kcRecent(id) {
+  var d = dashboardData || {}, t = function (x) { return new Date(x).getTime() || 0; }, out = [];
+  (d.reviewHistory || []).forEach(function (r) { if (r.child_id === id && r.status === 'approved') out.push({ t: t(r.reviewed_at), ic: '✅', tx: r.mission_title, n: +r.stars_earned || 0 }); });
+  (d.redemptionHistory || []).forEach(function (r) { if (r.child_id === id) out.push({ t: t(r.redeemed_at), ic: '🎁', tx: 'แลก ' + r.reward_title, n: -(+r.stars_spent || 0) }); });
+  (d.gifts || []).forEach(function (g) { if (g.child_id === id && g.status === 'opened') out.push({ t: t(g.opened_at), ic: '🎁', tx: 'ของขวัญ ' + g.reason_label, n: g.stars }); });
+  ((d.deds && d.deds.recent) || []).forEach(function (x) { if (x.child_id !== id) return;
+    out.push({ t: t(x.created_at), ic: '➖', tx: x.reason, n: -x.stars });
+    if (x.fix && x.fix.state === 'done') out.push({ t: t(x.fix.done_at), ic: '💪', tx: 'แก้ตัวสำเร็จ · ' + x.fix.title, n: x.stars }); });
+  return out.sort(function (a, b) { return b.t - a.t; }).slice(0, 3);
+}
+function kcTop(c) {
+  var wc = dashboardData.wheel && dashboardData.wheel.enabled && typeof wheelChildInfo === 'function' ? wheelChildInfo(c.member_id) : null;
+  return '<button type="button" class="kc-x" onclick="kcClose()" aria-label="ปิด">✕</button><div class="kc-who"><span>' + esc(c.avatar) + '</span>' + esc(c.name) + '</div>' +
+    '<div class="kc-big"><span class="st">⭐</span><span class="n" id="kc-bal">' + c.stats.balance + '</span><small>ดาว</small></div>' +
+    '<div class="kc-sub"><b>ได้รับ ' + c.stats.totalEarned + '</b><b>ใช้ไป ' + c.stats.totalSpent + '</b>' + (c.stats.deducted ? '<b>หักอยู่ ' + c.stats.deducted + '</b>' : '') + (wc ? '<b>' + TW('icon') + ' ' + wc.run + '/5</b>' : '') + '</div>';
+}
+function kcMain(id) {
+  var rec = kcRecent(id);
+  return '<div class="kc-acts"><button type="button" class="kc-a gift" data-sfx="gift" onclick="kcGo(\'gift\')"><i>🎁</i>ให้ของขวัญ</button>' +
+    '<button type="button" class="kc-a minus" onclick="kcMinus()"><i>➖</i>หักดาว</button>' +
+    '<button type="button" class="kc-a" onclick="kcGo(\'qr\')"><i>📷</i>QR เข้าแอป</button></div>' +
+    (rec.length ? '<div class="kc-hist"><small>ล่าสุด</small>' + rec.map(function (r) { return '<div><span>' + r.ic + ' ' + esc(r.tx) + '</span><span class="' + (r.n < 0 ? 'r' : 'g') + '">' + (r.n < 0 ? '−' + (-r.n) : '+' + r.n) + '</span></div>'; }).join('') + '</div>' : '<div style="height:4px"></div>');
+}
+function kcOpen(id, slide) {
+  var c = kcKid(id); if (!c || KC.el) return;
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  KC.kid = id; KC.slide = slide; KC.from = slide.getBoundingClientRect();
+  var bg = getComputedStyle(slide).getPropertyValue('--cbg') || '', W = Math.min(innerWidth - 32, 420), X = (innerWidth - W) / 2;
+  var ov = KC.ov = document.createElement('div'); ov.className = 'kc-ov'; ov.onclick = function (e) { if (e.target === ov) kcClose(); };
+  var el = KC.el = document.createElement('div'); el.className = 'kc' + (bg ? '' : ' nobg'); el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+  el.style.left = X + 'px'; el.style.width = W + 'px';
+  el.innerHTML = '<div class="kc-top"' + (bg ? ' style="--cbg:' + bg.trim() + '"' : '') + '>' + kcTop(c) + '</div><div class="kc-body" id="kc-body">' + kcMain(id) + '</div>';
+  ov.appendChild(el); document.body.appendChild(ov); document.body.classList.add('kc-lock');
+  var H = el.offsetHeight, top = el.querySelector('.kc-top').offsetHeight, Y = Math.max(16, (innerHeight - H) / 2);
+  el.style.top = Y + 'px'; KC.top = top;
+  if (reduce) { ov.classList.add('on'); el.classList.add('open', 'lift'); return; }
+  el.style.height = top + 'px';
+  el.style.transform = 'translate(' + (KC.from.left - X) + 'px,' + (KC.from.top - Y) + 'px) scale(' + (KC.from.width / W) + ',' + (KC.from.height / top) + ')';
+  slide.style.visibility = 'hidden';
+  requestAnimationFrame(function () { requestAnimationFrame(function () {
+    ov.classList.add('on'); el.classList.add('lift'); el.style.transform = 'none';
+    setTimeout(function () { if (KC.el !== el) return; el.style.height = H + 'px'; el.classList.add('open'); kcSpark();
+      setTimeout(function () { if (KC.el === el) el.style.height = 'auto'; }, 520); }, 260);
+  }); });
+}
+function kcSpark() {
+  var el = KC.el, s = el && el.querySelector('.kc-big .st'); if (!s || !s.animate) return;
+  var r = s.getBoundingClientRect(), b = el.querySelector('.kc-top').getBoundingClientRect();
+  for (var i = 0; i < 7; i++) { var e = document.createElement('span'), a = i / 7 * 6.28; e.className = 'kc-spark';
+    e.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17l-5.9 3.3 1.3-6.5L2.5 9.3l6.6-.8z" fill="#FFD66B"/></svg>';
+    e.style.left = (r.left - b.left + r.width / 2 - 5) + 'px'; e.style.top = (r.top - b.top + r.height / 2 - 5) + 'px';
+    el.querySelector('.kc-top').appendChild(e);
+    e.animate([{ transform: 'translate(0,0) scale(.3)', opacity: 1 }, { transform: 'translate(' + Math.cos(a) * 46 + 'px,' + Math.sin(a) * 46 + 'px) scale(1) rotate(140deg)', opacity: 0 }], { duration: 650, delay: 120, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'both' }); }
+}
+function kcClose(then) {
+  var el = KC.el, ov = KC.ov, slide = KC.slide; if (!el) { if (then) then(); return; }
+  KC.el = null; document.body.classList.remove('kc-lock');
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, live = slide && document.body.contains(slide);
+  var done = function () { if (slide) slide.style.visibility = ''; ov.remove(); if (then) then(); };
+  if (reduce || !live) return done();
+  var from = slide.getBoundingClientRect(), X = parseFloat(el.style.left), Y = parseFloat(el.style.top), W = el.offsetWidth;
+  el.style.height = el.offsetHeight + 'px'; el.offsetHeight; el.classList.remove('open'); el.style.height = KC.top + 'px';
+  setTimeout(function () { ov.classList.remove('on'); el.style.transform = 'translate(' + (from.left - X) + 'px,' + (from.top - Y) + 'px) scale(' + (from.width / W) + ',' + (from.height / KC.top) + ')'; el.style.boxShadow = 'none'; }, 160);
+  setTimeout(done, 700);
+}
+function kcGo(what) {
+  var c = kcKid(KC.kid); if (!c) return;
+  kcClose(function () { if (what === 'gift') showSendGift(c.member_id); else showChildQr(c.member_id, c.name); });
+}
+// ---- ฟอร์มหักดาว (ในการ์ดใบเดิม) ----
+function kcMinus() {
+  var c = kcKid(KC.kid); if (!c) return;
+  if (!(c.stats.balance > 0)) return toast('ลูกไม่มีดาวให้หัก');
+  window.__dd = { childId: c.member_id, stars: Math.min(1, c.stats.balance), max: c.stats.balance, fix: true, icon: '💪', minutes: 180, until: '' };
+  kcBody(ddForm());
+  setTimeout(function () { var r = document.getElementById('dd-reason'); if (r) r.focus(); }, 300);
+}
+function kcBody(html) {
+  var b = document.getElementById('kc-body'); if (!b) return;
+  b.style.opacity = 0;
+  setTimeout(function () { b.innerHTML = html; b.style.opacity = 1; var el = KC.el; if (el) { el.style.height = 'auto'; el.style.top = Math.max(16, (innerHeight - el.offsetHeight) / 2) + 'px'; } }, 160);
+}
+function ddForm() {
+  var f = window.__dd;
+  return '<div class="dd">' +
+    '<b class="dd-h">➖ หักดาว</b>' +
+    '<label class="u-flabel" for="dd-reason">หักเพราะอะไร</label><textarea id="dd-reason" class="u-in" rows="2" maxlength="80" style="resize:none" placeholder="เช่น พูดไม่สุภาพกับพี่"></textarea>' +
+    '<div class="dd-n"><span class="u-flabel" style="margin:0;flex:1">จำนวนดาว <small>(มี ' + f.max + ')</small></span><button type="button" class="u-chip" onclick="ddStep(-1)" aria-label="ลด">−</button><b id="dd-stars">' + f.stars + '</b><button type="button" class="u-chip" onclick="ddStep(1)" aria-label="เพิ่ม">+</button></div>' +
+    '<div class="dd-fix' + (f.fix ? '' : ' off') + '" id="dd-fix"><label class="dd-ck"><input type="checkbox" id="dd-fixon"' + (f.fix ? ' checked' : '') + ' onchange="ddFix(this.checked)"> 💪 ให้แก้ตัวได้ดาวคืน</label>' +
+      '<div class="dd-fb"><div style="display:flex;gap:8px"><button type="button" class="u-chip dd-ic" id="dd-icon" onclick="ddIcon()" aria-label="เปลี่ยนไอคอน">' + f.icon + '</button><input id="dd-title" class="u-in" style="flex:1" maxlength="60" placeholder="ภารกิจแก้ตัว เช่น ขอโทษพี่"></div>' +
+      '<span class="u-flabel" style="margin:6px 0 0">ทำได้ภายใน</span><div class="u-chips" id="dd-time">' + [[30, '30 นาที'], [60, '1 ชม.'], [180, '3 ชม.'], [1440, '1 วัน'], [0, '⏰ เลือกเวลา']].map(function (t) {
+        return '<button type="button" class="u-chip' + (t[0] === f.minutes && !f.until ? ' on' : '') + '" onclick="ddTime(this,' + t[0] + ')">' + t[1] + '</button>'; }).join('') + '</div>' +
+      '<input type="datetime-local" id="dd-until" class="u-in" style="display:none;margin-top:6px" onchange="window.__dd.until=this.value"></div></div>' +
+    '<button type="button" class="u-btn dd-go" id="dd-go" onclick="ddSend()">➖ หัก <span id="dd-go-n">' + f.stars + '</span> ดาว</button>' +
+    '<button type="button" class="u-btn ghost" style="margin-top:8px" onclick="kcBody(kcMain(KC.kid))">ยกเลิก</button>' +
+    '<p class="dd-note">ลูกเห็นทันที · กดผิด ยกเลิกได้ภายใน 5 นาที</p></div>';
+}
+function ddStep(n) { var f = window.__dd; f.stars = Math.max(1, Math.min(f.max, f.stars + n)); document.getElementById('dd-stars').textContent = f.stars; document.getElementById('dd-go-n').textContent = f.stars; }
+function ddFix(on) { window.__dd.fix = on; document.getElementById('dd-fix').classList.toggle('off', !on); }
+function ddIcon() { var f = window.__dd, i = (FIX_ICONS.indexOf(f.icon) + 1) % FIX_ICONS.length; f.icon = FIX_ICONS[i]; document.getElementById('dd-icon').textContent = f.icon; }
+function ddTime(b, m) {
+  var f = window.__dd, u = document.getElementById('dd-until');
+  document.querySelectorAll('#dd-time .u-chip').forEach(function (x) { x.classList.toggle('on', x === b); });
+  if (m) { f.minutes = m; f.until = ''; u.style.display = 'none'; }
+  else { f.minutes = 0; u.style.display = ''; var d = new Date(Date.now() + 3 * 3600000); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    if (!u.value) { u.value = d.toISOString().slice(0, 16); f.until = u.value; } u.min = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16); try { u.showPicker && u.showPicker(); } catch (e) {} }
+}
+function ddSend() {
+  var f = window.__dd, reason = (document.getElementById('dd-reason').value || '').trim();
+  if (!reason) { toast('บอกเหตุผลที่หักดาวก่อนนะ'); document.getElementById('dd-reason').focus(); return; }
+  var data = { childId: f.childId, stars: f.stars, reason: reason };
+  if (f.fix) {
+    var title = (document.getElementById('dd-title').value || '').trim();
+    if (!title) { toast('ตั้งชื่อภารกิจแก้ตัวก่อนนะ'); document.getElementById('dd-title').focus(); return; }
+    if (!f.minutes && !f.until) { toast('เลือกเวลาก่อนนะ'); return; }
+    data.fix = { title: title, icon: f.icon };
+    if (f.minutes) data.fix.minutes = f.minutes; else data.fix.until = new Date(f.until).toISOString();
+  }
+  var b = document.getElementById('dd-go'); b.disabled = true; b.textContent = '⏳...';
+  google.script.run.withSuccessHandler(function (r) {
+    var bal = document.getElementById('kc-bal'); if (bal) bal.textContent = r.balance;
+    window.__ddLast = r.ded;
+    kcBody('<div class="dd-done"><div class="dd-big">⭐ −' + r.ded.stars + '</div><div>หักดาวแล้ว · เหลือ <b>' + r.balance + '</b> ดาว</div>' +
+      (r.ded.fix ? '<div class="dd-sm">💪 ' + esc(r.ded.fix.title) + ' · ' + fixLeft(r.ded.fix.until).tx + '</div>' : '') +
+      '<button type="button" class="u-btn ghost" id="dd-undo" style="margin-top:12px" onclick="ddUndo(\'' + r.ded.ded_id + '\')">↩️ ยกเลิกการหัก (ภายใน 5 นาที)</button>' +
+      '<button type="button" class="u-btn mint" style="margin-top:8px" onclick="kcClose()">เสร็จแล้ว</button></div>');
+    Live.request();
+  }).withFailureHandler(function (e) { b.disabled = false; b.innerHTML = '➖ หัก <span id="dd-go-n">' + f.stars + '</span> ดาว'; toast(e.message, 4000); })
+    .deductStars(currentMember.memberId, data);
+}
+function ddUndo(id) {
+  var b = document.getElementById('dd-undo'); if (b) { b.disabled = true; b.textContent = '⏳...'; }
+  google.script.run.withSuccessHandler(function (r) { var bal = document.getElementById('kc-bal'); if (bal) bal.textContent = r.balance; toast('↩️ ยกเลิกการหักดาวแล้ว'); kcClose(); Live.request(); })
+    .withFailureHandler(function (e) { if (b) { b.disabled = false; b.textContent = '↩️ ยกเลิกการหัก (ภายใน 5 นาที)'; } toast(e.message, 4000); })
+    .undoDeduction(currentMember.memberId, id);
+}
+// เวลาที่เหลือของภารกิจแก้ตัว
+function fixLeft(until) {
+  var t = new Date(until).getTime(), left = t - Date.now(), d = new Date(t), hm = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  if (left <= 0) return { tx: 'หมดเวลาแล้ว', red: true };
+  if (left < 3600000) return { tx: 'เหลือ ' + Math.max(1, Math.round(left / 60000)) + ' นาที', red: true };
+  var today = new Date(), tm = new Date(Date.now() + 86400000);
+  if (d.toDateString() === today.toDateString()) return { tx: 'ถึง ' + hm + ' น.' };
+  if (d.toDateString() === tm.toDateString()) return { tx: 'ถึง พรุ่งนี้ ' + hm + ' น.' };
+  return { tx: 'ถึง ' + d.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + hm + ' น.' };
+}
+// ---- ผู้ปกครอง: ภารกิจแก้ตัวรออนุมัติ ----
+function fixRows(list) {
+  return (list || []).map(function (x) {
+    return '<div class="u2-pr fix"><span class="av">' + esc(x.child_avatar) + '</span><div class="tx"><b><span class="fix-tag">💪 แก้ตัว</span>' + esc(x.fix.title) + '</b>' +
+      '<small>' + esc(x.child_name) + ' · อนุมัติแล้วได้ ⭐ ' + x.stars + ' คืน</small></div>' +
+      '<button type="button" class="ok" data-sfx="ok" aria-label="อนุมัติ" onclick="fixReview(\'' + x.ded_id + '\',true,this)">✓</button>' +
+      '<button type="button" class="no" data-sfx="no" aria-label="ไม่อนุมัติ" onclick="fixReview(\'' + x.ded_id + '\',false,this)">✕</button></div>';
+  }).join('');
+}
+function fixReview(id, ok, b) {
+  if (b) b.disabled = true;
+  google.script.run.withSuccessHandler(function () { toast(ok ? '💪 อนุมัติแล้ว ลูกได้ดาวคืน' : 'ไม่อนุมัติ · ลูกส่งใหม่ได้ถ้ายังไม่หมดเวลา'); Live.request(); })
+    .withFailureHandler(function (e) { if (b) b.disabled = false; toast(e.message, 4000); })
+    .reviewFix(currentMember.memberId, id, ok);
+}
+// ---- ลูก: ป๊อปอัปโดนหักดาว (ต้องเห็นทันที) + การ์ดภารกิจแก้ตัว ----
+var DED = { shown: {} };
+function kidDedPop(d) {
+  var x = d.deds && d.deds.unseen && d.deds.unseen.find(function (u) { return !DED.shown[u.ded_id]; });
+  if (!x) return;
+  DED.shown[x.ded_id] = 1;
+  var f = x.fix;
+  openModalOver('<div class="ded-pop"><div class="ded-face">🥺</div><h2>โดนหักดาว</h2><div class="ded-n">⭐ −' + x.stars + '</div>' +
+    '<div class="ded-why">เพราะ <b>' + esc(x.reason) + '</b><br><small>โดย ' + esc(x.by_name) + ' · เหลือ ⭐ ' + d.stats.balance + '</small></div>' +
+    (f && (f.state === 'open' || f.state === 'pending') ? '<div class="ded-fix"><b>💪 แก้ตัวได้นะ!</b><div><span>' + esc(f.icon) + '</span><div>' + esc(f.title) + '<br><small>ทำแล้วได้ ⭐ ' + x.stars + ' คืน · ' + fixLeft(f.until).tx + '</small></div></div></div>' : '') +
+    '<p class="ded-cheer">ไม่เป็นไรนะ ทุกคนผิดพลาดได้ ลองใหม่กัน 💛</p>' +
+    '<div style="display:flex;margin-top:12px"><button type="button" class="dq-btn g" onclick="closeModal()">เข้าใจแล้ว</button></div></div>',
+    function () { google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).dedSeen(currentMember.memberId, x.ded_id);
+      setTimeout(function () { if (dashboardData) kidDedPop(dashboardData); }, 400); });
+}
+function kidFixCards(d) {
+  var box = document.getElementById('k2-fix'); if (!box) return;
+  var fx = (d.deds && d.deds.fixes) || [];
+  box.innerHTML = fx.map(function (x) {
+    var f = x.fix, lf = fixLeft(f.until), pend = f.state === 'pending';
+    return '<div class="k2-fixc"><span class="ic">' + esc(f.icon) + '</span><div class="tx"><small class="' + (lf.red && !pend ? 'red' : '') + '">💪 ภารกิจแก้ตัว · <span data-fix-until="' + esc(f.until) + '">' + lf.tx + '</span></small>' +
+      '<b>' + esc(f.title) + '</b><small class="m">ทำแล้วได้ ⭐ ' + x.stars + ' คืน</small></div>' +
+      (pend ? '<span class="k2-wait">⏳ รออนุมัติ</span>' : '<button type="button" data-sfx="send" onclick="fixSend(\'' + x.ded_id + '\',this)">ส่ง!</button>') + '</div>';
+  }).join('');
+  fixTick();
+}
+function fixSend(id, b) {
+  b.disabled = true; b.textContent = '⏳';
+  google.script.run.withSuccessHandler(function () { toast('💪 ส่งแล้ว! รอผู้ปกครองอนุมัตินะ'); Live.request(); })
+    .withFailureHandler(function (e) { b.disabled = false; b.textContent = 'ส่ง!'; toast(e.message, 4000); })
+    .submitFix(currentMember.memberId, id);
+}
+// อัปเดตข้อความเวลาที่เหลือบนหน้าจอเท่านั้น (ไม่ดึงข้อมูล) · หยุดเองเมื่อไม่มีการ์ด
+var FIX_T = null;
+function fixTick() {
+  if (FIX_T) return;
+  FIX_T = setInterval(function () {
+    var els = document.querySelectorAll('[data-fix-until]');
+    if (!els.length) { clearInterval(FIX_T); FIX_T = null; return; }
+    els.forEach(function (e) { var lf = fixLeft(e.getAttribute('data-fix-until')); e.textContent = lf.tx; e.parentNode.classList.toggle('red', !!lf.red); });
+  }, 30000);
+}
 </script>
 
 <script>
@@ -3939,12 +4232,12 @@ function ui2Kids(d, dl, mascot) {
   var kids = d.children || [];
   var slides = kids.map(function (c) {
     var wc = d.wheel && d.wheel.enabled ? wheelChildInfo(c.member_id) : null;
-    return '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + ui2CardBg('kid') + '>' +
+    return '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + ui2CardBg('kid') + ' data-kid="' + esc(c.member_id) + '" role="button" tabindex="0" aria-label="ดูดาวของ' + esc(c.name) + '" onclick="kcOpen(\'' + c.member_id + '\',this)">' +
       '<div class="u2-kid"><span class="u2-kav">' + esc(c.avatar) + '</span><b>' + esc(c.name) + '</b></div>' +
       '<div class="u2-big">⭐ ' + c.stats.balance + ' <span>ดาว</span></div>' +
       '<div class="u2-goal"><div style="flex:1;min-width:0;font-size:.76rem">ได้รับ ' + c.stats.totalEarned + ' · ใช้ไป ' + c.stats.totalSpent +
         (wc ? '<br>' + TW('icon') + ' ' + wc.run + '/5' + (wc.spins ? ' · 🎡 หมุนได้ ' + wc.spins : '') : '') + '</div>' +
-        '<button onclick="showSendGift(\'' + c.member_id + '\')">🎁 ของขวัญ</button><button class="q" onclick="showChildQr(\'' + c.member_id + '\',\'' + escJs(c.name) + '\')">QR</button></div></div>';
+        '<span class="u2-more">แตะดู ›</span></div></div>';
   });
   slides.push('<div class="u2-hero u2-slide fam th-' + esc(THEME.id || '') + ui2CardBg('family') + '><small>' + PSTAR + ' ดาวม่วงของครอบครัว</small><div class="u2-big">' + dl.wallet.purple + ' <span>ดวง</span></div>' + ui2Goal(dl.goal) + '</div>');
   if (U2.i >= slides.length) U2.i = 0;
@@ -4606,6 +4899,7 @@ function wkRender() {
     '<div class="wk-dl">' + [0, 1, 2, 3, 4, 5, 6].map(function (i) { var d = new Date(new Date(r.start + 'T00:00:00Z').getTime() + i * 86400000); return '<span>' + ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'][d.getUTCDay()] + '</span>'; }).join('') + '</div>' +
     (k.top.length ? '<div class="wk-sec">💪 ทำบ่อยสุด</div>' + k.top.map(function (x) { return '<div class="wk-row">' + esc(x.icon) + ' ' + esc(x.title) + '<span class="n">' + (x.days === 7 ? 'ทุกวัน' : x.n + ' ครั้ง') + '</span></div>'; }).join('') : '') +
     (k.low.length ? '<div class="wk-sec">😴 ยังไม่ค่อยได้ทำ</div>' + k.low.map(function (x) { return '<div class="wk-row low">' + esc(x.icon) + ' ' + esc(x.title) + '<span class="n">ยังไม่ได้ทำ</span></div>'; }).join('') : '') +
+    (k.dedN ? '<div class="wk-sec">➖ หักดาว</div><div class="wk-row low">' + k.dedN + ' ครั้ง · ⭐ ' + k.dedStars + ' ดาว' + (k.dedBack ? '<span class="n" style="color:#23966F">💪 แก้ตัวคืน ' + k.dedBack + '</span>' : '') + '</div>' : '') +
     (praise ? '<div class="wk-praise">💬 <b>ชวนชม:</b> "' + esc(praise) + '"</div>' : '') +
     '<div style="display:flex;margin-top:14px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div>';
 }
@@ -5609,7 +5903,7 @@ function updateAppBadge(d) {
   try {
     if (!('setAppBadge' in navigator)) return;
     var n = 0;
-    if (d && currentMember && currentMember.role === 'parent') n = (d.pending || []).length + (d.recentRedemptions || []).length;
+    if (d && currentMember && currentMember.role === 'parent') n = (d.pending || []).length + (d.recentRedemptions || []).length + ((d.deds && d.deds.fixPending) || []).length;
     (n > 0 ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(function () {});
   } catch (e) {}
 }

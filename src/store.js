@@ -20,6 +20,7 @@ export const TABLES = {
   WalletLog:   { pk: 'log_id', cols: ['log_id','family_id','currency','amount','kind','ref','member_id','created_at'], bools: [], writeOnly: true },
   Coupons:     { pk: 'coupon_id', cols: ['coupon_id','family_id','pct','egg_id','created_at','used_at','used_on'], bools: [] },
   Eggs:        { pk: 'egg_id', cols: ['egg_id','family_id','status','warm','goal','day','day_warm','contrib','hugs','found_by','found_at','hatched_by','hatched_at','prize','created_at','tier'], bools: [] },
+  Deductions:  { pk: 'ded_id', cols: ['ded_id','family_id','child_id','stars','reason','created_by','created_at','status','undone_at','seen_at','fix_title','fix_icon','fix_until','fix_status','fix_sent_at','fix_by','fix_done_at'], bools: [] },
   Spins:       { pk: 'spin_id', cols: ['spin_id','child_id','family_id','round_key','earned_at','used_at','prize_stars','prize_index','request_id'], bools: [], ignoreDup: true },
 };
 

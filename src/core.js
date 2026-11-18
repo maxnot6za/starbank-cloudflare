@@ -12,7 +12,7 @@ export const PUBLIC_API = [
   'webSaveMission', 'webSaveReward', 'webDeleteMission', 'webDeleteReward',
   'toggleSubmissionNotify', 'getDailySummary', 'getWeeklySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
-  'sendGift', 'cancelGift', 'openGift',
+  'sendGift', 'cancelGift', 'openGift', 'deductStars', 'undoDeduction', 'dedSeen', 'submitFix', 'reviewFix',
   'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'setNest', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'purpleSeen', 'newsSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem'
 ];
 
@@ -736,7 +736,7 @@ export function createCore(S) {
     return redemptions.map(function(r) {
       var child = getMember_(r.child_id);
       return {
-        redemption_id: r.redemption_id,
+        redemption_id: r.redemption_id, child_id: r.child_id,
         child_name: child ? child.name : 'น้อง',
         child_avatar: child ? child.avatar : '👤',
         reward_title: r.reward_title,
@@ -782,7 +782,12 @@ export function createCore(S) {
     const spent = getAllRows_('Redemptions')
       .filter(r => String(r.child_id) === String(childId))
       .reduce((sum, r) => sum + Number(r.stars_spent || 0), 0);
-    return earned + getWheelStars_(childId) + getGiftStars_(childId) - spent;
+    return earned + getWheelStars_(childId) + getGiftStars_(childId) - spent - dedHeld_(childId);
+  }
+  // ดาวที่โดนหักอยู่ (ยังไม่ได้คืนจากภารกิจแก้ตัว)
+  function dedHeld_(childId) {
+    return getAllRows_('Deductions').filter(function(x) { return String(x.child_id) === String(childId) && x.status === 'active' && x.fix_status !== 'done'; })
+      .reduce(function(sum, x) { return sum + Number(x.stars || 0); }, 0);
   }
 
   // ดาวจากของขวัญที่เปิดแล้ว (ไม่นับเป็นภารกิจ · ไม่นับในวันสะสมกงล้อ)
@@ -800,8 +805,9 @@ export function createCore(S) {
     const totalEarned = agg.earned + wheelStars + giftStars;
     const totalSpent = getAllRows_('Redemptions').filter(r => String(r.child_id) === String(childId))
       .reduce((sum, r) => sum + Number(r.stars_spent || 0), 0);
+    const deducted = dedHeld_(childId);
     return {
-      balance: totalEarned - totalSpent, totalEarned, totalSpent, wheelStars, giftStars,
+      balance: totalEarned - totalSpent - deducted, totalEarned, totalSpent, deducted, wheelStars, giftStars,
       missionsCompleted: agg.approved,
       pendingCount: agg.pending
     };
@@ -818,7 +824,7 @@ export function createCore(S) {
     const wheel = syncChildWheel_(member, family);   // ก่อน stats: อาจเพิ่มสิทธิ์หมุนใหม่
     urgentSweep(familyId);
     return {
-      urgent: childUrgent_(member), gifts: childGifts_(member), daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member),
+      urgent: childUrgent_(member), gifts: childGifts_(member), deds: childDeds_(member), daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member),
       member, family: family, wheel: wheel, stats: getChildStats_(memberId),
       missions: getMissions_(familyId), rewards: getRewardsForChild_(familyId),
       recentSubmissions: getChildSubmissions_(memberId).slice(-20).reverse(),
@@ -845,7 +851,7 @@ export function createCore(S) {
         reviewerAvatar = reviewer.avatar || '👤';
       }
       return {
-        submission_id: s.submission_id,
+        submission_id: s.submission_id, child_id: s.child_id,
         mission_title: s.mission_title,
         child_name: child ? child.name : 'น้อง',
         child_avatar: child ? child.avatar : '👤',
@@ -896,7 +902,7 @@ export function createCore(S) {
       recentRedemptions: getUnacknowledgedRedemptions_(familyId),
       reviewHistory: getReviewHistory_(familyId),
       redemptionHistory: getRedemptionHistory_(familyId),
-      wheel: wheel, urgent: urgent, gifts: parentGifts_(familyId), serverNow: new Date(nowMs_()).toISOString(),
+      wheel: wheel, urgent: urgent, gifts: parentGifts_(familyId), deds: parentDeds_(familyId), serverNow: new Date(nowMs_()).toISOString(),
       daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member),
       newsSeen: member.news_seen == null || member.news_seen === '' ? -1 : Number(member.news_seen)
     };
@@ -1098,10 +1104,13 @@ export function createCore(S) {
       var top = Object.keys(cnt).map(function(k) { var x = cnt[k]; return { title: x.title, icon: x.icon, n: x.n, days: Object.keys(x.days).length }; })
         .sort(function(a, b) { return b.n - a.n; }).slice(0, 3);
       var low = missions.filter(function(m) { return !cnt[m.mission_id]; }).map(function(m) { return { title: m.title, icon: m.icon || '⭐' }; }).slice(0, 3);
+      var dw = familyDeds_(familyId).filter(function(x) { return String(x.child_id) === String(c.member_id) && x.status === 'active' && inR(thaiDateKey_(x.created_at), startKey, endKey); });
       var u = urg.filter(function(x) { return String(x.child_id) === String(c.member_id) && inR(thaiDateKey_(x.created_at), startKey, endKey) && x.status !== 'cancelled' && x.status !== 'pending' && x.status !== 'running'; });
       return { member_id: c.member_id, name: c.name, avatar: c.avatar,
         missions: wk.length, stars: sum(wk), prevMissions: pv.length, prevStars: sum(pv), perDay: perDay, top: top, low: low,
-        urgentTotal: u.length, urgentOnTime: u.filter(function(x) { return x.status === 'submitted'; }).length };
+        urgentTotal: u.length, urgentOnTime: u.filter(function(x) { return x.status === 'submitted'; }).length,
+        dedN: dw.length, dedStars: dw.reduce(function(t, x) { return t + Number(x.stars || 0); }, 0),
+        dedBack: dw.filter(function(x) { return x.fix_status === 'done'; }).reduce(function(t, x) { return t + Number(x.stars || 0); }, 0) };
     }) };
   }
 
@@ -1773,6 +1782,103 @@ export function createCore(S) {
   }
 
   // ==========================================
+  // หักดาว + ภารกิจแก้ตัว — ผู้ปกครองหัก (ต้องมีเหตุผล · ไม่ติดลบ · ยกเลิกได้ใน 5 นาที)
+  //   แก้ตัว: ลูกส่ง → ผู้ปกครองอนุมัติ → ได้ดาวคืน · ไม่อนุมัติ = ส่งใหม่ได้ถ้ายังไม่หมดเวลา
+  //   ไม่นับในต้นไม้/ไข่/ภารกิจประจำวัน
+  // ==========================================
+  var DED_UNDO_MS = 5 * 60000, DED_FIX_MIN = [30, 60, 180, 1440];
+  function familyDeds_(familyId) { return getAllRows_('Deductions').filter(function(d) { return String(d.family_id) === String(familyId); }); }
+  function dedFixState_(d, now) {
+    if (d.status !== 'active' || !d.fix_status) return '';
+    if (d.fix_status === 'open' && new Date(d.fix_until).getTime() < now) return 'expired';
+    return d.fix_status;
+  }
+  function dedView_(d) {
+    var kid = getMember_(d.child_id), now = nowMs_();
+    return { ded_id: d.ded_id, child_id: d.child_id, child_name: kid ? kid.name : 'น้อง', child_avatar: kid ? kid.avatar : '🧒',
+      stars: Number(d.stars) || 0, reason: d.reason || '', by_name: urgentNameOf_(d.created_by, 'ผู้ปกครอง'), created_at: d.created_at,
+      undoable: d.status === 'active' && now - new Date(d.created_at).getTime() < DED_UNDO_MS && d.fix_status !== 'done',
+      fix: d.fix_status ? { title: d.fix_title, icon: d.fix_icon || '💪', until: d.fix_until, state: dedFixState_(d, now), sent_at: d.fix_sent_at || null, done_at: d.fix_done_at || null } : null };
+  }
+  function findDed_(familyId, dedId) {
+    var d = familyDeds_(familyId).find(function(x) { return String(x.ded_id) === String(dedId); });
+    if (!d || d.status !== 'active') throw new Error('ไม่พบรายการหักดาวนี้');
+    return d;
+  }
+  function deductStars(memberId, data) {
+    var parent = requireParent_(memberId);
+    data = data || {};
+    var kid = getMember_(data.childId);
+    if (!kid || kid.role !== 'child' || String(kid.family_id) !== String(parent.family_id)) throw new Error('ไม่พบลูกคนนี้');
+    var reason = String(data.reason || '').trim().slice(0, 80);
+    if (!reason) throw new Error('บอกเหตุผลที่หักดาวก่อนนะ');
+    var stars = Math.round(Number(data.stars));
+    if (!(stars >= 1)) throw new Error('จำนวนดาวต้องอย่างน้อย 1');
+    var bal = getStarBalance_(kid.member_id);
+    if (stars > bal) throw new Error(bal > 0 ? 'ลูกมีแค่ ' + bal + ' ดาว หักได้ไม่เกินนี้' : 'ลูกไม่มีดาวให้หัก');
+    var now = nowMs_(), fix = data.fix, row = { ded_id: genId_(), family_id: parent.family_id, child_id: kid.member_id, stars: stars, reason: reason,
+      created_by: memberId, created_at: msIso_(now), status: 'active', undone_at: '', seen_at: '',
+      fix_title: '', fix_icon: '', fix_until: '', fix_status: '', fix_sent_at: '', fix_by: '', fix_done_at: '' };
+    if (fix) {
+      var title = String(fix.title || '').trim().slice(0, 60);
+      if (!title) throw new Error('ตั้งชื่อภารกิจแก้ตัวก่อนนะ');
+      var until = fix.until ? new Date(fix.until).getTime() : now + Math.round(Number(fix.minutes)) * 60000;
+      if (!(until > now + 60000)) throw new Error('เวลาทำภารกิจแก้ตัวต้องอยู่ในอนาคต');
+      if (until > now + 31 * 86400000) throw new Error('ตั้งเวลาได้ไม่เกิน 31 วัน');
+      row.fix_title = title; row.fix_icon = String(fix.icon || '💪').slice(0, 8); row.fix_until = msIso_(until); row.fix_status = 'open';
+    }
+    appendRow_('Deductions', row);
+    if (S.events) S.events.push({ type: 'ded_new', familyId: String(parent.family_id), childId: String(kid.member_id), stars: stars, parentName: parent.name });
+    return { ded: dedView_(row), balance: getStarBalance_(kid.member_id) };
+  }
+  function undoDeduction(memberId, dedId) {
+    var parent = requireParent_(memberId), d = findDed_(parent.family_id, dedId);
+    if (nowMs_() - new Date(d.created_at).getTime() >= DED_UNDO_MS) throw new Error('เลย 5 นาทีแล้ว ยกเลิกไม่ได้');
+    if (d.fix_status === 'done') throw new Error('ลูกได้ดาวคืนแล้ว');
+    updateRow_('Deductions', 'ded_id', d.ded_id, { status: 'undone', undone_at: msIso_(nowMs_()) });
+    return { undone: true, balance: getStarBalance_(d.child_id) };
+  }
+  function dedSeen(childId, dedId) {
+    var kid = requireChild_(childId), d = familyDeds_(kid.family_id).find(function(x) { return String(x.ded_id) === String(dedId) && String(x.child_id) === String(childId); });
+    if (d && !d.seen_at) updateRow_('Deductions', 'ded_id', d.ded_id, { seen_at: msIso_(nowMs_()) });
+    return { seen: true };
+  }
+  function submitFix(childId, dedId) {
+    var kid = requireChild_(childId), d = findDed_(kid.family_id, dedId);
+    if (String(d.child_id) !== String(childId)) throw new Error('ไม่พบภารกิจแก้ตัวนี้');
+    var st = dedFixState_(d, nowMs_());
+    if (st === 'expired') throw new Error('หมดเวลาภารกิจแก้ตัวแล้ว');
+    if (st === 'pending') throw new Error('ส่งไปแล้ว รอผู้ปกครองอนุมัตินะ');
+    if (st !== 'open') throw new Error('ภารกิจแก้ตัวนี้จบแล้ว');
+    updateRow_('Deductions', 'ded_id', d.ded_id, { fix_status: 'pending', fix_sent_at: msIso_(nowMs_()) });
+    if (S.events) S.events.push({ type: 'fix_sent', familyId: String(kid.family_id), childName: kid.name, title: d.fix_title });
+    return { sent: true };
+  }
+  function reviewFix(memberId, dedId, ok) {
+    var parent = requireParent_(memberId), d = findDed_(parent.family_id, dedId);
+    if (d.fix_status !== 'pending') throw new Error('ไม่มีภารกิจแก้ตัวรออนุมัติ');
+    if (ok) updateRow_('Deductions', 'ded_id', d.ded_id, { fix_status: 'done', fix_by: String(memberId), fix_done_at: msIso_(nowMs_()) });
+    else updateRow_('Deductions', 'ded_id', d.ded_id, { fix_status: 'open', fix_sent_at: '' });
+    return { ok: !!ok, balance: getStarBalance_(d.child_id) };
+  }
+  function childDeds_(member) {
+    var mine = familyDeds_(member.family_id).filter(function(d) { return String(d.child_id) === String(member.member_id) && d.status === 'active'; });
+    var now = nowMs_();
+    return {
+      unseen: mine.filter(function(d) { return !d.seen_at; }).map(dedView_),
+      fixes: mine.filter(function(d) { var s = dedFixState_(d, now); return s === 'open' || s === 'pending'; }).map(dedView_),
+      recent: mine.slice().sort(function(a, b) { return String(b.created_at).localeCompare(String(a.created_at)); }).slice(0, 20).map(dedView_)
+    };
+  }
+  function parentDeds_(familyId) {
+    var all = familyDeds_(familyId).filter(function(d) { return d.status === 'active'; });
+    return {
+      fixPending: all.filter(function(d) { return d.fix_status === 'pending'; }).map(dedView_),
+      recent: all.slice().sort(function(a, b) { return String(b.created_at).localeCompare(String(a.created_at)); }).slice(0, 30).map(dedView_)
+    };
+  }
+
+  // ==========================================
   // ภารกิจประจำวัน + ดาวม่วง (เงินของครอบครัว) + ร้านค้าตัวละคร
   // ==========================================
   // ภารกิจผู้ปกครอง: 1 อันต่อวัน ใช้ร่วมกันทุกคน (ใครทำก็นับ) · ภารกิจเด็ก: สุ่มแยกให้เด็กแต่ละคน
@@ -2339,7 +2445,7 @@ export function createCore(S) {
     return { wished: true, replaced: old ? old.name : '', shop: getShop(memberId) };
   }
 
-  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, getWeeklySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift,
+  const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, getWeeklySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift, deductStars, undoDeduction, dedSeen, submitFix, reviewFix,
     questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, setNest, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen, newsSeen };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
