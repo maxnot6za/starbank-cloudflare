@@ -723,6 +723,29 @@ body.kc-lock{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.kc.lift,.kc-body,.kc-sub,.kc-hist,.kc-ov{transition:none}.kc.open .kc-a,.kc.open .kc-big .st{animation:none;opacity:1;transform:none}}
 .u2-more{flex:none;font-size:.78rem;font-weight:800;opacity:.85}
 .u2-fixbox{background:#fff;border-radius:18px;padding:4px 14px;margin-bottom:12px;box-shadow:0 0 0 2px #FFC24B}
+/* ทัวร์ + การ์ดฟีเจอร์ใน "มีอะไรใหม่" */
+.tr-hole{position:fixed;z-index:400;border-radius:22px;pointer-events:none;box-shadow:0 0 0 9999px #0b231fb3;transition:all .45s cubic-bezier(.3,1.2,.4,1)}
+.tr-hole::after{content:"";position:absolute;inset:-6px;border-radius:inherit;border:3px solid #FFD66B;animation:trPulse 1.4s ease-in-out infinite}
+@keyframes trPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.04)}}
+.tr-tip{position:fixed;z-index:401;left:16px;right:16px;max-width:380px;margin:0 auto;background:#fff;border-radius:20px;padding:14px 16px 12px;box-shadow:0 14px 40px #0006;transition:top .45s cubic-bezier(.3,1.2,.4,1);font-size:.98rem;line-height:1.5;color:var(--text)}
+.tr-tip b{display:block;font-size:1.05rem;margin-bottom:2px}
+.tr-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.tr-dots{flex:1;display:flex;gap:5px}.tr-dots i{width:7px;height:7px;border-radius:9px;background:#1F3B3526}.tr-dots i.on{width:18px;background:#E8A21A}
+.tr-tip button{border:0;border-radius:99px;padding:8px 14px;font:inherit;font-weight:800;cursor:pointer}
+.tr-skip{background:none;color:var(--text-muted)}.tr-next{background:#1F3B35;color:#fff}
+.tr-arrow{position:absolute;width:16px;height:16px;background:#fff;transform:translateX(-50%) rotate(45deg)}
+body.touring #dd-go{pointer-events:none}
+.wn2-prog{display:inline-flex;align-items:center;gap:6px;background:#FFF6DC;border-radius:99px;padding:5px 12px;font-weight:800;font-size:.85rem;color:#9A6B00;margin-top:6px}
+.wn2-prog i{font-style:normal;filter:grayscale(1);opacity:.35}.wn2-prog i.on{filter:none;opacity:1}
+.wn2-f{border-radius:20px;background:#fff;box-shadow:0 0 0 1.5px #1F3B3514;overflow:hidden;text-align:left;animation:wnIn .4s both}
+.wn2-f.next{box-shadow:0 0 0 3px #FFC24B,0 8px 20px #E8A21A33}
+.wn2-vid{display:block;width:100%;aspect-ratio:3/4;max-height:300px;object-fit:cover;object-position:center top;background:linear-gradient(160deg,#E4F4EC,#F6FBF9)}
+.wn2-b{display:flex;align-items:center;gap:10px;padding:12px 14px}.wn2-b .ic{font-size:1.6rem;flex:none}
+.wn2-b .tx{flex:1;min-width:0}.wn2-b .tx b{display:block}.wn2-b .tx span{font-size:.84rem;color:var(--text-muted)}
+.wn2-go{flex:none;border:0;border-radius:14px;padding:10px 14px;font:inherit;font-weight:800;color:#fff;background:linear-gradient(135deg,#FFB020,#FF7A45);box-shadow:0 3px 0 #C8660F;cursor:pointer}
+.wn2-done{flex:none;width:54px;height:54px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.62rem;font-weight:900;color:#9A6B00;background:radial-gradient(circle,#FFF3C2,#FFD66B);transform:rotate(-12deg);box-shadow:0 0 0 3px #fff,0 0 0 5px #FFC24B}
+.wn2-done i{font-style:normal;font-size:1.2rem;line-height:1}
+@media (prefers-reduced-motion:reduce){.tr-hole::after{animation:none}.tr-hole,.tr-tip{transition:none}}
 </style>
   <style>
     /* === ภารกิจประจำวัน + ดาวม่วง + ร้านค้า + ตัวละครเดินด้านล่าง === */
@@ -4793,6 +4816,9 @@ function ppBanner(html, goal, gained) {
 // ---------- มีอะไรใหม่ (ผู้ปกครอง · ขึ้นครั้งเดียวต่อรุ่น) ----------
 // เพิ่มรุ่นใหม่ไว้บนสุด (v เพิ่มทีละ 1) · ไม่เกิน 3 ข้อ · ข้อละบรรทัด (บอกประโยชน์ ไม่บอกวิธีทำงาน) · โชว์เฉพาะรุ่นล่าสุด · ถามผู้ใช้ก่อน deploy ทุกครั้งว่าจะแจ้งไหม
 var WHATS_NEW = [
+  { v: 7, date: '18 พ.ย.', items: [
+    ['➖', 'หักดาวได้แล้ว', 'แตะการ์ดลูก → หักดาว ใส่เหตุผล และตั้งภารกิจแก้ตัวให้ลูกได้ดาวคืน', 'tour:deduct'],
+    ['🎁', 'ของขวัญกับ QR ย้ายที่', 'อยู่ในการ์ดลูกแล้ว (แตะการ์ดลูกในหน้าหลัก)']] },
   { v: 6, date: '15 พ.ย.', items: [
     ['🏠', 'หน้าหลักโฉมใหม่!', 'ปัดการ์ดดาวซ้าย-ขวา ดูดาวของลูกแต่ละคน และดาวม่วงของครอบครัว'],
     ['✨', 'ปุ่มทางลัดใหม่', 'ภารกิจด่วน · เพิ่มภารกิจ · ส่งของขวัญ · สรุปสัปดาห์'],
@@ -4820,6 +4846,83 @@ var WN_NESTS = [['basket', 'ตะกร้าสาน', .42], ['cloud', 'เ�
 function wnNests() {
   return '<div class="wn-nests">' + WN_NESTS.map(function (n) { return '<div>' + nestBox({ art: n[0], rim: n[2], fx: n[0] }, eggSVG(0)) + '<small>' + n[1] + '</small></div>'; }).join('') + '</div>';
 }
+// ===================================================================
+// ทัวร์สอนใช้ฟีเจอร์ใหม่ (เปิดจากปุ่ม "👉 ลองเลย" ใน "มีอะไรใหม่" เท่านั้น ไม่เด้งเอง)
+//   หน้าจอมืด เหลือจุดที่ต้องกดสว่าง + กล่องข้อความ · ขั้นที่มี tap = ต้องกดของจริงเอง · ข้ามได้ทุกขั้น
+//   ลองแล้ว = จำในเครื่อง (sb_tours) → แสตมป์ "ลองแล้ว" ในมีอะไรใหม่ · ไม่บังคับต้องลองก่อนปิด
+//   ระหว่างทัวร์: ปุ่มที่ทำของจริง (เช่น หักดาว) ถูกปิด (body.touring)
+// ===================================================================
+var TOURS = {
+  deduct: { title: 'หักดาว', media: '/news/deduct.mp4', need: function () { return document.querySelector('.u2-slide[data-kid]'); }, steps: [
+    { el: '.u2-slide[data-kid]', tap: true, wait: 1300, title: '👆 แตะการ์ดลูก', text: 'ดูดาว ประวัติล่าสุด และเมนูของลูกคนนี้' },
+    { el: '.kc-a.minus', tap: true, wait: 700, radius: 20, title: '➖ หักดาวอยู่ตรงนี้', text: 'ของขวัญกับ QR ก็ย้ายมาอยู่ในการ์ดนี้ด้วย' },
+    { el: '#dd-reason', radius: 16, title: '✏️ บอกเหตุผล', text: 'ลูกจะเห็นเหตุผลนี้ทันที · หักได้ไม่เกินดาวที่ลูกมี' },
+    { el: '#dd-fix', radius: 18, title: '💪 ภารกิจแก้ตัว', text: 'ลูกทำแล้วส่งมา · กดอนุมัติแล้วลูกได้ดาวคืน' },
+    { el: '#dd-go', radius: 18, title: '✅ ยังไม่หักจริงนะ', text: 'ดาวจะถูกหักเมื่อกดปุ่มนี้เท่านั้น · กดผิดยกเลิกได้ใน 5 นาที' }
+  ], done: function () { if (typeof kcClose === 'function') kcClose(); } }
+};
+function toursTried() { try { return JSON.parse(localStorage.getItem('sb_tours') || '{}') || {}; } catch (e) { return {}; } }
+function tourMark(id) { var t = toursTried(); t[id] = Date.now(); try { localStorage.setItem('sb_tours', JSON.stringify(t)); } catch (e) {} }
+var TR = { id: null, i: 0, hole: null, tip: null, onEnd: null };
+function tourStart(id, onEnd) {
+  var t = TOURS[id]; if (!t) return;
+  if (t.need && !t.need()) return toast('ยังไม่มีข้อมูลให้ลองตอนนี้');
+  tourEnd(true);
+  TR.id = id; TR.i = 0; TR.onEnd = onEnd || null;
+  TR.hole = document.createElement('div'); TR.hole.className = 'tr-hole';
+  TR.tip = document.createElement('div'); TR.tip.className = 'tr-tip'; TR.tip.setAttribute('role', 'dialog');
+  document.body.appendChild(TR.hole); document.body.appendChild(TR.tip); document.body.classList.add('touring');
+  tourPlace();
+}
+function tourEl(s) { return typeof s.el === 'function' ? s.el() : document.querySelector(s.el); }
+function tourPlace() {
+  if (!TR.id) return;
+  var t = TOURS[TR.id], s = t.steps[TR.i], el = tourEl(s);
+  if (!el) { if (TR.tries = (TR.tries || 0) + 1, TR.tries < 15) return setTimeout(tourPlace, 120); return tourEnd(); }
+  TR.tries = 0;
+  if (el.scrollIntoView && !s.noScroll) { var r0 = el.getBoundingClientRect(); if (r0.top < 60 || r0.bottom > innerHeight - 160) el.scrollIntoView({ block: 'center' }); }
+  var r = el.getBoundingClientRect(), pad = s.pad == null ? 8 : s.pad, last = TR.i === t.steps.length - 1;
+  Object.assign(TR.hole.style, { left: r.left - pad + 'px', top: r.top - pad + 'px', width: r.width + pad * 2 + 'px', height: r.height + pad * 2 + 'px', borderRadius: (s.radius || 22) + 'px' });
+  var nx = last ? tourNext_() : null;
+  TR.tip.innerHTML = '<div class="tr-arrow"></div><b>' + s.title + '</b>' + s.text +
+    '<div class="tr-row"><div class="tr-dots">' + t.steps.map(function (_, k) { return '<i class="' + (k === TR.i ? 'on' : '') + '"></i>'; }).join('') + '</div>' +
+    '<button type="button" class="tr-skip" onclick="tourEnd()">' + (last ? 'พอแค่นี้' : 'ข้าม') + '</button>' +
+    (s.tap ? '' : '<button type="button" class="tr-next" onclick="tourGo()">' + (last ? (nx ? 'ต่อไป: ' + esc(TOURS[nx].title) + ' ›' : 'เข้าใจแล้ว 🎉') : 'ถัดไป') + '</button>') + '</div>';
+  var th = TR.tip.offsetHeight || 140, below = r.bottom + pad + 16 + th < innerHeight - 8;
+  TR.tip.style.top = Math.max(8, below ? r.bottom + pad + 14 : r.top - pad - 14 - th) + 'px';
+  var ar = TR.tip.querySelector('.tr-arrow'); ar.style[below ? 'top' : 'bottom'] = '-7px';
+  ar.style.left = Math.max(24, Math.min(TR.tip.offsetWidth - 24, r.left + r.width / 2 - TR.tip.getBoundingClientRect().left)) + 'px';
+  if (s.tap) { var my = TR.id + TR.i; el.addEventListener('click', function () { setTimeout(function () { if (TR.id && TR.id + TR.i === my) tourGo(); }, s.wait || 800); }, { once: true }); }
+}
+// ทัวร์ถัดไปใน "มีอะไรใหม่" ที่ยังไม่ได้ลอง
+function tourNext_() { var tr = toursTried(); return (WN.tours || []).filter(function (x) { return x !== TR.id && !tr[x]; })[0] || null; }
+function tourGo() {
+  var t = TOURS[TR.id]; if (!t) return;
+  if (TR.i < t.steps.length - 1) { TR.i++; return setTimeout(tourPlace, 60); }
+  var id = TR.id, nx = tourNext_(); tourMark(id); tourEnd();
+  if (nx) setTimeout(function () { tourStart(nx); }, 700); else setTimeout(wnReopen, 750);
+}
+function tourEnd(silent) {
+  var id = TR.id;
+  if (TR.hole) TR.hole.remove(); if (TR.tip) TR.tip.remove();
+  TR.hole = TR.tip = null; TR.id = null; document.body.classList.remove('touring');
+  if (!silent && id && TOURS[id] && TOURS[id].done) TOURS[id].done();
+}
+window.addEventListener('resize', function () { if (TR.id) tourPlace(); });
+// ---- การ์ดฟีเจอร์ใน "มีอะไรใหม่" (มีคลิปสั้น + ลองเลย / แสตมป์ลองแล้ว) ----
+function wnFeature(x, nextId) {
+  var id = x[3].slice(5), t = TOURS[id], ok = toursTried()[id];
+  return '<div class="wn2-f' + (id === nextId ? ' next' : '') + '">' + (t && t.media ? '<video class="wn2-vid" src="' + t.media + '" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>' : '') +
+    '<div class="wn2-b"><span class="ic">' + x[0] + '</span><div class="tx"><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span></div>' +
+    (ok ? '<div class="wn2-done"><i>⭐</i>ลองแล้ว</div>' : '<button type="button" class="wn2-go" onclick="wnTry(\'' + id + '\')">👉 ลองเลย</button>') + '</div></div>';
+}
+function wnProgress() {
+  var ts = WN.tours || []; if (!ts.length) return '';
+  var tr = toursTried(), n = ts.filter(function (x) { return tr[x]; }).length;
+  return '<span class="wn2-prog">ลองแล้ว ' + ts.map(function (x) { return '<i class="' + (tr[x] ? 'on' : '') + '">⭐</i>'; }).join('') + ' ' + n + '/' + ts.length + '</span>';
+}
+function wnTry(id) { closeModal(); setTimeout(function () { tourStart(id); }, 380); }
+function wnReopen() { if (WN.last) openModal(WN.last()); }
 function maybeWhatsNew(d) {
   if (!d || currentMember.role !== 'parent' || d.newsSeen == null) return;
   var top = WHATS_NEW[0]; if (!top || d.newsSeen >= top.v || WN.shown === top.v) return;
@@ -4833,11 +4936,14 @@ function maybeWhatsNew(d) {
   }
   WN.shown = top.v;
   if (!popLater()) return;
-  var row = function (x) { return '<div class="wn-row"><div class="ic">' + x[0] + '</div><div style="min-width:0"><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span>' + (x[3] === 'nests' ? wnNests() : '') + '</div></div>'; };
+  WN.tours = []; groups.forEach(function (g) { g.items.forEach(function (x) { if (x[3] && x[3].indexOf('tour:') === 0) WN.tours.push(x[3].slice(5)); }); });
+  var row = function (x) { if (x[3] && x[3].indexOf('tour:') === 0) { var tr = toursTried(), nx = WN.tours.filter(function (k) { return !tr[k]; })[0]; return wnFeature(x, nx); }
+    return '<div class="wn-row"><div class="ic">' + x[0] + '</div><div style="min-width:0"><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span>' + (x[3] === 'nests' ? wnNests() : '') + '</div></div>'; };
   var multi = groups.length > 1;
-  openModal('<div class="wn-hd"><div class="sp">✨</div><h2>มีอะไรใหม่</h2><small>' + (multi ? 'ตั้งแต่ครั้งก่อนที่เข้ามา' : 'อัปเดต ' + top.date) + '</small></div><div class="wn-list">' +
+  WN.last = function () { return '<div class="wn-hd"><div class="sp">✨</div><h2>มีอะไรใหม่</h2><small>' + (multi ? 'ตั้งแต่ครั้งก่อนที่เข้ามา' : 'อัปเดต ' + top.date) + '</small><div>' + wnProgress() + '</div></div><div class="wn-list">' +
     groups.map(function (g, i) { return (multi ? '<div class="wn-date">' + (i ? '' : 'ล่าสุด · ') + esc(g.date) + '</div>' : '') + g.items.map(row).join(''); }).join('') +
-    '</div><div style="display:flex;margin-top:16px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div>', function () {
+    '</div><div style="display:flex;margin-top:16px"><button class="dq-btn g" onclick="closeModal()">' + (WN.tours.length ? 'ไว้ทีหลัง' : 'ปิด') + '</button></div>'; };
+  openModal(WN.last(), function () {
     google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).newsSeen(currentMember.memberId, top.v);
     d.newsSeen = top.v;
   });

@@ -19,7 +19,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await dad.waitForSelector('.wn-list', { timeout: 15000 }); await dad.waitForTimeout(700); await dad.screenshot({ path: OUT + 'n1-whats-new.png' });
   ok(/ฐานไข่ 7 แบบ/.test(await dad.textContent('.wn-list')), 'ผู้ปกครองเห็น "มีอะไรใหม่"');
   const wn = await dad.textContent('.wn-list');
-  ok(/ฐานไข่/.test(wn) && /หน้าหลักโฉมใหม่/.test(wn) && /ทุกวันอาทิตย์/.test(wn) && !/ไข่หายาก/.test(wn) && await dad.locator('.wn-date').count() >= 2, 'เห็นแค่ v1 → รวมรุ่นที่ยังไม่เห็นในป๊อปอัปเดียว ไม่มี v1');
+  ok(/ฐานไข่/.test(wn) && /หน้าหลักโฉมใหม่/.test(wn) && /หักดาวได้แล้ว/.test(wn) && !/ไข่หายาก/.test(wn) && await dad.locator('.wn-date').count() >= 2, 'เห็นแค่ v1 → รวมรุ่นที่ยังไม่เห็นในป๊อปอัปเดียว ไม่มี v1');
   ok(await dad.locator('.wn-nests .nk').count() === 7, 'พรีวิวฐานไข่ 7 แบบ');
   ok(await dad.locator('.wn-row').count() <= 6, 'ไม่เกิน 6 ข้อ');
   await dad.click('#modal-content .dq-btn.g'); await dad.waitForTimeout(800);
