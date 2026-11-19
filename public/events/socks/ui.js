@@ -8,7 +8,7 @@
 // ใช้ของในหน้าแอป: esc, toast, google.script.run, Live, openModal, closeModal, popBusy, popLater, dashboardData, currentMember
 // =====================================================================
 (function () {
-  var B = '/events/socks/', V = '?v=2', SX = { busy: false, popped: '' };
+  var B = '/events/socks/', V = '?v=3', SX = { busy: false, popped: '' };
   var TIER = { s: 'ถุงเล็ก', m: 'ถุงกลาง', l: 'ถุงใหญ่' }, BAG_H = { s: 34, m: 38, l: 44 };
   var CSS = `
   .sx-card{position:relative;background:#fff;border-radius:22px;padding:14px;margin:12px 0;box-shadow:0 3px 0 #1f3b3512}

@@ -26,6 +26,23 @@
   .ho.shake{animation:hoSh .3s}@keyframes hoSh{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
   .ho-bub{position:absolute;right:10px;top:118px;background:#fff;color:#1F3B35;border-radius:16px;padding:8px 12px;font-weight:800;z-index:8;opacity:0;transform:scale(.4);transition:all .3s cubic-bezier(.3,1.6,.5,1)}
   .ho-bub.on{opacity:1;transform:none}`;
+  // เสียง: ถุงเท้าเข้ากระสอบ = โน้ตไล่ขึ้น (สเกลเพนทาโทนิก C ไล่ทีละขั้น 3 ช่วงเสียง) · ผ่านขั้นถุง = คอร์ด · จบ = ฉลอง · ปิดตามปุ่มเสียงแอป (sb_sfx)
+  var PENTA = [0, 2, 4, 7, 9], AC = null;
+  function snd() {
+    try { if (localStorage.getItem('sb_sfx') === '0') return null; } catch (e) {}
+    try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) { return null; }
+    return AC;
+  }
+  function bell(f, at, d, v) {
+    var ac = AC, o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle'; o2.type = 'sine'; o.frequency.value = f; o2.frequency.value = f * 2.01;
+    g.gain.setValueAtTime(.0001, at); g.gain.exponentialRampToValueAtTime(v, at + .008); g.gain.exponentialRampToValueAtTime(.0001, at + d);
+    o.connect(g); o2.connect(g); g.connect(ac.destination); o.start(at); o2.start(at); o.stop(at + d + .05); o2.stop(at + d + .05);
+  }
+  function noteF(i) { var k = Math.min(i, 14), semi = PENTA[k % 5] + 12 * Math.floor(k / 5); return 523.25 * Math.pow(2, semi / 12); }
+  function plink(i) { if (!snd()) return; bell(noteF(i), AC.currentTime, .32, .13); }
+  function chord(k) { if (!snd()) return; var t = AC.currentTime, root = [523.25, 659.25, 783.99][k]; [1, 1.25, 1.5, 2].forEach(function (m, j) { bell(root * m, t + j * .06, .9, .09); }); }
+  function fanfare() { if (!snd()) return; var t = AC.currentTime; [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach(function (f, j) { bell(f, t + j * .1, j === 4 ? 1.2 : .4, .12); }); }
   var styled = false;
   function el(t, c, h) { var e = document.createElement(t); if (c) e.className = c; if (h) e.innerHTML = h; return e; }
   function play(host, o) {
@@ -51,7 +68,7 @@
       num.firstChild.nodeValue = n;
       num.className = 'ho-num' + (n >= 100 ? ' t3' : n >= 60 ? ' t2' : n >= 30 ? ' t1' : '');
       void num.offsetWidth; num.classList.add('b');
-      for (var k = tierShown; k < 3; k++) if (n >= T[k]) { tierShown = k + 1; var tg = el('div', 'ho-tag', ['🎒 ถุงเล็ก!', '🎁 ถุงกลาง!', '🎅 ถุงใหญ่!'][k]); box.appendChild(tg); setTimeout(function () { tg.remove(); }, 1400); }
+      for (var k = tierShown; k < 3; k++) if (n >= T[k]) { tierShown = k + 1; chord(k); var tg = el('div', 'ho-tag', ['🎒 ถุงเล็ก!', '🎁 ถุงกลาง!', '🎅 ถุงใหญ่!'][k]); box.appendChild(tg); setTimeout(function () { tg.remove(); }, 1400); }
       var p = N ? n / N : 1, lvl = Math.min(3, Math.floor(p * 3.999));
       sackLevel(lvl, .85 + .15 * p);
       var b = p < .4 ? 'basket-2' : p < .85 ? 'basket-1' : 'basket-0'; if (!bk.src.endsWith(b + '.webp')) bk.src = img(b);
@@ -74,9 +91,9 @@
       var steps = [], K = 12; for (var i = 0; i <= K; i++) { var t = i / K, x = (1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * ((a[0] + b[0]) / 2) + t * t * b[0], y = (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * top + t * t * b[1];
         steps.push({ transform: 'translate(' + (x - 19) + 'px,' + (y - 19) + 'px) rotate(' + (t * 540) + 'deg) scale(' + (1 - t * .45) + ')' }); }
       var anim = s.animate(steps, { duration: reduce ? 1 : 620, easing: 'linear' });
-      anim.onfinish = function () { s.remove(); sent++; var n = Math.min(N, Math.round(sent * per)); if (sent >= flights) n = N; count = n; setNum(n); if (sent >= flights) finish(); };
+      anim.onfinish = function () { s.remove(); plink(Math.floor(sent * 15 / Math.max(1, flights))); sent++; var n = Math.min(N, Math.round(sent * per)); if (sent >= flights) n = N; count = n; setNum(n); if (sent >= flights) finish(); };
     }
-    function finish() { setTimeout(function () { bub.classList.add('on'); }, 250); setTimeout(function () { if (o.onDone) o.onDone(); }, 1700); }
+    function finish() { setTimeout(function () { bub.classList.add('on'); fanfare(); }, 250); setTimeout(function () { if (o.onDone) o.onDone(); }, 1700); }
     if (!flights) { finish(); return box; }
     (function launch() { if (launched >= flights) return; fly(); launched++; var p = launched / flights; setTimeout(launch, reduce ? 0 : Math.max(55, 230 - 190 * p)); })();
     return box;
