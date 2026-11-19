@@ -1,0 +1,106 @@
+{
+  "id": "petpenguin",
+  "name": "petpenguin",
+  "headWidth": 150,
+  "sheets": {
+    "walk": {
+      "file": "walk.webp",
+      "frames": 6,
+      "cell": [
+        222,
+        278
+      ],
+      "facing": "right",
+      "extent": [
+        81,
+        107
+      ],
+      "cut": {
+        "src": "../../../../../../mnt/user-data/attachments/b14b10f7-9712-559b-898d-5816c2230c4d/7bd2937e-image.jpg",
+        "frames": 6,
+        "facing": "right",
+        "zoom": 1.0
+      }
+    },
+    "down": {
+      "file": "down.webp",
+      "frames": 5,
+      "cell": [
+        346,
+        255
+      ],
+      "facing": "right",
+      "extent": [
+        169,
+        145
+      ],
+      "cut": {
+        "src": "../../../../../../mnt/user-data/attachments/b14b10f7-9712-559b-898d-5816c2230c4d/cddffdf2-image.jpg",
+        "frames": 5,
+        "facing": "right",
+        "zoom": 1.0
+      }
+    },
+    "slide": {
+      "file": "slide.webp",
+      "frames": 6,
+      "cell": [
+        266,
+        262
+      ],
+      "facing": "right",
+      "extent": [
+        129,
+        105
+      ],
+      "cut": {
+        "src": "../../../../../../mnt/user-data/attachments/b14b10f7-9712-559b-898d-5816c2230c4d/06b8de6e-image.jpg",
+        "frames": 6,
+        "order": "1,2,4,5,6,3",
+        "facing": "right",
+        "zoom": 1.0
+      }
+    },
+    "flap": {
+      "file": "flap.webp",
+      "frames": 6,
+      "cell": [
+        226,
+        263
+      ],
+      "facing": "right",
+      "extent": [
+        86,
+        109
+      ],
+      "cut": {
+        "src": "../../../../../../mnt/user-data/attachments/b14b10f7-9712-559b-898d-5816c2230c4d/d47844ea-image.jpg",
+        "frames": 6,
+        "facing": "right",
+        "zoom": 1.0
+      }
+    },
+    "gift": {
+      "file": "gift.webp",
+      "frames": 7,
+      "cell": [
+        242,
+        262
+      ],
+      "facing": "right",
+      "extent": [
+        108,
+        117
+      ],
+      "cut": {
+        "src": "../../../../../../mnt/user-data/attachments/b14b10f7-9712-559b-898d-5816c2230c4d/e126f7af-image.jpg",
+        "frames": 8,
+        "order": "1,2,3,4,5,6,8",
+        "facing": "right",
+        "zoom": 1.0
+      }
+    }
+  },
+  "anims": {},
+  "life": []
+}
