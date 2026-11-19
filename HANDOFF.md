@@ -265,6 +265,7 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 - `Members.color` (8 สีใน `PROFILE_COLORS`) · `motto` (≤30) · `birthday` (YYYY-MM-DD, ยังไม่มีแจ้งเตือน → ดูงานค้าง) · avatar เดิม (อีโมจิ) ใช้ต่อ · ตัวการ์ตูน = `'@<art>'` → `public/avatars/<art>.webp` (256px, `AVATAR_ART` ใน core.js, ฟรีทุกตัว) · ไม่มีรูปถ่าย (KC ไม่เอา)
 - API `updateProfile(memberId, targetId, patch)`: ลูกแก้ของตัวเองได้แค่ avatar/color/motto · ผู้ปกครองแก้ทุกคนในบ้านทุกช่อง · ชื่อ 1–20 ห้ามซ้ำในบ้าน · dashboard ทั้งสองแบบส่ง `profiles`
 - หน้าเว็บ: `avHtml(avatar, memberId)` ใช้ทุกที่ที่แสดง avatar (มีวงสีประจำตัว) · `PROF`/`profSet` · `openFamilyProfiles` (ตั้งค่า → สมาชิกครอบครัว) · `openProfile` (แตะรูปตัวเองที่หัวหน้าจอ) · `pfPick` (ตัวการ์ตูน/อีโมจิ) · ช่องเลือก avatar ตอนเพิ่มเด็ก/สมัครมีตัวการ์ตูนด้วย
+- มีอะไรใหม่ v8 + ทัวร์ `profile` (4 ขั้น ไม่มีคลิป) · ระหว่างทัวร์ปุ่มในโปรไฟล์กดไม่ได้ · เทสต์ ui-news/ui-nest/ui-tour ล็อกเนื้อหามีอะไรใหม่ไว้ที่ v7 ด้วย `routes.pinNews(p, 7)`
 - LINE ใช้อีโมจิแทนตัวการ์ตูน (`avEmoji_`) · ตัดภาพด้วยสคริปต์ครั้งเดียว (ไม่ได้เก็บใน repo) · เทสต์ `profile.test.js`
 
 ### 8.10 คูปองลดราคาจากไข่ (migration 0015)

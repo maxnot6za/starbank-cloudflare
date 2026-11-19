@@ -81,6 +81,20 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
       await pg.fill('#pf-v', 'ภูมิ'); await pg.click('#pf-ok'); await pg.waitForSelector('.pf-hero'); await pg.waitForTimeout(500);
       ok((await pg.textContent('.pf-nm')) === 'ภูมิ', 'ผู้ปกครองแก้ชื่อลูกผ่านหน้าจอได้');
       await pg.screenshot({ path: OUT + 'profile-parent.png' });
+      // ทัวร์ "รูปโปรไฟล์"
+      await pg.evaluate(() => { while (document.getElementById('modal-overlay').classList.contains('show')) closeModal(); });
+      await pg.waitForTimeout(500);
+      ok(await pg.evaluate(() => WHATS_NEW[0].items[0][3] === 'tour:profile'), 'มีอะไรใหม่ v8 มีทัวร์โปรไฟล์');
+      await pg.evaluate(() => tourStart('profile'));
+      await pg.waitForSelector('.tr-tip'); await pg.click('#parent-avatar', { force: true });
+      await pg.waitForSelector('.pf-hero'); await pg.waitForTimeout(1200);
+      for (let i = 0; i < 3; i++) {
+        ok(await pg.isVisible('.tr-next'), 'ทัวร์ขั้นที่ ' + (i + 2) + ' แสดง');
+        if (i === 1) await pg.screenshot({ path: OUT + 'profile-tour.png' });
+        await pg.click('.tr-next'); await pg.waitForTimeout(400);
+      }
+      ok(!(await pg.$('.tr-tip')), 'ทัวร์จบ');
+      ok(await pg.evaluate(() => !!toursTried().profile), 'จำว่าลองทัวร์แล้ว');
     }
     await ctx.close();
   }

@@ -18,7 +18,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   const br = await chromium.launch(), errors = [];
   const open = async (id) => { const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
     await ctx.addCookies([{ name: 'sb_s', value: await sessionFor(db, id), url: base }]);
-    const p = await ctx.newPage(); await routes(p); p.on('pageerror', e => errors.push(e.message)); await p.goto(base + '/'); return p; };
+    const p = await ctx.newPage(); await routes(p); await routes.pinNews(p, 7); p.on('pageerror', e => errors.push(e.message)); await p.goto(base + '/'); return p; };
   const mom = await open(P1);
   // มีอะไรใหม่ v5 + พรีวิวฐาน
   await mom.waitForSelector('.wn-nests', { timeout: 15000 }); await mom.waitForTimeout(600);

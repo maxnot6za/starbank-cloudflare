@@ -14,7 +14,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: OUT ? 2 : 1 });
   await ctx.addCookies([{ name: 'sb_s', value: await sessionFor(db, P1), url: base }]);
   await ctx.addInitScript(() => { try { localStorage.setItem('sb_ui2', '1'); } catch (e) {} });
-  const p = await ctx.newPage(); p.on('pageerror', e => errors.push(e.message)); await routes(p); await p.goto(base + '/');
+  const p = await ctx.newPage(); p.on('pageerror', e => errors.push(e.message)); await routes(p); await routes.pinNews(p, 7); await p.goto(base + '/');
   await p.waitForSelector('.wn2-f', { timeout: 15000 }); await p.waitForTimeout(800);
   if (OUT) await p.screenshot({ path: OUT + '/tw1.png' });
   ok(await p.locator('.wn2-f video[src="/news/deduct.mp4"]').count() === 1 && /0\/1/.test(await p.textContent('.wn2-prog')), 'การ์ดหักดาว + คลิป + ลองแล้ว 0/1');

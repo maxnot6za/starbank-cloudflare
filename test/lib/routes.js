@@ -15,3 +15,14 @@ module.exports = async function routes(p) {
   await p.route('**/fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
   await p.route('**/fonts.gstatic.com/**', r => r.abort());
 };
+// เทสต์ที่ผูกกับเนื้อหา "มีอะไรใหม่" รุ่นเก่า: ตัดรุ่นที่ใหม่กว่า maxV ออกจากหน้าเว็บ (เฉพาะในเทสต์)
+module.exports.pinNews = async function pinNews(p, maxV) {
+  await p.route(u => new URL(u).pathname === '/', async r => {
+    const res = await r.fetch(); let body = await res.text();
+    body = body.replace(/var WHATS_NEW = \[\n([\s\S]*?)\n  \{ v: (\d+),/, (m, newer, v) => {
+      const keep = newer.split(/\n(?=  \{ v: )/).filter(b => { const x = /\{ v: (\d+)/.exec(b); return x && +x[1] <= maxV; });
+      return 'var WHATS_NEW = [\n' + (keep.length ? keep.join('\n') + '\n' : '') + '  { v: ' + v + ',';
+    });
+    return r.fulfill({ response: res, body });
+  });
+};

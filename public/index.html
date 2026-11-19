@@ -774,6 +774,7 @@ body.kc-lock{overflow:hidden}
 .tr-skip{background:none;color:var(--text-muted)}.tr-next{background:#1F3B35;color:#fff}
 .tr-arrow{position:absolute;width:16px;height:16px;background:#fff;transform:translateX(-50%) rotate(45deg)}
 body.touring #dd-go{pointer-events:none}
+body.touring .pf-cam,body.touring .pf-dot,body.touring .pf-it,body.touring .pf-x{pointer-events:none}
 .wn2-prog{display:inline-flex;align-items:center;gap:6px;background:#FFF6DC;border-radius:99px;padding:5px 12px;font-weight:800;font-size:.85rem;color:#9A6B00;margin-top:6px}
 .wn2-prog i{font-style:normal;filter:grayscale(1);opacity:.35}.wn2-prog i.on{filter:none;opacity:1}
 .wn2-f{border-radius:20px;background:#fff;box-shadow:0 0 0 1.5px #1F3B3514;overflow:hidden;text-align:left;animation:wnIn .4s both}
@@ -5153,6 +5154,10 @@ function ppBanner(html, goal, gained) {
 // ---------- มีอะไรใหม่ (ผู้ปกครอง · ขึ้นครั้งเดียวต่อรุ่น) ----------
 // เพิ่มรุ่นใหม่ไว้บนสุด (v เพิ่มทีละ 1) · ไม่เกิน 3 ข้อ · ข้อละบรรทัด (บอกประโยชน์ ไม่บอกวิธีทำงาน) · โชว์เฉพาะรุ่นล่าสุด · ถามผู้ใช้ก่อน deploy ทุกครั้งว่าจะแจ้งไหม
 var WHATS_NEW = [
+  { v: 8, date: '19 พ.ย.', items: [
+    ['🦖', 'รูปโปรไฟล์ตัวการ์ตูน', 'แตะรูปตัวเองที่มุมบน แล้วเลือกตัวการ์ตูนน่ารักได้เลย', 'tour:profile'],
+    ['🎨', 'สีประจำตัว', 'เลือกสีให้แต่ละคน ดูง่ายว่าใครเป็นใคร'],
+    ['👨‍👩‍👧', 'แก้ชื่อและวันเกิดได้', 'ตั้งค่า → สมาชิกครอบครัว']] },
   { v: 7, date: '18 พ.ย.', items: [
     ['➖', 'หักดาวได้แล้ว', 'แตะการ์ดลูก → หักดาว ใส่เหตุผล และตั้งภารกิจแก้ตัวให้ลูกได้ดาวคืน', 'tour:deduct'],
     ['🎁', 'ของขวัญกับ QR ย้ายที่', 'อยู่ในการ์ดลูกแล้ว (แตะการ์ดลูกในหน้าหลัก)']] },
@@ -5190,6 +5195,12 @@ function wnNests() {
 //   ระหว่างทัวร์: ปุ่มที่ทำของจริง (เช่น หักดาว) ถูกปิด (body.touring)
 // ===================================================================
 var TOURS = {
+  profile: { title: 'รูปโปรไฟล์', need: function () { return document.getElementById('parent-avatar'); }, steps: [
+    { el: '#parent-avatar', tap: true, wait: 700, radius: 999, title: '👆 แตะรูปตัวเอง', text: 'เปิดโปรไฟล์ของคุณ' },
+    { el: '.pf-cam', radius: 999, title: '✏️ เปลี่ยนรูป', text: 'เลือกตัวการ์ตูนหรืออีโมจิ · ลูกเปลี่ยนรูปของตัวเองได้ด้วย' },
+    { el: '.pf-dots', radius: 16, title: '🎨 สีประจำตัว', text: 'สีนี้จะล้อมรูปของคุณทุกที่ในแอป' },
+    { el: '.pf-list', radius: 18, title: '👨‍👩‍👧 แก้ของคนอื่นก็ได้', text: 'ชื่อ วันเกิด PIN ของลูก → ตั้งค่า → สมาชิกครอบครัว' }
+  ], done: function () { closeModal(); } },
   deduct: { title: 'หักดาว', media: '/news/deduct.mp4', need: function () { return document.querySelector('.u2-slide[data-kid]'); }, steps: [
     { el: '.u2-slide[data-kid]', tap: true, wait: 1300, title: '👆 แตะการ์ดลูก', text: 'ดูดาว ประวัติล่าสุด และเมนูของลูกคนนี้' },
     { el: '.kc-a.minus', tap: true, wait: 700, radius: 20, title: '➖ หักดาวอยู่ตรงนี้', text: 'ของขวัญกับ QR ก็ย้ายมาอยู่ในการ์ดนี้ด้วย' },
