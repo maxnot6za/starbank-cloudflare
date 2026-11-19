@@ -2152,7 +2152,7 @@ export function createCore(S) {
   // ของจากกิจกรรมถุงเท้า (event: 'socks') ไม่ขายในร้าน · ex = รางวัลหมุดถุงเท้ายักษ์
   [['nutcracker', 'ทหารนัทแครกเกอร์', .8, 'sway'], ['ginger', 'บ้านขนมปังขิง', .6, 'breathe sparkle'], ['cocoa', 'โต๊ะโกโก้ร้อน', .5, 'breathe'],
    ['lantern', 'โคมไฟเทียน', .6, 'breathe lamp'], ['musicbox', 'กล่องดนตรี', .45, 'beat notes'], ['globe', 'ลูกแก้วหิมะ', .5, 'breathe snow'],
-   ['bells', 'กระดิ่งคู่', .5, 'wiggle'], ['train', 'รถไฟของเล่น', .45, 'slide'], ['poinsettia', 'กระถางดอกคริสต์มาส', .55, 'sway'], ['cookies', 'คุกกี้กับนมรอซานต้า', .5, 'hop sparkle'],
+   ['bells', 'กระดิ่งคู่', .5, 'wiggle'], ['poinsettia', 'กระถางดอกคริสต์มาส', .55, 'sway'], ['cookies', 'คุกกี้กับนมรอซานต้า', .5, 'hop sparkle'],
    ['snowfam', 'ครอบครัวตุ๊กตาหิมะ', 1, 'sway snow', 1], ['reindeer', 'กวางเรนเดียร์จมูกแดง', 1, 'breathe sparkle', 1], ['santachair', 'ซานต้านั่งพัก', 1.1, 'breathe sparkle', 1]].forEach(function(d) {
     SHOP_ITEMS.push({ id: 'decor_' + d[0], kind: 'decor', set: 'xmas', name: d[1], art: d[0], h: d[2], fx: d[3], price: 0, currency: 'purple', event: 'socks', ex: !!d[4] });
   });
@@ -2500,7 +2500,7 @@ export function createCore(S) {
       m: [[['purple', 3, 1]], [['purple', 2, .60], ['decor', 0, .35], ['coupon', 20, .05]]],
       l: [[['purple', 4, 1]], [['decor', 0, 1]], [['purple', 3, .85], ['coupon', 20, .10], ['coupon', 30, .05]]]
     },
-    decor: ['decor_nutcracker', 'decor_ginger', 'decor_cocoa', 'decor_lantern', 'decor_musicbox', 'decor_globe', 'decor_bells', 'decor_train', 'decor_poinsettia', 'decor_cookies'],
+    decor: ['decor_nutcracker', 'decor_ginger', 'decor_cocoa', 'decor_lantern', 'decor_musicbox', 'decor_globe', 'decor_bells', 'decor_poinsettia', 'decor_cookies'],
     milestones: [[25, 'decor_snowfam'], [50, 'decor_reindeer'], [75, 'decor_santachair'], [100, 'pet_penguin']],
     game: {}                        // ส่งให้ตัวเกม (public/events/socks/game.js) ทับค่า DEF ของเกม
   };

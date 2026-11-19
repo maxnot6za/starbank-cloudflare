@@ -59,7 +59,7 @@ const addD = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * 86400000).toI
   r = await call(mf, 'socksOpen', C);
   ok(r.ok && r.value.items.filter(i => i.kind === 'coupon').length === 1 && r.value.items.some(i => i.kind === 'purple'), 'คูปองใบที่ 2 ในสัปดาห์เดียวกัน → เป็นดาวม่วงแทน', r.value && r.value.items);
   // ร้านค้า: ของกิจกรรมซื้อไม่ได้ และไม่โชว์ถ้ายังไม่มี
-  r = await call(mf, 'buyItem', P1, 'decor_train'); ok(!r.ok && /กิจกรรม/.test(r.error), 'ซื้อของกิจกรรมไม่ได้');
+  r = await call(mf, 'buyItem', P1, 'decor_bells'); ok(!r.ok && /กิจกรรม/.test(r.error), 'ซื้อของกิจกรรมไม่ได้');
   const shop = (await call(mf, 'getShop', P1)).value.items.filter(i => i.event);
   ok(shop.every(i => i.owned) && shop.some(i => i.id === 'decor_snowfam'), 'ร้านโชว์ของกิจกรรมเฉพาะที่มีแล้ว', shop.map(i => i.id));
   // cron 18:00
