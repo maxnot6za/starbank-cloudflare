@@ -13,6 +13,8 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await db.prepare('UPDATE Members SET quest_seen = ?, tree_seen = ?, egg_seen = ?').bind(today, '9999', FAM + '|1:f').run();
   await db.prepare("INSERT INTO Eggs (egg_id,family_id,status,warm,goal,day,day_warm,contrib,hugs,found_by,found_at,created_at,tier) VALUES (?,?,'warming',7,15,?,0,?,'{}',?,?,?,'rare')")
     .bind(FAM + '|1', FAM, today, JSON.stringify({ [C]: 5, [P1]: 2 }), C, today, today).run();
+  // มีฐานไข่หายากครบแล้ว → ฟักแล้วต้องได้สัตว์เลี้ยง (ไม่ขึ้นกับการสุ่ม)
+  for (const id of ['nest_crown', 'nest_rainbow', 'nest_fire']) await db.prepare("INSERT INTO Inventory (inv_id,family_id,item_id,price,currency,bought_by,bought_at,assigned_to) VALUES (?,?,?,0,'egg',?,'','')").bind('n' + id, FAM, id, C).run();
   const base = String(await mf.ready).replace(/\/$/, '');
   const browser = await chromium.launch(), errors = [];
   const open = async (id) => { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
