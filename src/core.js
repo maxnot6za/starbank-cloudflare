@@ -2373,7 +2373,7 @@ export function createCore(S) {
       // ยังไม่มีไข่ → อีกไม่เกินกี่ภารกิจที่อนุมัติจะได้ไข่แน่นอน (การันตีครั้งที่ EGG_PITY) · ไม่บอกเรื่องไข่หายาก
       pity: cur ? null : { left: Math.max(1, EGG_PITY - Number((familyRow_(m.family_id) || {}).egg_pity || 0)), of: EGG_PITY },
       event: event, canHatch: m.role === 'child',
-      pool: eggPool_(eggTier_(cur)).map(function(it) { return { art: it.art, sprite: it.sprite, thumb: it.thumb, thumbFrames: it.thumbFrames, name: it.name, owned: owns_(m.family_id, it) }; })
+      pool: eggPool_(eggTier_(cur)).map(function(it) { return { kind: it.kind, art: it.art, sprite: it.sprite, thumb: it.thumb, thumbFrames: it.thumbFrames, name: it.name, owned: owns_(m.family_id, it) }; })
     };
   }
 

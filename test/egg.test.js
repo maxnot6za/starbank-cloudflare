@@ -115,6 +115,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await db.prepare("INSERT INTO Eggs (egg_id,family_id,status,warm,goal,contrib,hugs,found_by,created_at,tier) VALUES (?,?,'ready',15,15,'{}','{}',?,'','rare')").bind(FAM + '|r1', FAM, C).run();
   let cv = (await call(mf, 'getChildDashboard', C)).value.egg;
   ok(cv.current.tier === 'rare' && cv.pool.length === 6 && cv.pool.filter(p => p.sprite).length === 3, 'ไข่ rare: รายการลุ้น = สัตว์เลี้ยง 3 ตัว + ฐานไข่หายาก 3 แบบ', cv.pool);
+  ok(cv.pool.filter(p => p.kind === 'nest').map(p => p.art).sort().join() === 'crown,fire,rainbow', 'ไข่ rare: ฐานไข่ในรายการลุ้นส่ง kind nest (รูปจาก /stage/nests)', cv.pool);
   r = await call(mf, 'hatchEgg', C);
   ok(r.ok && /pet|nest/.test(r.value.prize.kind) && r.value.prize.tier === 'rare', 'ฟักไข่ rare → ได้สัตว์เลี้ยงหรือฐานไข่ rare', r.value && r.value.prize);
   const st = JSON.parse((await db.prepare('SELECT stage FROM Families WHERE family_id = ?').bind(FAM).first()).stage);
