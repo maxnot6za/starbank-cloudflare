@@ -2124,6 +2124,7 @@ export function createCore(S) {
     { id: 'pet_dino', kind: 'pet', name: 'ไดโนจิ๋ว', sprite: 'petdino', price: 20, currency: 'purple' },
     { id: 'pet_dino_pink', kind: 'pet', name: 'ไดโนชมพู', sprite: 'petpink', price: 20, currency: 'purple' },
     { id: 'pet_dino_yellow', kind: 'pet', name: 'ไดโนเหลือง', sprite: 'petyellow', price: 20, currency: 'purple' },
+    { id: 'pet_redpanda', kind: 'pet', name: 'แพนด้าแดงจิ๋ว', sprite: 'petredpanda', price: 20, currency: 'purple', thumb: 'down', thumbFrames: 6 },
     // สัตว์เลี้ยงจากไข่ระดับ rare (ไม่ขายในร้าน) · thumb = ชีตท่ายืน/หมอบ เฟรมแรกใช้เป็นรูปเล็ก
     { id: 'pet_godzero', kind: 'pet', name: 'ก๊อตซีโร่', sprite: 'petwalk', price: 0, currency: 'purple', egg: true, tier: 'rare', thumb: 'down', thumbFrames: 6 },
     { id: 'pet_puymek', kind: 'pet', name: 'ปุยเมฆ', sprite: 'petlamb', price: 0, currency: 'purple', egg: true, tier: 'rare', thumb: 'down', thumbFrames: 6 },
