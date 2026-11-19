@@ -28,7 +28,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   // ร้าน: แท็บฐานไข่
   await mom.click('#pnav-shop'); await mom.waitForSelector('.shop-tabs');
   await mom.click('#screen-parent-shop .shop-tabs button:has-text("ฐานไข่")'); await mom.waitForTimeout(500);
-  ok(await mom.locator('#screen-parent-shop .shop-item').count() === 8, 'ร้าน: ฐานไข่ 8 แบบ (รังฟางฟรี + 7)');
+  ok(await mom.locator('#screen-parent-shop .shop-item').count() === 11, 'ร้าน: ฐานไข่ 11 แบบ (รังฟางฟรี + 7 + หายากจากไข่ 3)');
   await mom.screenshot({ path: OUT + 'n1-shop.png' });
   await mom.locator('#screen-parent-shop .shop-item:has-text("พุดดิ้ง")').click(); await mom.waitForSelector('#shop-buy');
   await mom.click('#shop-buy'); await mom.waitForTimeout(1200);

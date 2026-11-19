@@ -54,7 +54,8 @@ const addD = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * 86400000).toI
   await db.prepare("INSERT INTO SocksPlays (play_id,family_id,member_id,season,play_date,day,status,socks,started_at) VALUES (?,?,?,?,?,?,?,?,?)").bind(P2 + '|' + y, FAM, P2, 'T', y, y, 'done', 95, new Date().toISOString()).run();
   s = (await call(mf, 'getChildDashboard', C)).value.socks;
   ok(s.pending.length === 1 && s.pending[0].day === y && s.pending[0].tier === 'm', 'ถุงเมื่อวานที่ยังไม่เปิดยังรออยู่ (ถุงกลาง)', s.pending);
-  // คูปอง: สัปดาห์ละไม่เกิน 1
+  // คูปอง: สัปดาห์ละไม่เกิน 1 (ล้างคูปองที่อาจสุ่มได้จากถุงแรกก่อน)
+  await db.prepare('DELETE FROM Coupons WHERE family_id = ?').bind(FAM).run();
   await setCfg(Object.assign({}, base, { bags: { m: [[['coupon', 30, 1]], [['coupon', 20, 1]]] } }));
   r = await call(mf, 'socksOpen', C);
   ok(r.ok && r.value.items.filter(i => i.kind === 'coupon').length === 1 && r.value.items.some(i => i.kind === 'purple'), 'คูปองใบที่ 2 ในสัปดาห์เดียวกัน → เป็นดาวม่วงแทน', r.value && r.value.items);

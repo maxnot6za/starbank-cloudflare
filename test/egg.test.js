@@ -114,12 +114,12 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await db.prepare("UPDATE Families SET stage = NULL WHERE family_id = ?").bind(FAM).run();
   await db.prepare("INSERT INTO Eggs (egg_id,family_id,status,warm,goal,contrib,hugs,found_by,created_at,tier) VALUES (?,?,'ready',15,15,'{}','{}',?,'','rare')").bind(FAM + '|r1', FAM, C).run();
   let cv = (await call(mf, 'getChildDashboard', C)).value.egg;
-  ok(cv.current.tier === 'rare' && cv.pool.length === 3 && cv.pool.every(p => p.sprite), 'ไข่ rare: รายการลุ้นเป็นสัตว์เลี้ยง 3 ตัว', cv.pool);
+  ok(cv.current.tier === 'rare' && cv.pool.length === 6 && cv.pool.filter(p => p.sprite).length === 3, 'ไข่ rare: รายการลุ้น = สัตว์เลี้ยง 3 ตัว + ฐานไข่หายาก 3 แบบ', cv.pool);
   r = await call(mf, 'hatchEgg', C);
-  ok(r.ok && r.value.prize.kind === 'pet' && r.value.prize.tier === 'rare', 'ฟักไข่ rare → ได้สัตว์เลี้ยง rare', r.value && r.value.prize);
+  ok(r.ok && /pet|nest/.test(r.value.prize.kind) && r.value.prize.tier === 'rare', 'ฟักไข่ rare → ได้สัตว์เลี้ยงหรือฐานไข่ rare', r.value && r.value.prize);
   const st = JSON.parse((await db.prepare('SELECT stage FROM Families WHERE family_id = ?').bind(FAM).first()).stage);
-  ok(st.pets.includes(r.value.prize.id), 'สัตว์เลี้ยงจากไข่เข้าห้องเอง', st.pets);
-  for (const id of ['pet_godzero', 'pet_puymek', 'pet_firedragon']) await db.prepare("INSERT OR IGNORE INTO Inventory (inv_id,family_id,item_id,price,currency,bought_by,bought_at,assigned_to) VALUES (?,?,?,0,'egg',?,'','')").bind('y' + id, FAM, id, C).run();
+  if (r.value.prize.kind === 'pet') ok(st.pets.includes(r.value.prize.id), 'สัตว์เลี้ยงจากไข่เข้าห้องเอง', st.pets);
+  for (const id of ['pet_godzero', 'pet_puymek', 'pet_firedragon', 'nest_crown', 'nest_rainbow', 'nest_fire']) await db.prepare("INSERT OR IGNORE INTO Inventory (inv_id,family_id,item_id,price,currency,bought_by,bought_at,assigned_to) VALUES (?,?,?,0,'egg',?,'','')").bind('y' + id, FAM, id, C).run();
   await db.prepare("INSERT INTO Eggs (egg_id,family_id,status,warm,goal,contrib,hugs,found_by,created_at,tier) VALUES (?,?,'ready',15,15,'{}','{}',?,'','rare')").bind(FAM + '|r2', FAM, C).run();
   const pb = (await db.prepare('SELECT purple FROM Families WHERE family_id = ?').bind(FAM).first()).purple;
   r = await call(mf, 'hatchEgg', C);
