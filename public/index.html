@@ -282,6 +282,45 @@
     .empty-state { text-align:center; padding:28px 20px; color:var(--text-muted); background:rgba(255,255,255,0.88); border-radius:var(--radius); box-shadow:var(--shadow); }
     .empty-state .es-icon { font-size:3rem; margin-bottom:8px; }
     .divider { height:1px; background:var(--border); margin:16px 0; }
+
+    /* ===== โปรไฟล์ ===== */
+    .avx { display:inline-grid; place-items:center; width:1.25em; height:1.25em; line-height:1; vertical-align:middle; border-radius:50%; }
+    .avx.img img { width:100%; height:100%; border-radius:50%; object-fit:cover; background:#fff; display:block; }
+    .avx.ring { box-shadow:0 0 0 .07em #fff, 0 0 0 .14em var(--avc); }
+    .pf-open { border:0; background:none; padding:0; cursor:pointer; font:inherit; color:inherit; }
+    .pf-open:focus-visible, .pf-mem:focus-visible, .pf-it:focus-visible, .pf-dot:focus-visible, .pf-grid button:focus-visible { outline:3px solid var(--mint-dark); outline-offset:2px; }
+    .pf-grp { margin:12px 4px 4px; font-size:.8rem; color:var(--text-muted); }
+    .pf-mem { display:flex; align-items:center; gap:12px; width:100%; background:var(--bg); border:0; border-radius:16px; padding:10px 12px; margin-bottom:8px; font:inherit; color:var(--text); text-align:left; cursor:pointer; }
+    .pf-av { font-size:2.2rem; } .pf-tx { flex:1; min-width:0; } .pf-tx b { font-family:Mali, inherit; display:block; font-size:1.02rem; } .pf-tx small { color:var(--text-muted); font-size:.8rem; }
+    .pf-note { font-size:.78rem; color:var(--text-muted); text-align:center; margin:8px 0 0; }
+    .pf { position:relative; margin:-8px -4px 0; }
+    .pf-x { position:absolute; left:0; top:0; z-index:2; width:36px; height:36px; border-radius:50%; border:0; background:#fff; font-size:1.4rem; line-height:1; cursor:pointer; box-shadow:0 2px 6px #0002; color:var(--text); }
+    .pf-hero { position:relative; text-align:center; padding:6px 0 14px; }
+    .pf-hero::before { content:""; position:absolute; left:-24px; right:-24px; top:-30px; height:150px; background:var(--pc); border-radius:0 0 50% 50% / 0 0 40% 40%; opacity:.88; }
+    .pf-star { position:relative; width:132px; height:132px; margin:0 auto; display:grid; place-items:center; }
+    .pf-star svg { position:absolute; inset:0; width:100%; height:100%; filter:drop-shadow(0 3px 6px #0002); }
+    .pf-face { position:relative; width:90px; height:90px; border-radius:50%; background:#fff; display:grid; place-items:center; font-size:3.4rem; overflow:hidden; }
+    .pf-face .avx { width:100%; height:100%; } .pf-face .avx:not(.img) { width:auto; height:auto; }
+    .pf-cam { position:absolute; right:8px; bottom:8px; width:36px; height:36px; border-radius:50%; border:3px solid #fff; background:var(--text); color:#fff; font-size:.95rem; cursor:pointer; }
+    .pf-nm { position:relative; font-family:Mali, inherit; font-size:1.5rem; font-weight:700; margin-top:4px; }
+    .pf-role { position:relative; display:inline-block; background:var(--bg); padding:2px 12px; border-radius:99px; font-size:.78rem; color:var(--text-muted); }
+    .pf-motto { position:relative; font-family:Mali, inherit; color:var(--text); margin-top:6px; }
+    .pf-list { background:var(--bg); border-radius:18px; overflow:hidden; }
+    .pf-it { display:flex; align-items:center; gap:10px; width:100%; padding:12px 14px; border:0; border-bottom:1px solid #fff; background:none; font:inherit; color:var(--text); text-align:left; cursor:pointer; }
+    .pf-it:disabled { cursor:default; opacity:1; } .pf-it .k { width:24px; text-align:center; } .pf-it .l { flex:none; }
+    .pf-it .v { margin-left:auto; color:var(--text-muted); font-size:.88rem; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60%; }
+    .pf-it .ph { opacity:.6; } .pf-it i { font-style:normal; color:var(--text-muted); margin-left:4px; }
+    .pf-dots { display:flex; flex-wrap:wrap; gap:10px; padding:0 14px 14px 48px; border-bottom:1px solid #fff; }
+    .pf-dot { width:28px; height:28px; border-radius:50%; border:0; cursor:pointer; }
+    .pf-dot.on { box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--text); } .pf-dot:disabled { cursor:default; }
+    .pf-tabs { display:flex; gap:6px; background:var(--bg); padding:4px; border-radius:14px; margin:4px 0 12px; }
+    .pf-tabs button { flex:1; border:0; background:none; padding:8px 0; border-radius:11px; font:inherit; font-weight:600; color:var(--text-muted); cursor:pointer; }
+    .pf-tabs button.on { background:#fff; color:var(--text); box-shadow:0 1px 4px #0001; }
+    .pf-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:6px; }
+    .pf-grid button { aspect-ratio:1; border-radius:50%; border:3px solid transparent; background:var(--bg); font-size:2.4rem; padding:0; cursor:pointer; display:grid; place-items:center; }
+    .pf-grid button .avx { width:100%; height:100%; } .pf-grid.emo button .avx { width:auto; height:auto; } .pf-grid.emo button { font-size:1.9rem; }
+    .pf-grid button.on { border-color:var(--mint); background:#E3F6EE; }
+    .avatar-pick button .avx.img { width:1.6em; height:1.6em; }
     .avatar-pick { display:flex; gap:8px; flex-wrap:wrap; }
     .avatar-pick button {
       width:48px; height:48px; font-size:1.5rem; border-radius:14px;
@@ -1243,7 +1282,7 @@ body.touring #dd-go{pointer-events:none}
 <!-- ==================== CHILD: HOME ==================== -->
 <div id="screen-child-home" class="screen">
   <div class="top-strip" style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-    <div id="child-avatar" style="font-size:2rem"></div>
+    <button type="button" id="child-avatar" class="pf-open" style="font-size:2rem" onclick="openProfile()" aria-label="โปรไฟล์ของฉัน"></button>
     <div style="flex:1">
       <div id="child-name" style="font-weight:700;font-size:1.1rem"></div>
       <div id="child-family-name" style="color:var(--text-muted);font-size:0.85rem"></div>
@@ -1319,7 +1358,7 @@ body.touring #dd-go{pointer-events:none}
 <div id="screen-parent-home" class="screen">
   <div class="top-strip" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
     <div style="display:flex;align-items:center;gap:12px">
-      <div id="parent-avatar" style="font-size:2rem"></div>
+      <button type="button" id="parent-avatar" class="pf-open" style="font-size:2rem" onclick="openProfile()" aria-label="โปรไฟล์ของฉัน"></button>
       <div>
         <div id="parent-name" style="font-weight:700;font-size:1.1rem"></div>
         <div id="parent-family-name" style="color:var(--text-muted);font-size:0.85rem"></div>
@@ -1599,7 +1638,7 @@ function showPickProfile(familyData) {
     `<div class="card" style="padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;border:2px solid var(--border);transition:border-color 0.2s"
           onclick="this.style.borderColor='var(--primary)';doReconnect('${c.member_id}')"
           ontouchstart="this.style.borderColor='var(--primary-light)'">
-      <div style="font-size:2rem">${c.avatar}</div>
+      <div style="font-size:2rem">${avHtml(c.avatar, c.member_id)}</div>
       <div style="flex:1">
         <div style="font-weight:700;font-size:1rem">${esc(c.name)}</div>
         <div style="color:var(--gold-dark);font-weight:600;font-size:0.9rem">⭐ ${c.stars} ดาว</div>
@@ -1643,8 +1682,9 @@ let selectedRole = '';
 let selectedAvatar = '';
 let profileFamilyId = '';
 
-const AVATARS_CHILD = ['🧒','👧','👦','🐱','🐶','🦊','🐰','🐻','🦁','🐼','🐸','🦄'];
-const AVATARS_PARENT = ['👨','👩','👴','👵','🧑','👨‍👩‍👧','👨‍👩‍👦','🏠'];
+const AV_ART_KID = ['dino','bunny','bear','unicorn','tiger','panda','dragon','fox'], AV_ART_PARENT = ['dad','mom','grandma','grandpa'];
+const AVATARS_CHILD = ['@dino','@bunny','@bear','@unicorn','🧒','👧','👦','🐱','🐶','🦊','🐰','🐻','🦁','🐼','🐸','🦄'];
+const AVATARS_PARENT = ['@dad','@mom','@grandma','@grandpa','👨','👩','👴','👵','🧑','👨‍👩‍👧','👨‍👩‍👦','🏠'];
 
 function goToProfile(familyId, familyName) {
   profileFamilyId = familyId;
@@ -1726,9 +1766,10 @@ function kid2Goal(d) {
   return '<div class="k2-goal"><small>🎯 เป้าหมาย: ' + esc(next.title) + '</small><div class="k2-bar"><i style="width:' + pct + '%"></i></div><b>อีก ' + (next.stars_cost - bal) + ' ดาว!</b></div>';
 }
 function kid2Home(d) {
+  profSet(d.profiles);
   document.body.classList.add('ui2k');
   var m = d.member, hero = document.getElementById('k2-hero');
-  hero.innerHTML = '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + ui2CardBg('kid') + ' style="min-height:0"><div class="u2-kid"><span class="u2-kav">' + esc(m.avatar) + '</span><b>' + esc(m.name) + '</b></div>' +
+  hero.innerHTML = '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + ui2CardBg('kid') + ' style="min-height:0"><div class="u2-kid"><button type="button" class="u2-kav pf-open" onclick="openProfile()" aria-label="โปรไฟล์ของฉัน">' + avHtml(m.avatar, m.member_id) + '</button><b>' + esc(m.name) + '</b></div>' +
     '<div class="u2-big">⭐ <span id="k2-bal" style="font-size:inherit;opacity:1">' + d.stats.balance + '</span> <span>ดาว</span></div>' + kid2Goal(d) + '</div>';
   // ปัดซ้าย → การ์ดดาวม่วงของครอบครัว (หน้าตาเดียวกับหน้าผู้ปกครอง)
   var dl = d.daily;
@@ -1761,8 +1802,9 @@ function kid2Home(d) {
   }).join('') + '</div>' : '<div class="k2-box"><h3>📋 ภารกิจวันนี้</h3><div class="u2-pe">📭 ยังไม่มีภารกิจ</div></div>';
 }
 function renderChildHome(d) {
+  profSet(d.profiles);
   themeSet(d.family && d.family.theme);
-  document.getElementById('child-avatar').textContent = d.member.avatar;
+  document.getElementById('child-avatar').innerHTML = avHtml(d.member.avatar, d.member.member_id);
   document.getElementById('child-name').textContent = d.member.name;
   document.getElementById('child-family-name').textContent = d.family.family_name;
   showStarCount(document.getElementById('child-star-count'), d.stats.balance, d.member.member_id);
@@ -1971,8 +2013,9 @@ function loadParentDashboard() {
 }
 
 function renderParentHome(d) {
+  profSet(d.profiles);
   themeSet(d.family && d.family.theme);
-  document.getElementById('parent-avatar').textContent = d.member.avatar;
+  document.getElementById('parent-avatar').innerHTML = avHtml(d.member.avatar, d.member.member_id);
   document.getElementById('parent-name').textContent = d.member.name;
   document.getElementById('parent-family-name').textContent = d.family.family_name;
   renderDaily(d);
@@ -1988,7 +2031,7 @@ function renderParentHome(d) {
   } else {
     cl.innerHTML = d.children.map(c => `
       <div class="card" style="padding:14px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:1.8rem">${c.avatar}</div>
+        <div style="font-size:1.8rem">${avHtml(c.avatar, c.member_id)}</div>
         <div style="flex:1">
           <div style="font-weight:600">${esc(c.name)}</div>
           <div style="color:var(--gold-dark);font-weight:700">⭐ ${c.stats.balance} ดาว</div>
@@ -2044,7 +2087,7 @@ function renderRedemptionAlerts(d) {
   list.innerHTML = items.map(function(r) {
     var timeStr = new Date(r.redeemed_at).toLocaleString('th-TH', {hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
     return '<div class="redemption-item">' +
-      '<span style="font-size:1.3rem">' + r.child_avatar + '</span>' +
+      '<span style="font-size:1.3rem">' + avHtml(r.child_avatar, r.child_id) + '</span>' +
       '<div style="flex:1">' +
         '<div style="font-weight:600">' + esc(r.child_name) + ' แลก "' + esc(r.reward_title) + '"</div>' +
         '<div style="font-size:0.8rem;color:var(--text-muted)">⭐ ' + r.stars_spent + ' ดาว · ' + timeStr + '</div>' +
@@ -2067,7 +2110,7 @@ function doAcknowledgeRedemptions() {
 function renderPendingItem(s) {
   const child = dashboardData.members.find(m => m.member_id === s.child_id);
   const childName = child ? child.name : '?';
-  const childAvatar = child ? child.avatar : '👤';
+  const childAvatar = child ? avHtml(child.avatar, child.member_id) : '👤';
   const timeStr = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
   return `
     <div class="pending-item${urgSub(s) ? ' urg' : ''}">
@@ -2134,7 +2177,7 @@ function renderReviewHistory(d) {
   list.innerHTML = items.map(function(r) {
     if (r.ded || r.fixok) {
       var x = r.ded || r.fixok, ts = new Date(r.t).toLocaleString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-      return '<div class="rh-row"><span style="font-size:1.3rem">' + esc(x.child_avatar) + '</span><div style="flex:1;min-width:0">' +
+      return '<div class="rh-row"><span style="font-size:1.3rem">' + avHtml(x.child_avatar, x.child_id) + '</span><div style="flex:1;min-width:0">' +
         (r.ded ? '<div style="font-weight:600;color:#C8322F">➖ หัก ' + x.stars + ' ดาว — ' + esc(x.child_name) + '</div><div style="font-size:0.8rem;color:var(--text-muted)">' + esc(x.reason) + ' · ' + esc(x.by_name) + ' · ' + ts +
           (x.fix ? ' · 💪 ' + esc(x.fix.title) + ' (' + ({ open: 'รอทำ', pending: 'รออนุมัติ', done: 'ได้คืนแล้ว', expired: 'หมดเวลา' }[x.fix.state] || '') + ')' : '') + '</div>'
           : '<div style="font-weight:600;color:#23966F">💪 ' + esc(x.child_name) + ' แก้ตัวสำเร็จ +' + x.stars + ' ดาว</div><div style="font-size:0.8rem;color:var(--text-muted)">' + esc(x.fix.title) + ' · ' + ts + '</div>') +
@@ -2142,7 +2185,7 @@ function renderReviewHistory(d) {
     }
     if (r.urg) {
       var k = r.urg, why = k.status === 'declined' ? '😴 ไว้คราวหน้า' : k.status === 'cancelled' ? '🚫 ยกเลิกแล้ว' : (k.seen_at ? '⏰ หมดเวลา' : '⏰ หมดเวลา · ไม่ได้เปิดดู');
-      return '<div class="rh-row urg"><span style="font-size:1.3rem">' + esc(k.child_avatar) + '</span><div style="flex:1;min-width:0">' +
+      return '<div class="rh-row urg"><span style="font-size:1.3rem">' + avHtml(k.child_avatar, k.child_id) + '</span><div style="flex:1;min-width:0">' +
         '<div style="font-weight:600"><span class="urg-tag">⚡ ด่วน</span>' + esc(k.child_name) + ' — ' + esc(r.g.title) + '</div>' +
         '<div style="font-size:0.8rem;color:var(--text-muted)">' + why + ' · ' + new Date(r.t).toLocaleString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) + '</div></div>' +
         (k.status !== 'cancelled' ? '<button class="u-chip" style="width:100%;font-size:.82rem;border-color:#FF8FA3;color:#E5484D;background:#FFF0F3" onclick="showSendGift(\'' + k.child_id + '\',\'comfort\')">🎁 ส่งดาวปลอบใจ</button>' : '') + '</div>';
@@ -2153,12 +2196,12 @@ function renderReviewHistory(d) {
     var statusText = r.status === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ';
     var starText = r.status === 'approved' && r.stars_earned ? ' +' + r.stars_earned + '⭐' : '';
     return '<div class="rh-row' + (us ? ' urg' : '') + '">' +
-      '<span style="font-size:1.3rem">' + r.child_avatar + '</span>' +
+      '<span style="font-size:1.3rem">' + avHtml(r.child_avatar, r.child_id) + '</span>' +
       '<div style="flex:1;min-width:0">' +
         '<div style="font-weight:600">' + (us ? '<span class="urg-tag">⚡ ด่วน</span>' : '') + esc(r.child_name) + ' — ' + esc(us ? String(r.mission_title).replace(/^⚡\s*/, '') : r.mission_title) + '</div>' +
         '<div style="font-size:0.8rem;color:var(--text-muted)">' +
           statusIcon + ' ' + statusText + starText + (us && urgOnTime(us) ? ' · ' + urgOnTime(us).replace(/<[^>]+>/g, '').replace('✓ ', '').trim() : '') +
-          ' · โดย ' + r.reviewer_avatar + ' ' + esc(r.reviewer_name) +
+          ' · โดย ' + avHtml(r.reviewer_avatar, r.reviewed_by) + ' ' + esc(r.reviewer_name) +
           ' · ' + timeStr +
         '</div>' +
       '</div>' +
@@ -2215,7 +2258,7 @@ function ui2Pending(list) {
   return all.slice(0, 3).map(function (s) {
     var c = dashboardData.members.find(function (m) { return m.member_id === s.child_id; }), u = urgSub(s);
     var t = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-    return '<div class="u2-pr' + (u ? ' urg' : '') + '"><span class="av">' + (c ? c.avatar : '👤') + '</span><div class="tx"><b>' +
+    return '<div class="u2-pr' + (u ? ' urg' : '') + '"><span class="av">' + (c ? avHtml(c.avatar, c.member_id) : '👤') + '</span><div class="tx"><b>' +
       (u ? '<span class="urg-tag">⚡ ด่วน</span>' : '') + esc(String(s.mission_title).replace(/^⚡\s*/, '')) + '</b><small>' + esc(c ? c.name : '?') + ' · ' + (u ? urgOnTime(u) : '') + t + '</small></div>' +
       '<button class="ok" data-sfx="ok" aria-label="อนุมัติ" onclick="doReview(\'' + s.submission_id + '\',\'approved\')">✓</button>' +
       '<button class="no" data-sfx="no" aria-label="ไม่อนุมัติ" onclick="doReview(\'' + s.submission_id + '\',\'rejected\')">✕</button></div>';
@@ -2262,7 +2305,7 @@ function renderParentRedemptionHistory(d) {
     var timeStr = new Date(r.redeemed_at).toLocaleString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     var ackText = r.acknowledged_at ? '✅ รับทราบโดย ' + esc(r.acknowledged_name || '?') : '🕐 ยังไม่รับทราบ';
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">' +
-      '<span style="font-size:1.3rem">' + r.child_avatar + '</span>' +
+      '<span style="font-size:1.3rem">' + avHtml(r.child_avatar, r.child_id) + '</span>' +
       '<div style="flex:1">' +
         '<div style="font-weight:600">' + esc(r.child_name) + ' แลก "' + esc(r.reward_title) + '"</div>' +
         '<div style="font-size:0.8rem;color:var(--text-muted)">⭐ ' + r.stars_spent + ' ดาว · ' + timeStr + ' · ' + ackText + '</div>' +
@@ -2514,6 +2557,7 @@ function showSettings() {
       <div class="info-row"><span>รหัสครอบครัว (เด็กใช้เข้าระบบ)</span><strong style="letter-spacing:3px">${joinCode}</strong></div>
       <div class="info-row"><span>สมาชิกทั้งหมด</span><span>${d.members.length} คน</span></div>
     </div>
+    <button type="button" class="set-link" onclick="openFamilyProfiles()"><span style="font-size:1.3rem">👨‍👩‍👧</span><span style="flex:1;text-align:left">สมาชิกครอบครัว<small>รูปโปรไฟล์ ชื่อ สีประจำตัว วันเกิด</small></span>›</button>
     <button type="button" class="set-link" onclick="closeModal();showWeekly()"><span style="font-size:1.3rem">🗓️</span><span style="flex:1;text-align:left">สรุปสัปดาห์<small>7 วันที่ผ่านมา เทียบกับสัปดาห์ก่อน</small></span>›</button>
     <button type="button" class="set-link" onclick="closeModal();openSummary()"><span style="font-size:1.3rem">📊</span><span style="flex:1;text-align:left">สรุปรายวัน<small>ลูกทำอะไรไปบ้างวันนี้</small></span>›</button>
     <button type="button" class="set-link" onclick="wnOpenAll()"><span style="font-size:1.3rem">✨</span><span style="flex:1;text-align:left">มีอะไรใหม่<small>ดูฟีเจอร์ล่าสุด และลองใช้ตามขั้นตอน</small></span><b>›</b></button>
@@ -2587,11 +2631,149 @@ function authTab(tab) {
   }
 }
 
+// ==================== โปรไฟล์สมาชิก ====================
+// avatar = อีโมจิ หรือ '@<art>' (ตัวการ์ตูน public/avatars/<art>.webp) · สีประจำตัวมาจาก dashboard.profiles
+var PROF = {};
+var PROF_COLORS = ['#FF9F43', '#3BB08F', '#5BA8F5', '#E86AA6', '#8B5CF6', '#FFC24B', '#FF6B6B', '#5C7C74'];
+var PROF_EMOJI = ['🧒','👧','👦','👶','🐱','🐶','🦁','🐸','🐵','🐨','🐷','🐙','🦋','🌟','🚀','⚽','👨','👩','👴','👵','🧑','👨‍🦱','👩‍🦰','🏠'];
+function profSet(list) { PROF = {}; (list || []).forEach(function (p) { PROF[p.member_id] = p; }); }
+function avHtml(a, id) {
+  a = String(a == null ? '' : a);
+  var p = id && PROF[id], c = p && p.color, img = a.charAt(0) === '@';
+  return '<span class="avx' + (img ? ' img' : '') + (c ? ' ring' : '') + '"' + (c ? ' style="--avc:' + esc(c) + '"' : '') + '>' +
+    (img ? '<img src="/avatars/' + encodeURIComponent(a.slice(1)) + '.webp" alt="">' : esc(a)) + '</span>';
+}
+function profMe() { return currentMember && currentMember.role === 'parent'; }
+function profAge(b) {
+  if (!b) return '';
+  var t = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10), y = +t.slice(0, 4) - +b.slice(0, 4);
+  if (t.slice(5) < b.slice(5)) y--;
+  return y >= 0 ? 'อายุ ' + y + (y < 15 ? ' ขวบ' : ' ปี') : '';
+}
+function profBday(b) { return b ? new Date(b + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; }
+function profRole(p) { return p.role === 'child' ? 'เด็ก' : 'ผู้ปกครอง'; }
+
+function openFamilyProfiles() {
+  var all = Object.keys(PROF).map(function (k) { return PROF[k]; });
+  var row = function (p) {
+    return '<button type="button" class="pf-mem" onclick="openProfile(\'' + escJs(p.member_id) + '\')"><span class="pf-av">' + avHtml(p.avatar, p.member_id) + '</span>' +
+      '<span class="pf-tx"><b>' + esc(p.name) + (String(p.member_id) === String(currentMember.memberId) ? ' (คุณ)' : '') + '</b><small>' +
+      esc([p.role === 'child' ? profAge(p.birthday) : '', p.motto].filter(Boolean).join(' · ') || profRole(p)) + '</small></span>›</button>';
+  };
+  var kids = all.filter(function (p) { return p.role === 'child'; }), par = all.filter(function (p) { return p.role !== 'child'; });
+  openModal('<h2>👨‍👩‍👧 สมาชิกครอบครัว</h2>' +
+    (kids.length ? '<p class="pf-grp">เด็ก</p>' + kids.map(row).join('') : '') +
+    '<p class="pf-grp">ผู้ปกครอง</p>' + par.map(row).join('') +
+    '<p class="pf-note">แตะชื่อเพื่อเปลี่ยนรูป สี ชื่อ หรือวันเกิด · เพิ่มเด็กหรือเชิญผู้ปกครองได้ในหน้าตั้งค่า</p>' +
+    '<button class="btn btn-outline" style="margin-top:10px" onclick="closeModal()">ปิด</button>');
+}
+
+var PF = { id: '', draft: null };
+function openProfile(id) {
+  var p = PROF[id || currentMember.memberId];
+  if (!p) return toast('ไม่พบสมาชิก');
+  PF.id = p.member_id;
+  pfRender();
+}
+function pfRender() {
+  var p = PROF[PF.id]; if (!p) return closeModal();
+  var parent = profMe(), self = String(p.member_id) === String(currentMember.memberId), canArt = parent || self;
+  var col = p.color || '#3BB08F';
+  var dots = PROF_COLORS.map(function (c) {
+    return '<button type="button" class="pf-dot' + (c === p.color ? ' on' : '') + '" style="background:' + c + '" aria-label="สี ' + c + '"' + (canArt ? ' onclick="pfSave({color:\'' + c + '\'})"' : ' disabled') + '></button>';
+  }).join('');
+  var item = function (ic, label, val, fn) {
+    return '<button type="button" class="pf-it"' + (fn ? ' onclick="' + fn + '"' : ' disabled') + '><span class="k">' + ic + '</span><span class="l">' + label + '</span><span class="v">' + val + '</span>' + (fn ? '<i>›</i>' : '') + '</button>';
+  };
+  openModal('<div class="pf" style="--pc:' + esc(col) + '">' +
+    '<button type="button" class="pf-x" onclick="' + (parent ? 'openFamilyProfiles()' : 'closeModal()') + '" aria-label="ย้อนกลับ">‹</button>' +
+    '<div class="pf-hero"><div class="pf-star">' +
+      '<svg viewBox="0 0 100 100" aria-hidden="true"><path fill="#FFC24B" stroke="#fff" stroke-width="3" stroke-linejoin="round" d="M50 3l13 31 33 3-25 22 8 33-29-18-29 18 8-33L4 37l33-3z"/></svg>' +
+      '<div class="pf-face">' + avHtml(p.avatar) + '</div>' +
+      (canArt ? '<button type="button" class="pf-cam" onclick="pfPick()" aria-label="เปลี่ยนรูปโปรไฟล์">✏️</button>' : '') + '</div>' +
+      '<div class="pf-nm">' + esc(p.name) + '</div>' +
+      '<span class="pf-role">' + esc([profRole(p), p.role === 'child' ? profAge(p.birthday) : ''].filter(Boolean).join(' · ')) + '</span>' +
+      (p.motto ? '<div class="pf-motto">“' + esc(p.motto) + '”</div>' : '') +
+    '</div>' +
+    '<div class="pf-list">' +
+      '<div class="pf-it"><span class="k">🎨</span><span class="l">สีประจำตัว</span></div><div class="pf-dots">' + dots + '</div>' +
+      item('✏️', 'ชื่อ', esc(p.name), parent ? 'pfName()' : '') +
+      item('💬', 'คำประจำตัว', p.motto ? esc(p.motto) : '<span class="ph">ยังไม่มี</span>', canArt ? 'pfMotto()' : '') +
+      item('🎂', 'วันเกิด', p.birthday ? esc(profBday(p.birthday)) : '<span class="ph">ยังไม่ได้ใส่</span>', parent ? 'pfBirthday()' : '') +
+      (parent && p.role === 'child' ? item('🔢', 'PIN เข้าแอป', '', 'showSetPin(\'' + escJs(p.member_id) + '\',\'' + escJs(p.name) + '\')') : '') +
+    '</div>' +
+    (!parent ? '<p class="pf-note">ชื่อและวันเกิด ให้พ่อแม่เป็นคนแก้</p>' : '') +
+  '</div>');
+}
+function pfPick(tab) {
+  var p = PROF[PF.id]; tab = tab || (String(p.avatar).charAt(0) === '@' || !p.avatar ? 'art' : 'emoji');
+  var art = (p.role === 'child' ? AV_ART_KID.concat(AV_ART_PARENT) : AV_ART_PARENT.concat(AV_ART_KID)).map(function (a) { return '@' + a; });
+  var list = tab === 'art' ? art : PROF_EMOJI;
+  PF.draft = p.avatar;
+  openModal('<h2>เปลี่ยนรูปโปรไฟล์</h2>' +
+    '<div class="pf-tabs" role="tablist"><button type="button" role="tab" class="' + (tab === 'art' ? 'on' : '') + '" onclick="pfPick(\'art\')">ตัวการ์ตูน</button>' +
+    '<button type="button" role="tab" class="' + (tab === 'emoji' ? 'on' : '') + '" onclick="pfPick(\'emoji\')">อีโมจิ</button></div>' +
+    '<div class="pf-grid' + (tab === 'emoji' ? ' emo' : '') + '">' + list.map(function (a) {
+      return '<button type="button" class="' + (a === p.avatar ? 'on' : '') + '" onclick="pfDraft(this,\'' + escJs(a) + '\')">' + avHtml(a) + '</button>';
+    }).join('') + '</div>' +
+    '<button class="btn btn-primary" id="pf-use" onclick="pfSave({avatar:PF.draft})">ใช้รูปนี้</button>' +
+    '<button class="btn btn-outline" style="margin-top:10px" onclick="pfRender()">ยกเลิก</button>');
+}
+function pfDraft(btn, a) {
+  document.querySelectorAll('.pf-grid button').forEach(function (b) { b.classList.remove('on'); });
+  btn.classList.add('on'); PF.draft = a;
+}
+function pfField(title, html, read) {
+  openModal('<h2>' + title + '</h2>' + html +
+    '<button class="btn btn-primary" id="pf-ok">บันทึก</button>' +
+    '<button class="btn btn-outline" style="margin-top:10px" onclick="pfRender()">ยกเลิก</button>');
+  var inp = document.querySelector('#modal-content input'); if (inp) setTimeout(function () { inp.focus(); }, 50);
+  document.getElementById('pf-ok').onclick = function () { var v = read(); if (v) pfSave(v); };
+}
+function pfName() {
+  var p = PROF[PF.id];
+  pfField('✏️ ชื่อ', '<div class="form-group"><input type="text" id="pf-v" maxlength="20" value="' + esc(p.name) + '"></div><p class="pf-note">ยาวได้ไม่เกิน 20 ตัวอักษร ห้ามซ้ำกับคนอื่นในครอบครัว</p>',
+    function () { var v = document.getElementById('pf-v').value.trim(); if (!v) { toast('กรุณาใส่ชื่อ'); return null; } return { name: v }; });
+}
+function pfMotto() {
+  var p = PROF[PF.id];
+  pfField('💬 คำประจำตัว', '<div class="form-group"><input type="text" id="pf-v" maxlength="30" placeholder="เช่น ไดโนพลังเต็ม!" value="' + esc(p.motto || '') + '"></div><p class="pf-note">ไม่เกิน 30 ตัวอักษร · เว้นว่างได้</p>',
+    function () { return { motto: document.getElementById('pf-v').value.trim() }; });
+}
+function pfBirthday() {
+  var p = PROF[PF.id], today = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+  pfField('🎂 วันเกิด', '<div class="form-group"><input type="date" id="pf-v" max="' + today + '" value="' + esc(p.birthday || '') + '"></div><p class="pf-note">เว้นว่างได้</p>',
+    function () { return { birthday: document.getElementById('pf-v').value }; });
+}
+function pfSave(patch) {
+  var btns = document.querySelectorAll('#modal-content button'); btns.forEach(function (b) { b.disabled = true; });
+  google.script.run.withSuccessHandler(function (r) {
+    var p = r && r.profile; if (p) PROF[p.member_id] = p;
+    if (String(p.member_id) === String(currentMember.memberId)) { currentMember.avatar = p.avatar; currentMember.name = p.name; }
+    if (dashboardData) {
+      dashboardData.profiles = Object.keys(PROF).map(function (k) { return PROF[k]; });
+      (dashboardData.members || []).concat(dashboardData.children || [], dashboardData.member ? [dashboardData.member] : []).forEach(function (m) {
+        if (m && String(m.member_id) === String(p.member_id)) { m.avatar = p.avatar; m.name = p.name; m.color = p.color; }
+      });
+    }
+    toast(patch.avatar ? 'เปลี่ยนรูปแล้ว' : 'บันทึกแล้ว');
+    pfRender(); pfRefreshHome();
+  }).withFailureHandler(function (e) {
+    btns.forEach(function (b) { b.disabled = false; }); toast((e && e.message) || 'บันทึกไม่สำเร็จ');
+  }).updateProfile(currentMember.memberId, PF.id, patch);
+}
+// วาดหัวหน้าจอใหม่ทันที (ส่วนอื่นอัปเดตตอน Live โหลดข้อมูลใหม่หลังปิดหน้าต่าง)
+function pfRefreshHome() {
+  var me = PROF[currentMember.memberId]; if (!me) return;
+  ['child-avatar', 'parent-avatar'].forEach(function (id) { var el = document.getElementById(id); if (el && el.innerHTML) el.innerHTML = avHtml(me.avatar, me.member_id); });
+  if (typeof Live !== 'undefined' && Live.request) Live.request();
+}
+
 function renderAvatars(list, containerId) {
   containerId = containerId || 'avatar-pick';
   const el = document.getElementById(containerId);
   el.innerHTML = list.map(a =>
-    `<button onclick="pickAvatar(this,'${a}','${containerId}')" ${a === selectedAvatar ? 'class="selected"' : ''}>${a}</button>`
+    `<button onclick="pickAvatar(this,'${a}','${containerId}')" ${a === selectedAvatar ? 'class="selected"' : ''}>${avHtml(a)}</button>`
   ).join('');
   if (!selectedAvatar || !list.includes(selectedAvatar)) {
     selectedAvatar = list[0];
@@ -2687,7 +2869,7 @@ function renderDailySummary(data) {
     } else {
       day.children.forEach(function(child) {
         html += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--border)">';
-        html += '<div style="font-size:1.3rem">' + child.avatar + '</div>';
+        html += '<div style="font-size:1.3rem">' + avHtml(child.avatar, child.member_id) + '</div>';
         html += '<div style="flex:1">';
         html += '<div style="font-weight:600;font-size:0.9rem">' + esc(child.name) + '</div>';
         if (child.earned > 0) {
@@ -3039,7 +3221,7 @@ function wheelSettingsCard() {
   var kids = (w.children || []).map(function(c) {
     var last = c.lastPrize ? 'หมุนล่าสุด +' + c.lastPrize.stars + ' ดาว' : 'ยังไม่เคยหมุน';
     return '<div style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:8px 10px;margin-top:8px">' +
-      '<div style="font-size:1.5rem">' + c.avatar + '</div><div style="flex:1"><div style="font-weight:700">' + esc(c.name) + '</div>' +
+      '<div style="font-size:1.5rem">' + avHtml(c.avatar, c.member_id) + '</div><div style="flex:1"><div style="font-weight:700">' + esc(c.name) + '</div>' +
       '<div style="font-size:0.75rem;color:var(--text-muted)">' + last + '</div></div>' +
       '<div style="text-align:right"><div style="font-weight:800;color:var(--primary-dark)">' + TW('icon') + ' ' + c.run + '/5</div><div style="font-size:0.75rem;color:var(--text-muted)">สิทธิ์ค้าง ' + c.spins + '</div></div></div>';
   }).join('');
@@ -3662,7 +3844,7 @@ function renderUrgentParent(d) {
       '<div class="u-sub">⭐ ' + x.stars + ' ดาว · ' + urgDur(x.duration_sec) + ' · โดย ' + esc(x.from_name) + '</div></div></div>' +
       '<div style="margin-top:6px">' + x.kids.map(function (k) {
         var sad = k.status === 'expired' || k.status === 'declined';
-        return '<div class="u-kid" style="flex-wrap:wrap"><span style="font-size:1.4rem">' + esc(k.child_avatar) + '</span><span style="flex:1;font-weight:600">' + esc(k.child_name) + '</span>' + urgKidPill(k) +
+        return '<div class="u-kid" style="flex-wrap:wrap"><span style="font-size:1.4rem">' + avHtml(k.child_avatar, k.child_id) + '</span><span style="flex:1;font-weight:600">' + esc(k.child_name) + '</span>' + urgKidPill(k) +
           (sad ? '<button class="u-chip" style="width:100%;margin-top:6px;font-size:.82rem;border-color:#FF8FA3;color:#E5484D;background:#FFF0F3" onclick="showSendGift(\'' + k.child_id + '\',\'comfort\')">🎁 ส่งดาวปลอบใจ</button>' : '') + '</div>';
       }).join('') + '</div>' +
       (x.active ? '<button class="u-btn ghost" style="margin-top:8px;padding:9px;font-size:.9rem" onclick="cancelUrgentBatch(this,\'' + x.batch_id + '\')">ยกเลิกภารกิจด่วน</button>' : '') +
@@ -3785,7 +3967,7 @@ function showCreateUrgent() {
       return '<button type="button" class="u-chip" style="font-size:.8rem;padding:4px 10px" onclick="urgQuick(' + q[0] + ',' + q[1] + ',' + q[2] + ')">' + q[3] + '</button>'; }).join('') + '</div>' +
     '<label class="u-flabel">ส่งให้</label><div class="u-chips" id="u-kids">' + kids.map(function (k) {
       var on = window.__urgForm.kids.indexOf(k.member_id) >= 0;
-      return '<button type="button" class="u-chip' + (on ? ' on' : '') + '" onclick="urgPickKid(this,\'' + k.member_id + '\')">' + esc(k.avatar) + ' ' + esc(k.name) + '</button>'; }).join('') + '</div>' +
+      return '<button type="button" class="u-chip' + (on ? ' on' : '') + '" onclick="urgPickKid(this,\'' + k.member_id + '\')">' + avHtml(k.avatar, k.member_id) + ' ' + esc(k.name) + '</button>'; }).join('') + '</div>' +
     '<label class="u-flabel">ถ้าลูกยังไม่เปิดดู ปิดรับภายใน</label><select id="u-open" class="u-in"><option value="3">3 ชั่วโมง</option><option value="6">6 ชั่วโมง</option><option value="12">12 ชั่วโมง</option><option value="24" selected>24 ชั่วโมง</option><option value="48">2 วัน</option></select>' +
     '<button class="u-btn red" id="u-create-btn" style="margin-top:16px" onclick="doCreateUrgent()">⚡ ส่งภารกิจด่วน</button>' +
     '<p style="text-align:center;font-size:.8rem;color:var(--text-muted);margin-top:8px">ลูกจะได้แจ้งเตือนทันที (ถ้าเปิดแจ้งเตือนในเครื่องไว้)</p>');
@@ -3890,7 +4072,7 @@ function renderGiftsParent(d) {
   if (!g.length) { box.innerHTML = ''; return; }
   box.innerHTML = '<div class="section-title">🎁 ของขวัญที่ส่ง</div><div class="card" style="padding:6px 14px">' + g.map(function (x) {
     var pill = x.status === 'sent' ? '<span class="u-pill u-p-run">รอเปิด</span>' : x.status === 'opened' ? '<span class="u-pill u-p-sent">เปิดแล้ว 🎉</span>' : '<span class="u-pill u-p-wait">ยกเลิกแล้ว</span>';
-    return '<div class="u-kid" style="flex-wrap:wrap"><span style="font-size:1.4rem">' + esc(x.child_avatar) + '</span><div style="flex:1;min-width:0"><div style="font-weight:600">' + esc(x.child_name) + ' · ⭐ ' + Number(x.stars).toLocaleString() + '</div>' +
+    return '<div class="u-kid" style="flex-wrap:wrap"><span style="font-size:1.4rem">' + avHtml(x.child_avatar, x.child_id) + '</span><div style="flex:1;min-width:0"><div style="font-weight:600">' + esc(x.child_name) + ' · ⭐ ' + Number(x.stars).toLocaleString() + '</div>' +
       '<div class="u-sub">' + esc(x.reason_label) + ' · โดย ' + esc(x.from_name) + '</div></div>' + pill +
       (x.status === 'sent' ? '<button class="u-chip" style="width:100%;margin-top:6px;font-size:.8rem" onclick="cancelGiftNow(this,\'' + x.gift_id + '\')">ยกเลิกของขวัญนี้</button>' : '') + '</div>';
   }).join('') + '</div>';
@@ -3910,7 +4092,7 @@ function showSendGift(childId, reason) {
   var f = window.__gf;
   openModal('<h2>🎁 ส่งของขวัญ</h2>' +
     '<label class="u-flabel">ให้ใคร</label><div class="u-chips">' + kids.map(function (k) {
-      return '<button type="button" class="u-chip' + (f.kids.indexOf(k.member_id) >= 0 ? ' on' : '') + '" onclick="gfKid(this,\'' + k.member_id + '\')">' + esc(k.avatar) + ' ' + esc(k.name) + '</button>'; }).join('') + '</div>' +
+      return '<button type="button" class="u-chip' + (f.kids.indexOf(k.member_id) >= 0 ? ' on' : '') + '" onclick="gfKid(this,\'' + k.member_id + '\')">' + avHtml(k.avatar, k.member_id) + ' ' + esc(k.name) + '</button>'; }).join('') + '</div>' +
     '<label class="u-flabel">จำนวนดาว</label><div style="display:flex;align-items:center;gap:10px"><button type="button" class="u-chip" onclick="gfStep(-1)">−</button>' +
     '<input id="gf-stars" type="number" min="1" inputmode="numeric" class="u-in" style="width:110px;text-align:center;font-weight:700;font-size:1.3rem" value="' + f.stars + '" oninput="window.__gf.stars=Math.round(Number(this.value))||0">' +
     '<button type="button" class="u-chip" onclick="gfStep(1)">+</button></div>' +
@@ -4025,7 +4207,7 @@ function kcRecent(id) {
 }
 function kcTop(c) {
   var wc = dashboardData.wheel && dashboardData.wheel.enabled && typeof wheelChildInfo === 'function' ? wheelChildInfo(c.member_id) : null;
-  return '<button type="button" class="kc-x" onclick="kcClose()" aria-label="ปิด">✕</button><div class="kc-who"><span>' + esc(c.avatar) + '</span>' + esc(c.name) + '</div>' +
+  return '<button type="button" class="kc-x" onclick="kcClose()" aria-label="ปิด">✕</button><div class="kc-who"><span>' + avHtml(c.avatar, c.member_id) + '</span>' + esc(c.name) + '</div>' +
     '<div class="kc-big"><span class="st">⭐</span><span class="n" id="kc-bal">' + c.stats.balance + '</span><small>ดาว</small></div>' +
     '<div class="kc-sub"><b>ได้รับ ' + c.stats.totalEarned + '</b><b>ใช้ไป ' + c.stats.totalSpent + '</b>' + (c.stats.deducted ? '<b>หักอยู่ ' + c.stats.deducted + '</b>' : '') + (wc ? '<b>' + TW('icon') + ' ' + wc.run + '/5</b>' : '') + '</div>';
 }
@@ -4162,7 +4344,7 @@ function fixLeft(until) {
 // ---- ผู้ปกครอง: ภารกิจแก้ตัวรออนุมัติ ----
 function fixRows(list) {
   return (list || []).map(function (x) {
-    return '<div class="u2-pr fix"><span class="av">' + esc(x.child_avatar) + '</span><div class="tx"><b><span class="fix-tag">💪 แก้ตัว</span>' + esc(x.fix.title) + '</b>' +
+    return '<div class="u2-pr fix"><span class="av">' + avHtml(x.child_avatar, x.child_id) + '</span><div class="tx"><b><span class="fix-tag">💪 แก้ตัว</span>' + esc(x.fix.title) + '</b>' +
       '<small>' + esc(x.child_name) + ' · อนุมัติแล้วได้ ⭐ ' + x.stars + ' คืน</small></div>' +
       '<button type="button" class="ok" data-sfx="ok" aria-label="อนุมัติ" onclick="fixReview(\'' + x.ded_id + '\',true,this)">✓</button>' +
       '<button type="button" class="no" data-sfx="no" aria-label="ไม่อนุมัติ" onclick="fixReview(\'' + x.ded_id + '\',false,this)">✕</button></div>';
@@ -4410,7 +4592,7 @@ function ui2Kids(d, dl, mascot) {
   var slides = kids.map(function (c) {
     var wc = d.wheel && d.wheel.enabled ? wheelChildInfo(c.member_id) : null;
     return '<div class="u2-hero u2-slide th-' + esc(THEME.id || '') + ui2CardBg('kid') + ' data-kid="' + esc(c.member_id) + '" role="button" tabindex="0" aria-label="ดูดาวของ' + esc(c.name) + '" onclick="kcOpen(\'' + c.member_id + '\',this)">' +
-      '<div class="u2-kid"><span class="u2-kav">' + esc(c.avatar) + '</span><b>' + esc(c.name) + '</b></div>' +
+      '<div class="u2-kid"><span class="u2-kav">' + avHtml(c.avatar, c.member_id) + '</span><b>' + esc(c.name) + '</b></div>' +
       '<div class="u2-big">⭐ ' + c.stats.balance + ' <span>ดาว</span></div>' +
       '<div class="u2-goal"><div style="flex:1;min-width:0;font-size:.76rem">ได้รับ ' + c.stats.totalEarned + ' · ใช้ไป ' + c.stats.totalSpent +
         (wc ? '<br>' + TW('icon') + ' ' + wc.run + '/5' + (wc.spins ? ' · 🎡 หมุนได้ ' + wc.spins : '') : '') + '</div>' +
@@ -4490,7 +4672,7 @@ function ui2Quests() {
 function ui2Gift() {
   var kids = (dashboardData && dashboardData.children) || [];
   if (kids.length === 1) return showSendGift(kids[0].member_id);
-  openModal('<h2>🎁 ส่งของขวัญให้ใคร?</h2>' + kids.map(function (c) { return '<button class="set-link" onclick="closeModal();showSendGift(\'' + c.member_id + '\')"><span style="font-size:1.6rem">' + esc(c.avatar) + '</span><span style="flex:1;text-align:left">' + esc(c.name) + '</span>›</button>'; }).join(''));
+  openModal('<h2>🎁 ส่งของขวัญให้ใคร?</h2>' + kids.map(function (c) { return '<button class="set-link" onclick="closeModal();showSendGift(\'' + c.member_id + '\')"><span style="font-size:1.6rem">' + avHtml(c.avatar, c.member_id) + '</span><span style="flex:1;text-align:left">' + esc(c.name) + '</span>›</button>'; }).join(''));
 }
 function renderDaily(d) {
   ui2Apply();
@@ -5159,8 +5341,8 @@ function wkRender() {
   var praise = full ? 'สัปดาห์นี้' + full.title + 'ครบทุกวันเลย เก่งมาก!' : best ? 'สัปดาห์นี้' + best.title + 'ไป ' + best.n + ' ครั้ง เก่งมาก!' : '';
   var mood = k.missions > k.prevMissions ? 'ทำได้มากกว่าสัปดาห์ก่อน 🎉' : k.missions && k.missions === k.prevMissions ? 'สม่ำเสมอดีมาก 👍' : k.missions ? 'สัปดาห์นี้ทำน้อยลงนิดนึง' : 'สัปดาห์นี้ยังไม่ได้ทำภารกิจ';
   box.innerHTML = '<div class="wk-h"><div style="font-size:1.8rem">🗓️</div><h2 style="margin:4px 0">สรุปสัปดาห์</h2><small>' + wkDate(r.start) + ' – ' + wkDate(r.end) + '</small>' +
-    (r.kids.length > 1 ? '<div class="wk-tabs">' + r.kids.map(function (x, i) { return '<button class="' + (i === WK.kid ? 'on' : '') + '" onclick="WK.kid=' + i + ';wkRender()">' + esc(x.avatar) + ' ' + esc(x.name) + '</button>'; }).join('') + '</div>' : '') + '</div>' +
-    '<div class="wk-kid"><span class="av">' + esc(k.avatar) + '</span><div><b>' + esc(k.name) + '</b><span>' + mood + '</span></div></div>' +
+    (r.kids.length > 1 ? '<div class="wk-tabs">' + r.kids.map(function (x, i) { return '<button class="' + (i === WK.kid ? 'on' : '') + '" onclick="WK.kid=' + i + ';wkRender()">' + avHtml(x.avatar, x.member_id) + ' ' + esc(x.name) + '</button>'; }).join('') + '</div>' : '') + '</div>' +
+    '<div class="wk-kid"><span class="av">' + avHtml(k.avatar, k.member_id) + '</span><div><b>' + esc(k.name) + '</b><span>' + mood + '</span></div></div>' +
     '<div class="wk-stats"><div class="wk-st"><b>' + k.missions + '</b><small>ภารกิจ</small>' + wkDiff(k.missions, k.prevMissions) + '</div>' +
     '<div class="wk-st"><b>⭐ ' + k.stars + '</b><small>ดาวที่ได้</small>' + wkDiff(k.stars, k.prevStars) + '</div>' +
     '<div class="wk-st"><b>⚡ ' + (k.urgentTotal ? k.urgentOnTime + '/' + k.urgentTotal : '–') + '</b><small>ด่วนทันเวลา</small>' + (k.urgentTotal ? (k.urgentOnTime === k.urgentTotal ? '<div class="wk-up">ทันทุกครั้ง</div>' : '<div class="wk-dn">ไม่ทัน ' + (k.urgentTotal - k.urgentOnTime) + '</div>') : '<div class="wk-eq">ไม่มีภารกิจด่วน</div>') + '</div></div>' +
@@ -5300,7 +5482,7 @@ function openShopItem(id) {
   var fits = d.members.filter(function (m) { return it.type === 'kid' ? m.role === 'child' : m.role === 'parent'; });
   window.__shopPick = it.assigned_to ? it.assigned_to.member_id : (fits.length === 1 ? fits[0].member_id : '');
   var whoHtml = d.canBuy ? '<div style="font-weight:700;margin-top:4px">' + (it.owned ? 'ให้ใครใช้?' : 'ซื้อแล้วให้ใครใช้?') + '</div><div class="shop-who" id="shop-who">' +
-    fits.map(function (m) { return '<button type="button" class="u-chip' + (window.__shopPick === m.member_id ? ' on' : '') + '" onclick="shopPick(this,\'' + m.member_id + '\')">' + m.avatar + ' ' + esc(m.name) + '</button>'; }).join('') +
+    fits.map(function (m) { return '<button type="button" class="u-chip' + (window.__shopPick === m.member_id ? ' on' : '') + '" onclick="shopPick(this,\'' + m.member_id + '\')">' + avHtml(m.avatar, m.member_id) + ' ' + esc(m.name) + '</button>'; }).join('') +
     (it.owned ? '<button type="button" class="u-chip' + (!window.__shopPick ? ' on' : '') + '" onclick="shopPick(this,\'\')">ยังไม่ให้ใคร</button>' : '') + '</div>' : '';
   var cpHtml = couponOptsHtml(it), pay0 = cpHtml ? couponPrice(it.price, d.coupons[0].pct) : it.pay;
   var lack = !it.owned && d.wallet.purple < pay0 ? pay0 - d.wallet.purple : 0;
@@ -5813,7 +5995,7 @@ function showPickFamily(info) {
   openModal('<h2>🏠 เลือกครอบครัว</h2>' +
     '<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">บัญชี LINE "' + esc(info.lineName) + '" อยู่หลายครอบครัว</p>' +
     info.options.map(function (o) {
-      return '<button class="btn btn-outline" style="margin-bottom:10px" onclick="pickFamily(\'' + escJs(o.member_id) + '\')">' + o.avatar + ' ' + esc(o.family_name) + ' · ' + esc(o.name) + '</button>';
+      return '<button class="btn btn-outline" style="margin-bottom:10px" onclick="pickFamily(\'' + escJs(o.member_id) + '\')">' + avHtml(o.avatar, o.member_id) + ' ' + esc(o.family_name) + ' · ' + esc(o.name) + '</button>';
     }).join('') +
     '<div class="divider"></div><button class="btn btn-outline" onclick="showNewParent(window.__ticketInfo)">➕ สร้างครอบครัวใหม่</button>');
   window.__ticketInfo = info;
@@ -5855,7 +6037,7 @@ function kidStart() {
     if (!d.children.length) return toast('ครอบครัวนี้ยังไม่มีเด็ก ให้ผู้ปกครองเพิ่มในตั้งค่าก่อน', 4500);
     openModal('<h2>👋 หนูคือใคร?</h2><p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:14px">' + esc(d.familyName) + '</p>' +
       '<div class="kid-pick">' + d.children.map(function (c, i) {
-        return '<button onclick="kidPick(' + i + ')"><span class="av">' + c.avatar + '</span>' + esc(c.name) + '</button>';
+        return '<button onclick="kidPick(' + i + ')"><span class="av">' + avHtml(c.avatar, c.member_id) + '</span>' + esc(c.name) + '</button>';
       }).join('') + '</div>');
   }).catch(function (e) { toast(e.message); });
 }
@@ -5863,12 +6045,12 @@ function kidStart() {
 function kidPick(i) {
   var c = kidCtx.family.children[i];
   if (!c.hasPin) {
-    openModal('<h2>' + c.avatar + ' ' + esc(c.name) + '</h2><p style="text-align:center;line-height:1.7">ยังไม่มี PIN<br>ให้พ่อแม่เปิดแอป → ⚙️ ตั้งค่า<br>แล้วกด <b>ตั้ง PIN</b> หรือ <b>QR</b> ให้หนูนะ</p>' +
+    openModal('<h2>' + avHtml(c.avatar, c.member_id) + ' ' + esc(c.name) + '</h2><p style="text-align:center;line-height:1.7">ยังไม่มี PIN<br>ให้พ่อแม่เปิดแอป → ⚙️ ตั้งค่า<br>แล้วกด <b>ตั้ง PIN</b> หรือ <b>QR</b> ให้หนูนะ</p>' +
       '<button class="btn btn-outline" style="margin-top:14px" onclick="closeModal()">ตกลง</button>');
     return;
   }
   kidCtx.child = c; kidCtx.pin = '';
-  openModal('<div style="text-align:center"><div style="font-size:3rem">' + c.avatar + '</div><h2 style="margin:4px 0">' + esc(c.name) + '</h2>' +
+  openModal('<div style="text-align:center"><div style="font-size:3rem">' + avHtml(c.avatar, c.member_id) + '</div><h2 style="margin:4px 0">' + esc(c.name) + '</h2>' +
     '<div style="color:var(--text-muted);font-size:0.9rem">ใส่ PIN 4 หลัก</div></div>' +
     '<div class="pin-dots" id="pin-dots"><span></span><span></span><span></span><span></span></div>' +
     '<div class="pin-pad">' + [1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map(function (k) {
@@ -5918,7 +6100,7 @@ function renderAccess(a) {
   var el = document.getElementById('access-slot');
   if (!el) return;
   var kids = a.children.map(function (c) {
-    return '<div class="acc-row"><div style="font-size:1.6rem">' + c.avatar + '</div><div class="nm"><div>' + esc(c.name) + '</div><div>' + (c.hasPin ? 'มี PIN แล้ว ✓' : '⚠️ ยังไม่มี PIN') + '</div></div>' +
+    return '<div class="acc-row"><div style="font-size:1.6rem">' + avHtml(c.avatar, c.member_id) + '</div><div class="nm"><div>' + esc(c.name) + '</div><div>' + (c.hasPin ? 'มี PIN แล้ว ✓' : '⚠️ ยังไม่มี PIN') + '</div></div>' +
       '<button class="chip-btn" onclick="showSetPin(\'' + escJs(c.member_id) + '\',\'' + escJs(c.name) + '\')">🔢 ' + (c.hasPin ? 'เปลี่ยน PIN' : 'ตั้ง PIN') + '</button>' +
       '<button class="chip-btn" onclick="showChildQr(\'' + escJs(c.member_id) + '\',\'' + escJs(c.name) + '\')">📱 QR</button></div>';
   }).join('') || '<div class="empty" style="padding:8px 0">ยังไม่มีเด็ก</div>';
@@ -5927,7 +6109,7 @@ function renderAccess(a) {
     if (p.reviews) acts.push('อนุมัติ ' + p.reviews);
     if (p.missions) acts.push('ภารกิจ ' + p.missions);
     if (p.rewards) acts.push('รางวัล ' + p.rewards);
-    return '<div class="acc-row" style="flex-wrap:wrap"><div style="font-size:1.6rem">' + p.avatar + '</div><div class="nm"><div>' + esc(p.name) + (p.isMe ? ' (คุณ)' : '') + '</div>' +
+    return '<div class="acc-row" style="flex-wrap:wrap"><div style="font-size:1.6rem">' + avHtml(p.avatar, p.member_id) + '</div><div class="nm"><div>' + esc(p.name) + (p.isMe ? ' (คุณ)' : '') + '</div>' +
       '<div>' + [p.hasLine ? '💬 LINE' : '', p.username ? '👤 ' + esc(p.username) : ''].filter(Boolean).join(' · ') + (p.hasLine || p.username ? '' : 'ยังไม่มีวิธีเข้าระบบ') + ' · ใช้งานล่าสุด ' + lastActiveText(p.lastActive) + '</div>' +
       '<div>' + (acts.length ? acts.join(' · ') : 'ยังไม่เคยทำรายการ') + ' · รหัส ' + esc(String(p.member_id).slice(0, 4)) + '…</div></div>' +
       (p.username && !p.isMe ? '<div style="display:flex;gap:6px;width:100%;justify-content:flex-end"><button class="chip-btn" onclick="sendResetLink(\'' + escJs(p.member_id) + '\',\'' + escJs(p.name) + '\')">🔗 ลิงก์ตั้งรหัสใหม่</button></div>' : '') +
@@ -5936,7 +6118,7 @@ function renderAccess(a) {
         '<button class="chip-btn" style="color:var(--danger)" onclick="showMergeParent(\'' + escJs(p.member_id) + '\')">🧹 รวมกับ…</button></div>') + '</div>';
   }).join('');
   var devices = a.devices.map(function (d) {
-    return '<div class="acc-row"><div style="font-size:1.4rem">' + d.avatar + '</div><div class="nm"><div>' + esc(d.name) + ' · ' + esc(d.device || '') + '</div><div>' + (d.current ? 'เครื่องนี้' : 'ใช้ล่าสุด ' + timeAgo(d.lastSeen)) + '</div></div>' +
+    return '<div class="acc-row"><div style="font-size:1.4rem">' + avHtml(d.avatar, d.member_id) + '</div><div class="nm"><div>' + esc(d.name) + ' · ' + esc(d.device || '') + '</div><div>' + (d.current ? 'เครื่องนี้' : 'ใช้ล่าสุด ' + timeAgo(d.lastSeen)) + '</div></div>' +
       (d.current ? '' : '<button class="chip-btn" style="color:var(--danger)" onclick="revokeDevice(\'' + d.id + '\')">ออกจากระบบ</button>') + '</div>';
   }).join('');
   el.innerHTML = myLoginCard(a) +
@@ -5963,7 +6145,7 @@ function showMergeParent(fromId) {
     '<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">เลือกคนที่ใช่ตัวจริง ประวัติทั้งหมดของแถวนี้จะย้ายไปอยู่กับคนนั้น แล้วลบแถวนี้ทิ้ง</p>' +
     targets.map(function (p) {
       return '<button class="btn btn-outline" style="margin-bottom:8px;justify-content:flex-start" onclick="confirmMerge(\'' + escJs(fromId) + '\',\'' + escJs(p.member_id) + '\')">' +
-        p.avatar + ' ' + esc(p.name) + (p.hasLine ? ' · LINE ✓' : '') + ' · ' + lastActiveText(p.lastActive) + '</button>';
+        avHtml(p.avatar, p.member_id) + ' ' + esc(p.name) + (p.hasLine ? ' · LINE ✓' : '') + ' · ' + lastActiveText(p.lastActive) + '</button>';
     }).join('') +
     '<button class="btn btn-outline" style="margin-top:6px" onclick="showSettings()">ย้อนกลับ</button>');
 }
@@ -5977,8 +6159,8 @@ function confirmMerge(fromId, intoId) {
   if (from.rewards) moved.push('รางวัลที่สร้าง ' + from.rewards);
   openModal('<h2>ยืนยันการรวม</h2>' +
     '<div class="card" style="box-shadow:none;background:var(--bg);line-height:1.8">' +
-    '🗑️ ลบ: <b>' + from.avatar + ' ' + esc(from.name) + '</b> (รหัส ' + esc(fromId.slice(0, 4)) + '…)<br>' +
-    '✅ เก็บ: <b>' + into.avatar + ' ' + esc(into.name) + '</b>' + (into.hasLine ? ' · LINE ✓' : '') + '<br>' +
+    '🗑️ ลบ: <b>' + avHtml(from.avatar, from.member_id) + ' ' + esc(from.name) + '</b> (รหัส ' + esc(fromId.slice(0, 4)) + '…)<br>' +
+    '✅ เก็บ: <b>' + avHtml(into.avatar, into.member_id) + ' ' + esc(into.name) + '</b>' + (into.hasLine ? ' · LINE ✓' : '') + '<br>' +
     '📦 ย้าย: ' + (moved.length ? moved.join(', ') : 'ไม่มีประวัติ') + '</div>' +
     '<p style="text-align:center;color:var(--danger);font-size:0.85rem;margin:10px 0">ย้อนกลับไม่ได้ · ภารกิจ รางวัล และดาวของเด็กไม่หาย</p>' +
     '<button class="btn btn-danger" id="merge-btn" onclick="doMerge(\'' + escJs(fromId) + '\',\'' + escJs(intoId) + '\')">ยืนยันรวม</button>' +
@@ -6268,7 +6450,7 @@ function checkHandoff() {
   authApi('handoffInfo').then(function (h) {
     if (!h) return;
     openModal('<h2>📲 ยืนยันเข้าสู่ระบบในแอป</h2>' +
-      '<p style="text-align:center;line-height:1.7">แอปธนาคารดาวบนหน้าจอโฮม<br>ขอเข้าสู่ระบบเป็น <b>' + h.avatar + ' ' + esc(h.name) + '</b></p>' +
+      '<p style="text-align:center;line-height:1.7">แอปธนาคารดาวบนหน้าจอโฮม<br>ขอเข้าสู่ระบบเป็น <b>' + avHtml(h.avatar, h.member_id) + ' ' + esc(h.name) + '</b></p>' +
       '<div style="text-align:center;font:700 2.4rem Mali,sans-serif;letter-spacing:8px;color:var(--primary);margin:10px 0">' + esc(h.code) + '</div>' +
       '<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">กดยืนยันเฉพาะเมื่อรหัสตรงกับที่แอปแสดงอยู่</p>' +
       '<button class="btn btn-primary" onclick="approveHandoff()">ยืนยัน</button>' +
@@ -6551,7 +6733,7 @@ function afterRecovery() {
 // ตั้งรหัสใหม่จากลิงก์ที่คนในบ้านส่งมา
 function showResetPassword(token, info) {
   window.__resetToken = token;
-  openModal('<div style="text-align:center"><div style="font-size:2.2rem">🔐</div><h2>ตั้งรหัสผ่านใหม่</h2><p style="margin:6px 0 14px">บัญชี <b>' + info.avatar + ' ' + esc(info.name) + '</b> (' + esc(info.username) + ')</p></div>' +
+  openModal('<div style="text-align:center"><div style="font-size:2.2rem">🔐</div><h2>ตั้งรหัสผ่านใหม่</h2><p style="margin:6px 0 14px">บัญชี <b>' + avHtml(info.avatar, info.member_id) + ' ' + esc(info.name) + '</b> (' + esc(info.username) + ')</p></div>' +
     '<form onsubmit="return doResetPassword(event)"><input type="text" name="username" autocomplete="username" value="' + esc(info.username) + '" hidden>' +
     PW_FIELD('rs-pass', 'รหัสผ่านใหม่', 'new-password') + '<button type="submit" class="btn btn-dark" id="rs-btn">บันทึกและเข้าสู่ระบบ</button></form>' +
     '<p class="login-note" style="margin-top:10px">ลิงก์ใช้ได้ครั้งเดียว · เครื่องอื่นที่ค้างอยู่จะถูกออกจากระบบ</p>');

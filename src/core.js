@@ -13,8 +13,12 @@ export const PUBLIC_API = [
   'toggleSubmissionNotify', 'getDailySummary', 'getWeeklySummary', 'setWheelEnabled', 'setWheelPrizes', 'getWheelStatus',
   'createUrgent', 'cancelUrgent', 'urgentSeen', 'acceptUrgent', 'submitUrgent', 'declineUrgent',
   'sendGift', 'cancelGift', 'openGift', 'deductStars', 'undoDeduction', 'dedSeen', 'submitFix', 'reviewFix',
-  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'setNest', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'purpleSeen', 'newsSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem', 'socksState', 'socksStart', 'socksEnd', 'socksOpen'
+  'questSeen', 'treeSeen', 'setTheme', 'setFloor', 'setWall', 'setNest', 'saveRoom', 'setPets', 'hugEgg', 'hatchEgg', 'eggSeen', 'purpleSeen', 'newsSeen', 'claimQuest', 'getShop', 'buyItem', 'assignAvatar', 'wishItem', 'socksState', 'socksStart', 'socksEnd', 'socksOpen', 'updateProfile'
 ];
+
+// ตัวการ์ตูนโปรไฟล์ (public/avatars/<art>.webp) → อีโมจิสำรองสำหรับ LINE
+export const AVATAR_ART = { dino: '🦖', bunny: '🐰', bear: '🐻', unicorn: '🦄', tiger: '🐯', panda: '🐼', dragon: '🐲', fox: '🦊', dad: '👨', mom: '👩', grandma: '👵', grandpa: '👴' };
+export const PROFILE_COLORS = ['#FF9F43', '#3BB08F', '#5BA8F5', '#E86AA6', '#8B5CF6', '#FFC24B', '#FF6B6B', '#5C7C74'];
 
 export function createCore(S) {
   function handleLineEvent_(event) {
@@ -249,7 +253,7 @@ export function createCore(S) {
     let text = `🏠 ครอบครัว: ${getFamilyInfo_(familyId).family_name}\n\n`;
     children.forEach(c => {
       const stats = getChildStats_(c.member_id);
-      text += `${c.avatar} ${c.name}: ⭐${stats.balance} ดาว (ได้ ${stats.totalEarned} / ใช้ ${stats.totalSpent})\n`;
+      text += `${avEmoji_(c.avatar)} ${c.name}: ⭐${stats.balance} ดาว (ได้ ${stats.totalEarned} / ใช้ ${stats.totalSpent})\n`;
     });
 
     const pending = getPendingSubmissions_(familyId);
@@ -490,6 +494,65 @@ export function createCore(S) {
   }
 
   // ==========================================
+  // PROFILE — รูปโปรไฟล์ (ตัวการ์ตูน '@<art>' หรืออีโมจิ) · สีประจำตัว · คำประจำตัว · วันเกิด
+  // ลูกแก้ของตัวเองได้: avatar color motto · ผู้ปกครองแก้ได้ทุกคนในครอบครัวทุกช่อง
+  // ==========================================
+  function familyProfiles_(familyId) {
+    return getFamilyMembers_(familyId).map(function(m) {
+      return { member_id: m.member_id, name: m.name, role: m.role, avatar: m.avatar, color: m.color || '', motto: m.motto || '', birthday: m.birthday || '' };
+    });
+  }
+
+  function updateProfile(memberId, targetId, patch) {
+    var me = getMember_(memberId);
+    if (!me) throw new Error('ไม่พบสมาชิก');
+    var t = getMember_(targetId || memberId);
+    if (!t || String(t.family_id) !== String(me.family_id)) throw new Error('ไม่พบสมาชิก');
+    var isParent = me.role === 'parent', self = String(t.member_id) === String(me.member_id);
+    if (!isParent && !self) throw new Error('แก้ได้เฉพาะโปรไฟล์ของตัวเอง');
+    patch = patch && typeof patch === 'object' ? patch : {};
+    var up = {};
+    if ('avatar' in patch) {
+      var a = String(patch.avatar || '').trim();
+      if (a.charAt(0) === '@') { if (!AVATAR_ART[a.slice(1)]) throw new Error('ไม่พบรูปนี้'); }
+      else if (!a || a.length > 16 || /[<>"'&\s]/.test(a)) throw new Error('รูปโปรไฟล์ไม่ถูกต้อง');
+      up.avatar = a;
+    }
+    if ('color' in patch) {
+      var c = String(patch.color || '');
+      if (c && PROFILE_COLORS.indexOf(c) < 0) throw new Error('ไม่พบสีนี้');
+      up.color = c;
+    }
+    if ('motto' in patch) up.motto = String(patch.motto || '').replace(/\s+/g, ' ').trim().slice(0, 30);
+    if ('name' in patch || 'birthday' in patch) {
+      if (!isParent) throw new Error('ให้ผู้ปกครองแก้ชื่อและวันเกิด');
+      if ('name' in patch) {
+        var n = String(patch.name || '').replace(/\s+/g, ' ').trim();
+        if (!n) throw new Error('กรุณาใส่ชื่อ');
+        if (n.length > 20) throw new Error('ชื่อยาวได้ไม่เกิน 20 ตัวอักษร');
+        var dup = getFamilyMembers_(t.family_id).some(function(x) { return String(x.member_id) !== String(t.member_id) && String(x.name).trim() === n; });
+        if (dup) throw new Error('มีคนในครอบครัวใช้ชื่อนี้แล้ว');
+        up.name = n;
+      }
+      if ('birthday' in patch) {
+        var b = String(patch.birthday || '');
+        if (b) {
+          var mt = /^(\d{4})-(\d{2})-(\d{2})$/.exec(b), d = mt && new Date(b + 'T00:00:00Z');
+          if (!mt || isNaN(d) || d.toISOString().slice(0, 10) !== b || b > thaiDateKey_(new Date(nowMs_()).toISOString()) || +mt[1] < 1900) throw new Error('วันเกิดไม่ถูกต้อง');
+        }
+        up.birthday = b;
+      }
+    }
+    if (!Object.keys(up).length) return { profile: familyProfiles_(t.family_id).filter(function(x) { return x.member_id === t.member_id; })[0] };
+    updateRow_('Members', 'member_id', t.member_id, up);
+    var after = getMember_(t.member_id);
+    return { profile: { member_id: after.member_id, name: after.name, role: after.role, avatar: after.avatar, color: after.color || '', motto: after.motto || '', birthday: after.birthday || '' } };
+  }
+
+  // ข้อความ LINE ใช้อีโมจิแทนตัวการ์ตูน
+  function avEmoji_(a) { a = String(a || ''); return a.charAt(0) === '@' ? (AVATAR_ART[a.slice(1)] || '🙂') : a; }
+
+  // ==========================================
   // MISSIONS
   // ==========================================
   function getMissions_(familyId) {
@@ -528,7 +591,7 @@ export function createCore(S) {
     // แจ้ง LINE ผู้ปกครอง ด้วย Flex Message + ปุ่มอนุมัติ
     const child = getMember_(childId);
     const childName = child ? child.name : 'น้อง';
-    const childAvatar = child ? child.avatar : '🧒';
+    const childAvatar = child ? avEmoji_(child.avatar) : '🧒';
     const stars = Number(mission.base_stars) * Number(mission.multiplier || 1);
     const starsDisplay = Number(mission.multiplier) > 1
       ? `${mission.base_stars} x${mission.multiplier} = ${stars} ดาว`
@@ -852,7 +915,7 @@ export function createCore(S) {
     const wheel = syncChildWheel_(member, family);   // ก่อน stats: อาจเพิ่มสิทธิ์หมุนใหม่
     urgentSweep(familyId);
     return {
-      urgent: childUrgent_(member), gifts: childGifts_(member), deds: childDeds_(member), rewardState: childRewardState_(member), daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member), socks: socksView_(member),
+      urgent: childUrgent_(member), gifts: childGifts_(member), deds: childDeds_(member), rewardState: childRewardState_(member), daily: dailyFor_(member), avatars: familyAvatars_(familyId), profiles: familyProfiles_(familyId), stage: familyStage_(familyId), egg: eggView_(member), socks: socksView_(member),
       member, family: family, wheel: wheel, stats: getChildStats_(memberId),
       missions: getMissions_(familyId), rewards: getRewardsForChild_(familyId),
       recentSubmissions: getChildSubmissions_(memberId).slice(-20).reverse(),
@@ -931,7 +994,7 @@ export function createCore(S) {
       reviewHistory: getReviewHistory_(familyId),
       redemptionHistory: getRedemptionHistory_(familyId),
       wheel: wheel, urgent: urgent, gifts: parentGifts_(familyId), deds: parentDeds_(familyId), serverNow: new Date(nowMs_()).toISOString(),
-      daily: dailyFor_(member), avatars: familyAvatars_(familyId), stage: familyStage_(familyId), egg: eggView_(member), socks: socksView_(member),
+      daily: dailyFor_(member), avatars: familyAvatars_(familyId), profiles: familyProfiles_(familyId), stage: familyStage_(familyId), egg: eggView_(member), socks: socksView_(member),
       newsSeen: member.news_seen == null || member.news_seen === '' ? -1 : Number(member.news_seen)
     };
   }
@@ -1390,7 +1453,7 @@ export function createCore(S) {
 
   // ส่งกลับเฉพาะข้อมูลที่หน้าเว็บใช้ (ไม่ส่ง line_user_id / web_token ของคนอื่นออกไป)
   function publicMember_(m) {
-    return m ? { member_id: m.member_id, family_id: m.family_id, name: m.name, role: m.role, avatar: m.avatar } : null;
+    return m ? { member_id: m.member_id, family_id: m.family_id, name: m.name, role: m.role, avatar: m.avatar, color: m.color || '' } : null;
   }
 
   function cleanPrizes_(prizes) {
@@ -1517,7 +1580,7 @@ export function createCore(S) {
     var kid = getMember_(u.child_id);
     S.events.push(Object.assign({
       type: type, familyId: String(u.family_id), urgentId: u.urgent_id, childId: String(u.child_id),
-      childName: kid ? kid.name : 'น้อง', childAvatar: kid ? kid.avatar : '🧒',
+      childName: kid ? kid.name : 'น้อง', childAvatar: kid ? avEmoji_(kid.avatar) : '🧒',
       parentName: urgentNameOf_(u.created_by, 'ผู้ปกครอง'), title: u.title, icon: u.icon || '⚡', stars: Number(u.stars) || 0
     }, extra || {}));
   }
@@ -1680,8 +1743,8 @@ export function createCore(S) {
     updateRow_('Urgent', 'urgent_id', u.urgent_id, { status: 'submitted', submission_id: submissionId, ended_at: msIso_(now) });
     var starsDisplay = Number(u.stars) + ' ดาว · ⚡ ภารกิจด่วน';
     if (S.events) S.events.push({ type: 'submit', familyId: String(u.family_id), submissionId: submissionId, childName: kid ? kid.name : 'น้อง',
-      childAvatar: kid ? kid.avatar : '🧒', missionTitle: '⚡ ' + u.title, starsDisplay: starsDisplay });
-    var flexMsg = makeApprovalFlex_(submissionId, kid ? kid.name : 'น้อง', kid ? kid.avatar : '🧒', '⚡ ' + u.title, starsDisplay);
+      childAvatar: kid ? avEmoji_(kid.avatar) : '🧒', missionTitle: '⚡ ' + u.title, starsDisplay: starsDisplay });
+    var flexMsg = makeApprovalFlex_(submissionId, kid ? kid.name : 'น้อง', kid ? avEmoji_(kid.avatar) : '🧒', '⚡ ' + u.title, starsDisplay);
     getAllRows_('Members').filter(function(m) { return String(m.family_id) === String(u.family_id) && m.role === 'parent' && m.line_user_id; })
       .forEach(function(p) {
         var ns = p.notify_submission;
@@ -2656,7 +2719,7 @@ export function createCore(S) {
   }
 
   const api = { getMemberByWebToken, webLookupFamily, webReconnect, webRegister, webJoinFamily, getChildDashboard, submitMission, redeemReward, spinWheel, getParentDashboard, acknowledgeRedemptions, giveReward, rewardSeen, checkRejectImpact, reviewSubmission, webSaveMission, webSaveReward, webDeleteMission, webDeleteReward, toggleSubmissionNotify, getDailySummary, getWeeklySummary, setWheelEnabled, setWheelPrizes, getWheelStatus, createUrgent, cancelUrgent, urgentSeen, acceptUrgent, submitUrgent, declineUrgent, sendGift, cancelGift, openGift, deductStars, undoDeduction, dedSeen, submitFix, reviewFix,
-    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, setNest, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen, newsSeen , socksState, socksStart, socksEnd, socksOpen };
+    questSeen, treeSeen, setTheme, claimQuest, getShop, buyItem, assignAvatar, wishItem, setFloor, setWall, setNest, saveRoom, setPets, hugEgg, hatchEgg, eggSeen, purpleSeen, newsSeen , socksState, socksStart, socksEnd, socksOpen, updateProfile };
   return { api: api, urgentSweep: urgentSweep, handleLineEvent_: handleLineEvent_, saveDailySnapshot: saveDailySnapshot,
     createFamily_: createFamily_, joinFamily: joinFamily };
 }

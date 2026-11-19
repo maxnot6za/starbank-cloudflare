@@ -21,7 +21,7 @@ const MEMBER_ARG = {
   createUrgent: 0, cancelUrgent: 0, urgentSeen: 0, acceptUrgent: 0, submitUrgent: 0, declineUrgent: 0,
   sendGift: 0, cancelGift: 0, openGift: 0, deductStars: 0, undoDeduction: 0, dedSeen: 0, submitFix: 0, reviewFix: 0,
   questSeen: 0, treeSeen: 0, setTheme: 0, setFloor: 0, setWall: 0, setNest: 0, saveRoom: 0, setPets: 0, hugEgg: 0, hatchEgg: 0, eggSeen: 0, purpleSeen: 0, newsSeen: 0, claimQuest: 0, getShop: 0, buyItem: 0, assignAvatar: 0, wishItem: 0,
-  socksState: 0, socksStart: 0, socksEnd: 0, socksOpen: 0,
+  socksState: 0, socksStart: 0, socksEnd: 0, socksOpen: 0, updateProfile: 0,
 };
 // คำสั่งเข้าระบบแบบเก่า (ลิงก์ ?auto=, รหัสครอบครัว) ถูกแทนด้วย /auth/* แล้ว
 
