@@ -2506,6 +2506,7 @@ function showSettings() {
     </div>
     <button type="button" class="set-link" onclick="closeModal();showWeekly()"><span style="font-size:1.3rem">🗓️</span><span style="flex:1;text-align:left">สรุปสัปดาห์<small>7 วันที่ผ่านมา เทียบกับสัปดาห์ก่อน</small></span>›</button>
     <button type="button" class="set-link" onclick="closeModal();openSummary()"><span style="font-size:1.3rem">📊</span><span style="flex:1;text-align:left">สรุปรายวัน<small>ลูกทำอะไรไปบ้างวันนี้</small></span>›</button>
+    <button type="button" class="set-link" onclick="wnOpenAll()"><span style="font-size:1.3rem">✨</span><span style="flex:1;text-align:left">มีอะไรใหม่<small>ดูฟีเจอร์ล่าสุด และลองใช้ตามขั้นตอน</small></span><b>›</b></button>
     <button type="button" class="set-link" onclick="sfxToggle(this)"><span style="font-size:1.3rem">🔊</span><span style="flex:1;text-align:left">เสียงตอนกดปุ่ม<small>เปลี่ยนแค่เครื่องนี้</small></span><b class="sfx-st">${sfxOn() ? 'เปิด' : 'ปิด'}</b></button>
     
     <div class="divider"></div>
@@ -5079,6 +5080,18 @@ function maybeWhatsNew(d) {
   }
   WN.shown = top.v;
   if (!popLater()) return;
+  wnBuild(groups, top);
+  openModal(WN.last(), function () {
+    google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).newsSeen(currentMember.memberId, top.v);
+    d.newsSeen = top.v;
+  });
+}
+// ✨ เปิดดู "มีอะไรใหม่" ย้อนหลังจากหน้าตั้งค่า (ทัวร์ "ลองเลย" ใช้ได้เหมือนเดิม) · ไม่เกิน 8 ข้อล่าสุด
+function wnOpenAll() {
+  var left = 8, groups = WHATS_NEW.map(function (g) { var it = g.items.slice(0, Math.max(0, left)); left -= it.length; return { date: g.date, items: it }; }).filter(function (g) { return g.items.length; });
+  wnBuild(groups, WHATS_NEW[0]); closeModal(); setTimeout(function () { openModal(WN.last()); }, 320);
+}
+function wnBuild(groups, top) {
   WN.tours = []; groups.forEach(function (g) { g.items.forEach(function (x) { if (x[3] && x[3].indexOf('tour:') === 0) WN.tours.push(x[3].slice(5)); }); });
   var row = function (x) { if (x[3] && x[3].indexOf('tour:') === 0) { var tr = toursTried(), nx = WN.tours.filter(function (k) { return !tr[k]; })[0]; return wnFeature(x, nx); }
     return '<div class="wn-row"><div class="ic">' + x[0] + '</div><div style="min-width:0"><b>' + esc(x[1]) + '</b><span>' + esc(x[2]) + '</span>' + (x[3] === 'nests' ? wnNests() : '') + '</div></div>'; };
@@ -5086,10 +5099,6 @@ function maybeWhatsNew(d) {
   WN.last = function () { return '<div class="wn-hd"><div class="sp">✨</div><h2>มีอะไรใหม่</h2><small>' + (multi ? 'ตั้งแต่ครั้งก่อนที่เข้ามา' : 'อัปเดต ' + top.date) + '</small><div>' + wnProgress() + '</div></div><div class="wn-list">' +
     groups.map(function (g, i) { return (multi ? '<div class="wn-date">' + (i ? '' : 'ล่าสุด · ') + esc(g.date) + '</div>' : '') + g.items.map(row).join(''); }).join('') +
     '</div><div style="display:flex;margin-top:16px"><button class="dq-btn g" onclick="closeModal()">' + (WN.tours.length ? 'ไว้ทีหลัง' : 'ปิด') + '</button></div>'; };
-  openModal(WN.last(), function () {
-    google.script.run.withSuccessHandler(function () {}).withFailureHandler(function () {}).newsSeen(currentMember.memberId, top.v);
-    d.newsSeen = top.v;
-  });
 }
 // 🗓️ สรุปประจำสัปดาห์ (ผู้ปกครอง) · เด้งเองครั้งเดียวต่อสัปดาห์ ช่วงอาทิตย์ 17:00 – อังคาร (จำในเครื่อง) · ดูย้อนได้ในตั้งค่า
 var WK = { key: 'sb_week_seen', data: null, kid: 0 };
