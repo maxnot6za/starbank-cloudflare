@@ -2153,10 +2153,11 @@ export function createCore(S) {
   [['nutcracker', 'ทหารนัทแครกเกอร์', .8, 'sway'], ['ginger', 'บ้านขนมปังขิง', .6, 'breathe sparkle'], ['cocoa', 'โต๊ะโกโก้ร้อน', .5, 'breathe'],
    ['lantern', 'โคมไฟเทียน', .6, 'breathe lamp'], ['musicbox', 'กล่องดนตรี', .45, 'beat notes'], ['globe', 'ลูกแก้วหิมะ', .5, 'breathe snow'],
    ['bells', 'กระดิ่งคู่', .5, 'wiggle'], ['poinsettia', 'กระถางดอกคริสต์มาส', .55, 'sway'], ['cookies', 'คุกกี้กับนมรอซานต้า', .5, 'hop sparkle'],
-   ['snowfam', 'ครอบครัวตุ๊กตาหิมะ', 1, 'sway snow', 1], ['reindeer', 'กวางเรนเดียร์จมูกแดง', 1, 'breathe sparkle', 1], ['santachair', 'ซานต้านั่งพัก', 1.1, 'breathe sparkle', 1]].forEach(function(d) {
-    SHOP_ITEMS.push({ id: 'decor_' + d[0], kind: 'decor', set: 'xmas', name: d[1], art: d[0], h: d[2], fx: d[3], price: 0, currency: 'purple', event: 'socks', ex: !!d[4] });
+   ['snowfam', 'ครอบครัวตุ๊กตาหิมะ', 1, '', 1], ['reindeer', 'กวางเรนเดียร์จมูกแดง', 1, '', 1], ['santachair', 'ซานต้านั่งพัก', 1.1, '', 1]].forEach(function(d) {
+    // fx: ท่าเฉพาะชิ้นอยู่ใน index.html (.dc.x-<art> + decorParts) · ex = exclusive มีออร่าทอง
+    SHOP_ITEMS.push({ id: 'decor_' + d[0], kind: 'decor', set: 'xmas', name: d[1], art: d[0], h: d[2], fx: 'xfx x-' + d[0] + (d[4] ? ' xex' : ''), price: 0, currency: 'purple', event: 'socks', ex: !!d[4] });
   });
-  SHOP_ITEMS.push({ id: 'pet_penguin', kind: 'pet', name: 'เพนกวินซานต้า', sprite: 'petpenguin', price: 0, currency: 'purple', event: 'socks', ex: true, thumb: 'down', thumbFrames: 3 });
+  SHOP_ITEMS.push({ id: 'pet_penguin', kind: 'pet', name: 'เพนกวินซานต้า', sprite: 'petpenguin', price: 0, currency: 'purple', event: 'socks', ex: true, thumb: 'down', thumbFrames: 5 });
   var DEFAULT_FLOOR = 'floor_wood', DEFAULT_WALL = 'wall_cream', ROOM_MAX = 8, PET_MAX = 2, SCALE_MIN = 0.6, SCALE_MAX = 1.6;
   var FIRST_DISCOUNT = 0.5;   // ของชิ้นแรกของครอบครัว (ชนิดไหนก็ได้) ลด 50%
   function shopItem_(id) { return SHOP_ITEMS.find(function(i) { return i.id === String(id); }); }

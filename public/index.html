@@ -896,6 +896,53 @@ body.touring #dd-go{pointer-events:none}
     .dc.fire::before { bottom:5%; width:60%; aspect-ratio:1; background:radial-gradient(#FF9A3Ccc,transparent 70%); animation-duration:.5s; }
     .dc.twinkle::before { top:-12%; width:45%; aspect-ratio:1; background:radial-gradient(#FFE08Add,transparent 70%); }
     @keyframes dcGlow { 0%,100%{opacity:.45} 50%{opacity:1} }
+    /* ===== ของตกแต่งกิจกรรมถุงเท้า: ท่าเฉพาะชิ้น (fx 'xfx x-<art>') + แตะ = ท่าพิเศษ (.tap) · ส่วนประกอบ <i> มาจาก decorParts() ===== */
+    .dc.xfx { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    #avatar-strip .dc.xfx { pointer-events:auto; }
+    .dc.xfx i { position:absolute; display:block; pointer-events:none; z-index:2; font-style:normal; }
+    @keyframes xGlow { 0%,100%{opacity:.55} 50%{opacity:.95} }
+    @keyframes xNote { 0%{opacity:0;transform:translate(0,0) scale(.6)} 15%{opacity:1} 100%{opacity:0;transform:translate(var(--dx,-14px),-46px) scale(1.1) rotate(-12deg)} }
+    @keyframes xLit { 25%{filter:brightness(1.25) drop-shadow(0 0 14px #FFD66B);transform:scale(1.05)} }
+    @keyframes xJump { 20%{transform:translateY(-10%) scale(.97,1.04)} 40%{transform:none} 55%{transform:translateY(-5%)} 70%{transform:none} }
+    @keyframes xBreathe { 0%,100%{transform:scale(1,1)} 50%{transform:scale(1.02,.98)} }
+    .dc.x-poinsettia img { animation:xSway 4.5s ease-in-out infinite; } @keyframes xSway { 0%,100%{transform:rotate(-1.6deg)} 50%{transform:rotate(1.6deg)} }
+    .dc.x-poinsettia.tap img { animation:xBloom .7s cubic-bezier(.3,1.6,.5,1); } @keyframes xBloom { 40%{transform:scale(1.08,1.1)} }
+    .dc .x-spark { width:12px; height:12px; margin:-6px; background:radial-gradient(circle,#fff 0 18%,#FFD66B 30%,transparent 66%); opacity:0; animation:xSpark 2.4s ease-in-out infinite; } @keyframes xSpark { 0%,70%,100%{opacity:0;transform:scale(.3)} 80%{opacity:1;transform:scale(1.2) rotate(45deg)} }
+    .dc .x-heart { font-size:14px; opacity:0; } .dc.tap .x-heart { animation:xNote 1.2s ease-out; }
+    .dc .x-snowbox { left:12%; top:5%; width:76%; height:62%; border-radius:50%; overflow:hidden; z-index:2; }
+    .dc .x-flake { position:absolute; top:-6%; width:4px; height:4px; border-radius:50%; background:#fff; box-shadow:0 0 2px #9cc; animation:xFall linear infinite; } @keyframes xFall { to{transform:translate(var(--dx,6px),180%)} }
+    .dc.x-globe.tap img { animation:xShake .6s; } @keyframes xShake { 20%{transform:rotate(-6deg)} 40%{transform:rotate(5deg)} 60%{transform:rotate(-4deg)} 80%{transform:rotate(2deg)} }
+    .dc.x-globe.tap .x-flake { animation-duration:1.4s !important; }
+    .dc.x-bells img { transform-origin:50% 16%; animation:xSwing 3.6s ease-in-out infinite; } @keyframes xSwing { 0%,100%{transform:rotate(-2.5deg)} 50%{transform:rotate(2.5deg)} }
+    .dc.x-bells.tap img { animation:xRing 1.1s ease-out; } @keyframes xRing { 15%{transform:rotate(12deg)} 35%{transform:rotate(-10deg)} 55%{transform:rotate(6deg)} 75%{transform:rotate(-3deg)} }
+    .dc .x-wave { width:22px; height:22px; margin:-11px; border:2px solid transparent; border-right-color:#FFC24B; border-radius:50%; opacity:0; } .dc.tap .x-wave { animation:xWave .9s ease-out; } @keyframes xWave { 0%{opacity:1;transform:scale(.5)} 100%{opacity:0;transform:scale(1.8)} }
+    .dc .x-note { font-size:14px; font-weight:800; opacity:0; animation:xNote 3.6s ease-out infinite; }
+    .dc .x-glow { left:50%; top:52%; width:120%; aspect-ratio:1; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(#FFE08Acc,#FFE08A33 45%,transparent 70%); z-index:0 !important; animation:xGlow 2.6s ease-in-out infinite; }
+    .dc .x-flame { left:50%; top:51%; width:16%; aspect-ratio:.7; margin-left:-8%; transform-origin:50% 100%; border-radius:50% 50% 45% 45%/70% 70% 30% 30%; background:radial-gradient(circle at 50% 70%,#fff8 0 25%,#FFB43A88 55%,transparent 72%); animation:xFlick .45s ease-in-out infinite alternate; } @keyframes xFlick { from{transform:scale(.92,.95) skewX(-3deg)} to{transform:scale(1.06,1.08) skewX(3deg)} }
+    .dc.x-lantern.tap .x-glow { animation:xFlash 1.2s ease-out; } @keyframes xFlash { 25%{opacity:1;transform:translate(-50%,-50%) scale(1.9)} }
+    .dc.x-lantern.tap img, .dc.x-ginger.tap img { animation:xLit 1.4s ease-out; }
+    .dc .x-steam { width:9px; height:24px; margin-left:-4.5px; border-radius:9px; background:linear-gradient(#ffffffd0,#ffffff00); filter:blur(1.5px); opacity:0; animation:xSteam 3s ease-out infinite; } @keyframes xSteam { 0%{opacity:0;transform:translateY(6px) scaleY(.6)} 30%{opacity:.9} 100%{opacity:0;transform:translate(4px,-26px) scaleY(1.3)} }
+    .dc.x-cocoa.tap img { animation:xClink .5s; } @keyframes xClink { 30%{transform:translateY(-6%) scale(1.03,.97)} 60%{transform:translateY(0) scale(.98,1.02)} }
+    .dc .x-puff { width:10px; height:10px; margin:-5px; border-radius:50%; background:#fff; box-shadow:0 0 0 1.5px #dfe9e5; opacity:0; animation:xPuff 3.2s ease-out infinite; } @keyframes xPuff { 0%{opacity:0;transform:scale(.4)} 15%{opacity:1} 100%{opacity:0;transform:translate(10px,-34px) scale(1.7)} }
+    .dc.x-ginger.tap .x-puff { animation-duration:1.2s; }
+    .dc .x-win { width:22%; aspect-ratio:1; margin:-11%; border-radius:50%; background:radial-gradient(#FFE08Acc 0 30%,#FFE08A55 50%,transparent 70%); opacity:.5; animation:xGlow 3s ease-in-out infinite; }
+    .dc.x-ginger.tap .x-win { animation:xFlash2 1.6s ease-out; } @keyframes xFlash2 { 20%,60%{opacity:1;transform:scale(1.8)} }
+    .dc.x-nutcracker img { animation:xToy 4s steps(1) infinite; } @keyframes xToy { 0%,84%,100%{transform:none} 86%,92%{transform:translateY(-4%)} 90%,96%{transform:none} }
+    .dc.x-nutcracker.tap img { animation:xMarch 1s linear; } @keyframes xMarch { 0%,25%,75%,100%{transform:none} 12%,37%,62%,87%{transform:translateY(-5%) rotate(-4deg)} 50%{transform:translateY(-5%) rotate(4deg)} }
+    /* exclusive: ออร่าทองที่พื้น + ประกายทองลอย */
+    .dc.xex::before { content:""; position:absolute; left:50%; bottom:-5px; width:110%; height:18px; transform:translateX(-50%); border-radius:50%; background:radial-gradient(#FFD66Baa,transparent 70%); animation:xGlow 2.4s ease-in-out infinite; z-index:0; }
+    .dc .x-gold { width:10px; height:10px; margin:-5px; background:radial-gradient(circle,#fff 0 15%,#FFC24B 30%,transparent 66%); opacity:0; animation:xDrift 3.4s ease-in-out infinite; } @keyframes xDrift { 0%{opacity:0;transform:translateY(8px) scale(.4)} 30%{opacity:1} 100%{opacity:0;transform:translateY(-26px) scale(1)} }
+    .dc.x-snowfam img, .dc.x-santachair img { animation:xBreathe 3.6s ease-in-out infinite; }
+    .dc .x-bulb { width:11px; height:11px; margin:-5.5px; border-radius:50%; animation:xBulb 1.8s ease-in-out infinite; } @keyframes xBulb { 0%,100%{opacity:.15;transform:scale(.6)} 50%{opacity:1;transform:scale(1.25)} }
+    .dc.x-snowfam.tap .x-bulb { animation:xBulb .35s ease-in-out 4; }
+    .dc.x-snowfam.tap img, .dc.x-reindeer.tap img { animation:xJump .9s ease-out; }
+    .dc.x-reindeer img { animation:xDeer 5s ease-in-out infinite; } @keyframes xDeer { 0%,46%,54%,62%,100%{transform:none} 50%,58%{transform:rotate(-2deg) translateY(-2%)} }
+    .dc .x-nose { width:30%; aspect-ratio:1; margin:-15%; border-radius:50%; background:radial-gradient(#ff5a5a 0 12%,#ff6b6b88 30%,transparent 68%); animation:xGlow 1.6s ease-in-out infinite; }
+    .dc.x-reindeer.tap .x-nose { animation:xNose .3s ease-in-out 4; } @keyframes xNose { 50%{opacity:1;transform:scale(1.7)} }
+    .dc .x-hoho { left:50%; top:-16%; transform:translateX(-50%) scale(.4); background:#fff; color:#C8322F; font-weight:800; font-size:12px; white-space:nowrap; border-radius:12px; padding:3px 8px; box-shadow:0 2px 0 #0002; opacity:0; z-index:5 !important; }
+    .dc.x-santachair.tap .x-hoho { animation:xHoho 1.6s ease-out; } @keyframes xHoho { 15%,75%{opacity:1;transform:translateX(-50%) scale(1)} 100%{opacity:0;transform:translateX(-50%) translateY(-8px)} }
+    .dc.x-santachair.tap img { animation:xLaugh 1s ease-in-out; } @keyframes xLaugh { 10%,30%,50%,70%{transform:translateY(-2%) scale(1.01,.99)} 20%,40%,60%,80%{transform:none} }
+    @media (prefers-reduced-motion: reduce) { .dc.xfx img, .dc.xfx i, .dc.xex::before { animation:none !important; } .dc .x-note, .dc .x-puff, .dc .x-steam, .dc .x-flake, .dc .x-spark, .dc .x-wave, .dc .x-heart, .dc .x-gold, .dc .x-hoho { display:none; } }
     @media (prefers-reduced-motion: reduce) { .dc img, .dc::before { animation:none !important; } }
     /* ไข่ในห้อง */
     /* ไข่ในห้อง 54px · หายใจตลอด + กระโดดดุ๊กดิ๊กทุก 4 วิ + แสงอุ่น · พร้อมฟัก = สั่นแรง + ประกาย */
@@ -5224,7 +5271,7 @@ function shopArt(it, big) {
   if (it.kind === 'floor') return '<div class="shop-floor" style="--fl:url(' + floorUrl(it.art) + ')' + (big ? ';height:110px' : '') + '"></div>';
   if (it.kind === 'wall') return '<div class="shop-floor" style="--fl:url(' + wallUrl(it.art) + ');background-size:auto 100%' + (big ? ';height:110px' : '') + '"></div>';
   if (it.kind === 'nest') return '<div class="shop-stage" style="display:grid;place-items:end center;padding-bottom:6px">' + nestBox({ art: it.art, rim: it.rim, fx: it.fx }, eggSVG(0)) + '</div>';
-  if (it.kind === 'decor') return '<div class="shop-stage" style="display:grid;place-items:center"><div class="dc ' + esc(it.fx || '') + '" style="position:relative;transform:none"><img src="' + decorUrl(it.art) + '" alt="" style="max-height:' + (big ? 120 : 84) + 'px;max-width:' + (big ? 180 : 110) + 'px;' + (it.egg && !it.owned ? 'filter:brightness(0) opacity(.25)' : '') + '"></div></div>';
+  if (it.kind === 'decor') return '<div class="shop-stage" style="display:grid;place-items:center"><div class="dc ' + esc(it.fx || '') + '" style="position:relative;transform:none"><img src="' + decorUrl(it.art) + '" alt="" style="max-height:' + (big ? 120 : 84) + 'px;max-width:' + (big ? 180 : 110) + 'px;' + (it.egg && !it.owned ? 'filter:brightness(0) opacity(.25)' : '') + '">' + decorParts(it) + '</div></div>';
   return '<div class="shop-stage" data-sprite="' + it.sprite + '"' + (it.egg && !it.owned ? ' data-locked="1"' : '') + '></div>';
 }
 function openShopItem(id) {
@@ -5372,9 +5419,48 @@ function decorH(it, roomH, groundY, kh) {
 }
 function decorHtml(list, roomH, groundY, kh) {
   return (list || []).map(function (d, i) {
-    return '<div class="dc ' + esc(d.fx || '') + '" data-i="' + i + '" style="left:' + (d.x * 100) + '%;bottom:' + groundY + 'px;z-index:' + (2 + i) + '"><img src="' + decorUrl(d.art) + '" alt="" style="height:' + Math.round(decorH(d, roomH, groundY, kh)) + 'px"></div>';
+    return '<div class="dc ' + esc(d.fx || '') + '" data-i="' + i + '" data-art="' + esc(d.art || '') + '" style="left:' + (d.x * 100) + '%;bottom:' + groundY + 'px;z-index:' + (2 + i) + '"><img src="' + decorUrl(d.art) + '" alt="" style="height:' + Math.round(decorH(d, roomH, groundY, kh)) + 'px">' + decorParts(d) + '</div>';
   }).join('');
 }
+// ส่วนประกอบท่าของของตกแต่งกิจกรรม (fx มี 'xfx') · ตำแหน่ง % ของภาพ · แตะในห้อง = decorTap
+function decorParts(d) {
+  if (!d || !/\bxfx\b/.test(d.fx || '')) return '';
+  var i = function (c, x, y, st, txt) { return '<i class="' + c + '" style="left:' + x + '%;top:' + y + '%;' + (st || '') + '">' + (txt || '') + '</i>'; };
+  var P = {
+    cookies: i('x-spark', 30, 30) + i('x-spark', 44, 24, 'animation-delay:.8s') + i('x-spark', 23, 40, 'animation-delay:1.6s') + i('x-heart', 40, 10, '', '💗') + i('x-heart', 60, 6, 'animation-delay:.2s', '💗'),
+    globe: '<i class="x-snowbox">' + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function (k) { return '<i class="x-flake" style="left:' + (8 + k * 6.9) % 88 + '%;animation-duration:' + (4 + k % 5) + 's;animation-delay:-' + (k * .7) + 's;--dx:' + ((k % 3) - 1) * 8 + 'px"></i>'; }).join('') + '</i>',
+    bells: i('x-wave', 18, 50) + i('x-wave', 84, 50, 'transform:scaleX(-1)'),
+    musicbox: i('x-note', 52, 40, 'color:#FF5A36', '♪') + i('x-note', 60, 38, 'color:#FFC24B;animation-delay:1.2s;--dx:10px', '♫') + i('x-note', 46, 42, 'color:#2A9479;animation-delay:2.4s', '♪'),
+    lantern: '<i class="x-glow"></i><i class="x-flame"></i>',
+    cocoa: i('x-steam', 36, 12) + i('x-steam', 62, 10, 'animation-delay:1.5s'),
+    ginger: i('x-puff', 73, 6) + i('x-puff', 73, 6, 'animation-delay:1.6s') + i('x-win', 37, 40) + i('x-win', 66, 62, 'animation-delay:1.2s') + i('x-win', 30, 72, 'animation-delay:.6s'),
+    snowfam: [[13, 56, '#FF5A36'], [27, 77, '#FFC24B'], [42, 66, '#7CD9A8'], [52, 46, '#FF5A36'], [70, 40, '#FFC24B'], [86, 56, '#7CD9A8'], [80, 80, '#FF5A36'], [62, 84, '#FFC24B'], [34, 90, '#7CD9A8']].map(function (b, k) { return i('x-bulb', b[0], b[1], 'background:radial-gradient(' + b[2] + ' 0 30%,transparent 70%);animation-delay:' + (k * .2) + 's'); }).join(''),
+    reindeer: i('x-nose', 71, 44),
+    santachair: i('x-steam', 41, 30) + i('x-steam', 45, 28, 'animation-delay:1.4s') + '<i class="x-hoho">โฮ่ โฮ่ โฮ่! 🎄</i>'
+  };
+  var gold = /\bxex\b/.test(d.fx) ? [[8, 30, 0], [88, 20, 1.1], [20, 70, 2.2], [80, 60, .6], [50, 5, 1.7]].map(function (p) { return i('x-gold', p[0], p[1], 'animation-delay:' + p[2] + 's'); }).join('') : '';
+  return (P[d.art] || '') + gold;
+}
+var XFX_AC = null;
+function decorTap(el) {
+  el.classList.remove('tap'); void el.offsetWidth; el.classList.add('tap');
+  clearTimeout(el._xt); el._xt = setTimeout(function () { el.classList.remove('tap'); }, 1700);
+  var art = el.getAttribute('data-art');
+  if (art === 'musicbox') for (var k = 0; k < 5; k++) (function (k) { var x = document.createElement('i'); x.className = 'x-note'; x.textContent = ['♪', '♫', '♪', '♬', '♪'][k]; x.style.cssText = 'left:' + (44 + k * 5) + '%;top:40%;color:' + ['#FF5A36', '#FFC24B', '#2A9479', '#FF5A36', '#FFC24B'][k] + ';animation:xNote 1.6s ease-out ' + (k * .15) + 's forwards;--dx:' + (k * 6 - 12) + 'px'; el.appendChild(x); setTimeout(function () { x.remove(); }, 2300); })(k);
+  if (typeof sfxOn === 'function' && !sfxOn()) return;
+  try { XFX_AC = XFX_AC || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  var ac = XFX_AC, t = ac.currentTime, tone = function (f, at, d, v, type) { var o = ac.createOscillator(), g = ac.createGain(); o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(.0001, at); g.gain.exponentialRampToValueAtTime(v, at + .01); g.gain.exponentialRampToValueAtTime(.0001, at + d); o.connect(g); g.connect(ac.destination); o.start(at); o.stop(at + d + .05); };
+  if (art === 'bells') [1318, 1568].forEach(function (f, k) { tone(f, t + k * .12, 1.2, .15); tone(f * 2.01, t + k * .12, .6, .05); });
+  if (art === 'musicbox') [784, 988, 1175, 988, 784, 1568].forEach(function (f, k) { tone(f, t + k * .18, .6, .12, 'triangle'); });
+  if (art === 'cocoa') { tone(2600, t, .25, .08); tone(3150, t + .03, .2, .05); }
+  if (art === 'reindeer') [0, .08, .16, .24, .32].forEach(function (d, k) { tone(2200 + k % 2 * 400, t + d, .25, .06, 'triangle'); });
+  if (art === 'santachair') [196, 175, 147].forEach(function (f, k) { tone(f, t + k * .28, .25, .18, 'triangle'); });
+}
+document.addEventListener('click', function (e) {
+  var el = e.target.closest && e.target.closest('.dc.xfx'); if (!el) return;
+  if (el.closest('.room-ed#room-ed') && typeof ROOM !== 'undefined' && ROOM.edit) return;   // โหมดจัดห้อง: แตะ = เลือก
+  decorTap(el);
+});
 // ---------- จัดห้อง (ลากซ้าย-ขวา · ปรับขนาด · หน้า/หลัง) ----------
 var ROOM = { list: [], sel: -1, dirty: false };
 function roomEditorHtml(d, mine, edit) {
