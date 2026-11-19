@@ -43,7 +43,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   ok(true, 'ลูกเห็นป๊อปอัปซานต้ามาแล้ว (เห็นรอบหน้าได้)');
   await kid.click('#modal-overlay .sx-g'); await kid.waitForSelector('.sx-ov .sx-sc0', { timeout: 5000 });
   ok(/ขอบคุณสำหรับถุงเท้า/.test(await kid.textContent('.sx-ov')), 'ซานต้าทั้งตัวขอบคุณ');
-  await kid.click('.sx-ov .sx-g'); await kid.waitForSelector('.sx-bag', { timeout: 5000 }); await kid.waitForTimeout(800);
+  await kid.click('.sx-ov .sx-g'); await kid.waitForSelector('.sx-ov .ho-num', { timeout: 5000 }); ok(true, 'ฉากส่งถุงเท้า: เลขนับ'); await kid.waitForSelector('.sx-bag', { timeout: 20000 }); await kid.waitForTimeout(800);
   for (let i = 0; i < 3; i++) { await kid.click('.sx-bag'); await kid.waitForTimeout(250); }
   await kid.waitForSelector('.sx-loot', { timeout: 5000 }); await kid.waitForTimeout(1500);
   const n = await kid.locator('.sx-loot > div').count();
