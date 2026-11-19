@@ -16,9 +16,9 @@
   .ho-bk{position:absolute;left:0;bottom:0;width:150px;z-index:3;transition:transform .2s}
   .ho-bk.p{animation:hoP .25s}@keyframes hoP{50%{transform:scale(1.08,.94)}}
   .ho-sa{position:absolute;right:0;bottom:0;height:250px;z-index:4;transform:scaleX(-1)}
-  .ho-sk{position:absolute;z-index:3;transform-origin:50% 100%;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+  .ho-sk{position:absolute;z-index:5;transform-origin:50% 100%;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
   .ho-sk img{display:block;width:100%}
-  .ho-fly{position:absolute;left:0;top:0;width:38px;z-index:5;pointer-events:none;will-change:transform}
+  .ho-fly{position:absolute;left:0;top:0;width:38px;z-index:6;pointer-events:none;will-change:transform}
   .ho-sp{position:absolute;width:10px;height:10px;margin:-5px;border-radius:50%;z-index:7;pointer-events:none;background:radial-gradient(circle,#fff 0 20%,#FFC24B 40%,transparent 70%)}
   .ho-cf{position:absolute;width:8px;height:12px;z-index:7;pointer-events:none;border-radius:2px}
   .ho-tag{position:absolute;left:50%;top:78px;transform:translateX(-50%) scale(.3);z-index:8;background:#E8473C;color:#fff;font-weight:900;border-radius:16px;padding:6px 16px;white-space:nowrap;opacity:0;animation:hoTag 1.3s ease-out forwards}
@@ -37,14 +37,14 @@
     bk.src = img('basket-2'); sa.src = img('santa-hold'); sk.querySelector('img').src = img('sack-0');
     [num, bk, sk, sa, bub].forEach(function (x) { box.appendChild(x); });
     // กระสอบ: ปากกระสอบอยู่ที่มือของซานต้า (92%, 57% ของภาพต้นฉบับ)
-    var W = box.clientWidth, SA_H = 250, saW = SA_H * 273 / 420, saL = W - saW, hand = [saL + saW * (1 - .92), 360 - SA_H * (1 - .57)];   // พลิกซานต้าให้กระสอบอยู่ฝั่งตะกร้า
-    var SK = [[201, 156], [185, 190], [204, 219], [246, 272]], skW = 120;
+    var W = box.clientWidth, SA_H = 250, saW = SA_H * 273 / 420, saL = W - saW, hand = [saL + saW * .45, 360 - SA_H * (1 - .6)];   // กระสอบวางหน้าซานต้า (กลางตัว ระดับมือ)
+    var SK = [[201, 156], [185, 190], [204, 219], [246, 272]], skW = 125;
     function sackLevel(i, sc) {
       var r = SK[i], h = skW * r[1] / r[0] * sc;
-      sk.style.width = skW * sc + 'px'; sk.style.left = (hand[0] - skW * sc / 2) + 'px'; sk.style.top = (hand[1] - h * .18) + 'px';
+      sk.style.width = skW * sc + 'px'; sk.style.left = (hand[0] - skW * sc / 2) + 'px'; sk.style.top = (Math.min(hand[1] - h * .1, 360 - h + 6)) + 'px';
       var im = sk.querySelector('img'); if (!im.src.endsWith('sack-' + i + '.webp')) { im.src = img('sack-' + i); sk.style.transform = 'scale(1.12)'; setTimeout(function () { sk.style.transform = ''; }, 120); }
     }
-    sackLevel(0, .9);
+    sackLevel(0, .85);
     var mouthB = function () { return [hand[0], hand[1] + 6]; }, mouthA = [75, 360 - 120];
     var count = 0, sent = 0, flights = Math.min(N, 36), per = flights ? N / flights : 0, launched = 0, tierShown = 0;
     function setNum(n) {
@@ -53,7 +53,7 @@
       void num.offsetWidth; num.classList.add('b');
       for (var k = tierShown; k < 3; k++) if (n >= T[k]) { tierShown = k + 1; var tg = el('div', 'ho-tag', ['🎒 ถุงเล็ก!', '🎁 ถุงกลาง!', '🎅 ถุงใหญ่!'][k]); box.appendChild(tg); setTimeout(function () { tg.remove(); }, 1400); }
       var p = N ? n / N : 1, lvl = Math.min(3, Math.floor(p * 3.999));
-      sackLevel(lvl, .9 + .25 * p);
+      sackLevel(lvl, .85 + .15 * p);
       var b = p < .4 ? 'basket-2' : p < .85 ? 'basket-1' : 'basket-0'; if (!bk.src.endsWith(b + '.webp')) bk.src = img(b);
       bk.classList.remove('p'); void bk.offsetWidth; bk.classList.add('p');
       if (n >= 60 && !reduce) burst(mouthB(), n >= 100 ? 8 : 4);
