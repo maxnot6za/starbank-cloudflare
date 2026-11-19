@@ -7,19 +7,19 @@
       "file": "walk.webp",
       "frames": 6,
       "cell": [
-        242,
-        149
+        309,
+        189
       ],
       "facing": "right",
       "extent": [
-        117,
-        78
+        150,
+        100
       ],
       "cut": {
         "src": "src/walk.webp",
         "frames": 6,
         "facing": "right",
-        "zoom": 1.0
+        "zoom": 1.28
       }
     },
     "down": {
@@ -45,39 +45,39 @@
       "file": "hug.webp",
       "frames": 8,
       "cell": [
-        445,
-        241
+        361,
+        196
       ],
       "facing": "right",
       "extent": [
-        218,
-        100
+        176,
+        82
       ],
       "cut": {
         "src": "src/hug.webp",
         "frames": 8,
         "facing": "right",
-        "zoom": 1.0
+        "zoom": 0.81
       }
     },
     "stand": {
       "file": "stand.webp",
       "frames": 6,
       "cell": [
-        195,
-        207
+        224,
+        237
       ],
       "facing": "right",
       "extent": [
-        94,
-        86
+        108,
+        99
       ],
       "cut": {
         "src": "src/stand.webp",
         "frames": 6,
         "order": "3,4,1,2,5,6",
         "facing": "right",
-        "zoom": 1.0
+        "zoom": 1.15
       }
     }
   },

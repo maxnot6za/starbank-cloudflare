@@ -234,7 +234,7 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 - สัตว์เลี้ยงสีใหม่: เจนชีตชุดเดียวกัน → cut.py เป็นตัวละครใหม่ → คัดลอก anims/life จาก petdino → เพิ่มใน SHOP_ITEMS · ทดสอบ `pet.test.js`
 - ชีตโหม่งบอลจาก AI มีเส้นพื้นและบอลแยกชิ้น → สร้าง `src/head-fixed.webp` (ตัดเส้นพื้น เว้นช่องคอลัมน์) แล้วตัดด้วย `--keep-y --order 1,2,6,3,4,5`
 - ค้าง: ท่าหมอบหลับของ petdino ไม่มีขอบขาว (KC จะเจนใหม่)
-- **แพนด้าแดงจิ๋ว (19 พ.ย., branch feat/pet-redpanda):** `pet_redpanda` sprite `petredpanda` ขายในร้าน 20 ดาวม่วง · ชีต walk 6 · down 6 (ยืน→นั่ง→หมอบ→นอนขดหางห่ม) · hug 8 (กอดหาง) · stand 6 (ยืนสองขาชูแขน, แตะ = `surprise`) · ภาพเจนจาก Google Flow ผ่าน flow-mcp บนเครื่อง KC (ต้นฉบับ `sprites/characters/petredpanda/src/`)
+- **แพนด้าแดงจิ๋ว (19 พ.ย., branch feat/pet-redpanda):** `pet_redpanda` sprite `petredpanda` ขายในร้าน 20 ดาวม่วง · ชีต walk 6 · down 6 (ยืน→นั่ง→หมอบ→นอนขดหางห่ม) · hug 8 (กอดหาง) · stand 6 (ยืนสองขาชูแขน, แตะ = `surprise`) · ปรับขนาดให้เท่ากันด้วย --zoom (walk 1.28, hug 0.81, stand 1.15) · ภาพเจนจาก Google Flow ผ่าน flow-mcp บนเครื่อง KC (ต้นฉบับ `sprites/characters/petredpanda/src/`)
 
 ### 8.12 ไข่ 3 ระดับ + สัตว์เลี้ยงจากไข่ (migration 0017)
 - `Eggs.tier` normal / rare / epic · ตอนเจอไข่สุ่ม rare 25% (`EGG_RARE_CHANCE`) · การันตี rare ทุกใบที่ 5 (`Families.egg_rare_pity`, `EGG_RARE_PITY`) · epic ยังไม่มีของ → ยังไม่สุ่ม
