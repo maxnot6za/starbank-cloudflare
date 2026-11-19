@@ -2493,7 +2493,7 @@ export function createCore(S) {
   // เปิด/ปิด + ตัวเลขทั้งหมด: AppConfig key 'event_socks' (JSON ทับค่าใน SOCKS_DEF ทีละช่อง) · ไม่มีแถว/enabled=false = ปิด
   // ==========================================
   var SOCKS_DEF = {
-    enabled: false, season: '2026', start: '2026-12-01', end: '2026-12-25', santaHour: 18, teaseDays: 14,
+    enabled: false, season: '2026', start: '2026-12-01', end: '2026-12-25', santaHour: 18, teaseDays: 14, bigEnd: '',   // bigEnd = เส้นตายถุงเท้ายักษ์ 100% (ว่าง = end)
     tiers: [15, 30, 45],            // ถุงเล็ก/กลาง/ใหญ่: คู่ต่อสมาชิก 1 คน
     bigPerPerson: 650,              // ถุงเท้ายักษ์: คู่ต่อสมาชิก 1 คน ทั้งเทศกาล
     maxSocks: 160, maxPerSec: 4,    // กันโกง: ต่อรอบ / ต่อวินาทีที่เล่นจริง
@@ -2566,7 +2566,7 @@ export function createCore(S) {
       }),
       pending: pend, canOpen: m.role === 'child' || !kids.length,
       opened: todayBag ? { tier: todayBag.tier, total: Number(todayBag.total || 0), by: (getMember_(todayBag.opened_by) || {}).name || '', items: jsonArr_(todayBag.items).map(socksItemView_).filter(Boolean) } : null,
-      big: socksBig_(c, fid), game: c.game || {}
+      big: Object.assign(socksBig_(c, fid), { end: c.bigEnd || c.end }), game: c.game || {}
     };
   }
   function jsonArr_(s) { try { var a = JSON.parse(s || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
@@ -2598,7 +2598,7 @@ export function createCore(S) {
     var after = socksBig_(c, m.family_id), unlocked = [];
     c.milestones.forEach(function(ms) {
       if (after.pct < ms[0] || before.milestones.some(function(x) { return x.pct === ms[0] && x.got; })) return;
-      if (ms[0] === 100 && todayKey_() > c.end) return;
+      if (ms[0] === 100 && todayKey_() > (c.bigEnd || c.end)) return;   // เพนกวิน: ต้องเต็มภายในวันคริสต์มาส (bigEnd)
       var it = shopItem_(ms[1]);
       if (it && !owns_(m.family_id, it)) {
         appendRow_('Inventory', { inv_id: genId_(), family_id: m.family_id, item_id: it.id, price: 0, currency: 'event', bought_by: String(m.member_id), bought_at: msIso_(nowMs_()), assigned_to: '' });
