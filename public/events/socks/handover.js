@@ -33,6 +33,11 @@
     try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) { return null; }
     return AC;
   }
+  // ต้องเรียกตอนผู้ใช้แตะ (iOS ไม่ให้เปิดเสียงจาก timer/animation) · เล่นเสียงเงียบ 1 ครั้งเพื่อปลดล็อก
+  function unlock() {
+    if (!snd()) return;
+    try { var b = AC.createBuffer(1, 1, 22050), src = AC.createBufferSource(); src.buffer = b; src.connect(AC.destination); src.start(0); AC.resume(); } catch (e) {}
+  }
   function bell(f, at, d, v) {
     var ac = AC, o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain();
     o.type = 'triangle'; o2.type = 'sine'; o.frequency.value = f; o2.frequency.value = f * 2.01;
@@ -98,5 +103,5 @@
     (function launch() { if (launched >= flights) return; fly(); launched++; var p = launched / flights; setTimeout(launch, reduce ? 0 : Math.max(55, 230 - 190 * p)); })();
     return box;
   }
-  window.SocksHandover = { play: play };
+  window.SocksHandover = { play: play, unlock: unlock };
 })();

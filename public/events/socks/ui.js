@@ -8,7 +8,7 @@
 // ใช้ของในหน้าแอป: esc, toast, google.script.run, Live, openModal, closeModal, popBusy, popLater, dashboardData, currentMember
 // =====================================================================
 (function () {
-  var B = '/events/socks/', V = '?v=3', SX = { busy: false, popped: '' };
+  var B = '/events/socks/', V = '?v=4', SX = { busy: false, popped: '' };
   var TIER = { s: 'ถุงเล็ก', m: 'ถุงกลาง', l: 'ถุงใหญ่' }, BAG_H = { s: 34, m: 38, l: 44 };
   var CSS = `
   .sx-card{position:relative;background:#fff;border-radius:22px;padding:14px;margin:12px 0;box-shadow:0 3px 0 #1f3b3512}
@@ -160,7 +160,7 @@
   // ---------- เปิดถุงของขวัญ ----------
   window.socksBag = function () {
     var s = S(); if (!s || !s.pending || !s.pending.length || SX.busy) return;
-    var b = s.pending[0]; SX.busy = true;
+    var b = s.pending[0]; SX.busy = true; loadHO(function () {});   // โหลดฉากส่งมอบไว้ก่อน → ตอนแตะปลดล็อกเสียงได้ทันที
     var ov = document.createElement('div'); ov.className = 'sx-ov';
     ov.innerHTML = '<button class="sx-x" aria-label="ปิด">✕</button><div class="sx-bub">โฮ่ โฮ่ โฮ่! ขอบคุณสำหรับถุงเท้า<br><b>' + b.total + ' คู่</b> ' + (b.day === s.today ? 'นะ' : 'ของ' + dayLabel(b.day, s)) + '</div>' +
       '<div class="sx-sc0"><img class="tk" src="' + img('santa-take') + '" alt="ซานต้า"><img class="bk" src="' + basketOf(b.tier) + '" alt=""></div>' +
@@ -170,6 +170,7 @@
     ov.querySelector('.sx-x').onclick = close;
     ov.querySelector('.sx-g').onclick = function () {
       this.disabled = true;
+      loadHO(function () { if (window.SocksHandover) SocksHandover.unlock(); });   // ปลดล็อกเสียงตอนแตะ (iOS)
       google.script.run.withSuccessHandler(function (res) { reveal(ov, res, close); })
         .withFailureHandler(function (e) { toast(e.message, 4000); close(); }).socksOpen(currentMember.memberId, b.day);
     };
