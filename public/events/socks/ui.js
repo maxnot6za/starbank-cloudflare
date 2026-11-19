@@ -8,7 +8,7 @@
 // ใช้ของในหน้าแอป: esc, toast, google.script.run, Live, openModal, closeModal, popBusy, popLater, dashboardData, currentMember
 // =====================================================================
 (function () {
-  var B = '/events/socks/', V = '?v=5', SX = { busy: false, popped: '' };
+  var B = '/events/socks/', V = '?v=6', SX = { busy: false, popped: '' };
   var TIER = { s: 'ถุงเล็ก', m: 'ถุงกลาง', l: 'ถุงใหญ่' }, BAG_H = { s: 34, m: 38, l: 44 };
   var CSS = `
   .sx-pill{position:absolute;right:10px;top:10px;z-index:5;display:flex;align-items:center;gap:4px;background:#ffffff2e;border:1px solid #ffffff66;color:#fff;border-radius:99px;padding:3px 10px 3px 4px;font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
@@ -242,12 +242,12 @@
     var s = S(); if (!s) return; var g = s.big;
     var bend = g.end || s.end, left = Math.max(0, Math.round((Date.parse(bend + 'T00:00:00Z') - Date.parse(s.today + 'T00:00:00Z')) / 86400000));
     var ov = document.createElement('div'); ov.className = 'sx-ov sx-big';
-    ov.innerHTML = '<button class="sx-x" style="background:#1F3B3522;color:#1F3B35" aria-label="ปิด">✕</button><h3>ถุงเท้ายักษ์ของบ้าน</h3><p style="color:#5E7A73">ถุงเท้าทุกคู่ที่บ้านเก็บได้ มาเติมที่นี่ · ' + (left ? 'อีก ' + left + ' วันถึงคริสต์มาส' : 'วันนี้วันสุดท้ายของถุงเท้ายักษ์!') + '</p>' +
+    ov.innerHTML = '<button class="sx-x" style="background:#1F3B3522;color:#1F3B35" aria-label="ปิด">✕</button><h3>ถุงเท้ายักษ์ของบ้าน</h3><p style="color:#5E7A73">ถุงเท้าทุกคู่ที่บ้านเก็บได้ มาเติมที่นี่ · ' + (left ? 'เติมได้อีก ' + left + ' วัน' : 'วันนี้วันสุดท้ายของถุงเท้ายักษ์!') + '</p>' +
       '<div style="display:flex;gap:10px;width:100%;max-width:380px;align-items:center">' +
       '<div class="sx-sock"><img class="e" src="' + img('bigsock-1') + '" alt=""><img class="f" src="' + img('bigsock-1') + '" alt="" style="clip-path:inset(' + (100 - g.pct) + '% 0 0 0)"></div>' +
       '<div class="sx-pins">' + g.milestones.slice().reverse().map(function (m) {
         var it = m.item || {}, src = it.kind === 'pet' ? '/sprites/characters/' + it.sprite + '/' + (it.thumb || 'walk') + '.webp' : '/stage/decor/' + it.art + '.webp';
-        return '<div class="sx-pin' + (m.got ? ' got' : '') + '"><em><img src="' + src + '" alt="" onerror="this.replaceWith(\'' + (m.pct === 100 ? '🐧' : '🎁') + '\')"></em><span><b>' + m.pct + '%' + (m.got ? ' ✓' : '') + (m.pct === 100 ? ' · ภายใน ' + Number(bend.slice(8)) + ' ธ.ค.' : '') + '</b>' + E(it.name) + '</span></div>';
+        return '<div class="sx-pin' + (m.got ? ' got' : '') + '"><em><img src="' + src + '" alt="" onerror="this.replaceWith(\'' + (m.pct === 100 ? '🐧' : '🎁') + '\')"></em><span><b>' + m.pct + '%' + (m.got ? ' ✓' : '') + (m.pct === 100 ? ' · ภายใน ' + Number(bend.slice(8)) + ' ' + ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][Number(bend.slice(5, 7)) - 1] : '') + '</b>' + E(it.name) + '</span></div>';
       }).join('') + '</div></div>' +
       '<div class="sx-box" style="display:flex;justify-content:space-between"><span>เก็บแล้ว <b style="color:#E8473C">' + g.total.toLocaleString() + '</b> / ' + g.target.toLocaleString() + ' คู่</span><b>' + g.pct + '%</b></div>';
     ov.querySelector('.sx-x').onclick = function () { ov.remove(); };
