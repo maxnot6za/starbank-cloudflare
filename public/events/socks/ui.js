@@ -8,9 +8,12 @@
 // ใช้ของในหน้าแอป: esc, toast, google.script.run, Live, openModal, closeModal, popBusy, popLater, dashboardData, currentMember
 // =====================================================================
 (function () {
-  var B = '/events/socks/', V = '?v=4', SX = { busy: false, popped: '' };
+  var B = '/events/socks/', V = '?v=5', SX = { busy: false, popped: '' };
   var TIER = { s: 'ถุงเล็ก', m: 'ถุงกลาง', l: 'ถุงใหญ่' }, BAG_H = { s: 34, m: 38, l: 44 };
   var CSS = `
+  .sx-pill{position:absolute;right:10px;top:10px;z-index:5;display:flex;align-items:center;gap:4px;background:#ffffff2e;border:1px solid #ffffff66;color:#fff;border-radius:99px;padding:3px 10px 3px 4px;font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  .sx-pill img{height:20px}
+  .sx-cnt{display:flex;gap:6px;justify-content:center;margin:10px 0}.sx-cnt div{background:#22336e;color:#fff;border-radius:12px;padding:6px 8px;min-width:50px}.sx-cnt b{display:block;font-size:1.4rem}.sx-cnt small{font-size:.66rem;opacity:.8}
   .sx-card{position:relative;background:#fff;border-radius:22px;padding:14px;margin:12px 0;box-shadow:0 3px 0 #1f3b3512}
   .sx-card.santa{margin-top:70px}
   .sx-peek{position:absolute;right:4px;top:-64px;width:132px;pointer-events:none}
@@ -79,7 +82,7 @@
 
   // ---------- การ์ดหน้าหลัก ----------
   window.socksCard = function (s) {
-    if (!s) return '';
+    if (!s || s.soon) return '';
     socksResend();
     var t = s.tiers, top = t[2], pct = Math.min(100, s.total / top * 100), next = s.tier === 'l' ? null : (s.tier === 'm' ? ['l', t[2]] : s.tier === 's' ? ['m', t[1]] : ['s', t[0]]);
     var pend = s.pending || [], santa = s.santa && pend.length;
@@ -103,6 +106,31 @@
     h += '<div class="sx-note">' + (tomorrow ? '🎁 เปิดถุงวันนี้แล้ว · ถุงเท้าที่เก็บตอนนี้นับเป็นของพรุ่งนี้<br>' : '') +
       '🎅 ซานต้ามารับถุงเท้า ' + s.santaHour + ':00–24:00 ทุกวัน · ลูกเป็นคนเปิดถุง</div></div>';
     return h;
+  };
+
+  // ---------- นับถอยหลังก่อนเริ่ม: ป้ายเล็กมุมขวาบนของการ์ดดาว (ทุกใบที่ปัดได้) · แตะ = ป๊อปอัปเล่ากิจกรรม ----------
+  window.socksPill = function () {
+    var s = S(); document.querySelectorAll('.sx-pill').forEach(function (e) { e.remove(); });
+    if (!s || !s.soon) return;
+    document.querySelectorAll('.u2-hero.u2-slide').forEach(function (h) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'sx-pill';
+      b.innerHTML = '<img src="' + img('sock') + '" alt="">' + (s.days ? 'อีก ' + s.days + ' วัน' : 'พรุ่งนี้!');
+      b.onclick = function (e) { e.stopPropagation(); socksSoonPop(); };
+      h.appendChild(b);
+    });
+  };
+  window.socksSoonPop = function () {
+    var s = S(); if (!s || !s.soon) return;
+    var st = Date.parse(s.start + 'T00:00:00+07:00'), tick = function () {
+      var el = document.getElementById('sx-cnt'); if (!el) return;
+      var ms = Math.max(0, st - Date.now()), d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
+      el.innerHTML = [[d, 'วัน'], [('0' + h).slice(-2), 'ชม.'], [('0' + m).slice(-2), 'นาที']].map(function (x) { return '<div><b>' + x[0] + '</b><small>' + x[1] + '</small></div>'; }).join('');
+      setTimeout(tick, 20000);   // นาฬิกาในหน้าต่างที่เปิดอยู่ (ไม่ได้ดึงข้อมูลจากเซิร์ฟเวอร์)
+    };
+    openModal('<div style="text-align:center"><img src="' + img('santa-wave') + '" alt="" style="height:120px"><h2 style="margin:6px 0">🧦 ถุงเท้าซานต้า</h2>' +
+      '<p style="margin:0 0 6px;color:var(--text-muted)">เริ่ม ' + Number(s.start.slice(8)) + ' ' + ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'][Number(s.start.slice(5, 7)) - 1] + ' · เล่นเกมเก็บถุงเท้าวันละรอบ<br>รวมกันทั้งบ้าน ' + s.santaHour + ':00 ซานต้ามารับ ลูกได้เปิดถุงของขวัญ!</p>' +
+      '<div class="sx-cnt" id="sx-cnt"></div><button class="sx-btn sx-g" style="width:100%" onclick="closeModal()">รอเลย!</button></div>');
+    tick();
   };
 
   // ---------- เล่น ----------

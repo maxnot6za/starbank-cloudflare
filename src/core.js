@@ -2137,6 +2137,10 @@ export function createCore(S) {
    ['ufo', 'จานบินจิ๋ว', .33], ['pudding', 'พุดดิ้งคาราเมล', .25], ['knit', 'เบาะไหมพรม', .33]].forEach(function(n) {
     SHOP_ITEMS.push({ id: 'nest_' + n[0], kind: 'nest', name: n[1], art: n[0], rim: n[2], fx: n[0], price: 15, currency: 'purple' });
   });
+  // ฐานไข่หายาก: ได้จากไข่หายากเท่านั้น (egg + tier rare) · ไม่ขายในร้าน
+  [['crown', 'มงกุฎทองคำ', .42], ['rainbow', 'วงรุ้ง', .64], ['fire', 'กองไฟอุ่น ๆ', .45]].forEach(function(n) {
+    SHOP_ITEMS.push({ id: 'nest_' + n[0], kind: 'nest', name: n[1], art: n[0], rim: n[2], fx: n[0], price: 0, currency: 'purple', egg: true, tier: 'rare' });
+  });
   // ของตกแต่ง · h = ความสูงเทียบตัวละคร (1 = เท่าลูกไดโน) · fx = ท่าขยับในหน้าเว็บ · set = หมวดในหน้าจัดห้อง
   // egg: true = ได้จากไข่เท่านั้น (ไม่ขายในร้าน)
   [['tree', 'ต้นคริสต์มาส', 1, 'sway twinkle'], ['gifts', 'กองของขวัญ', .55, 'hop sparkle'], ['snowman', 'ตุ๊กตาหิมะ', .9, 'sway snow'],
@@ -2489,7 +2493,7 @@ export function createCore(S) {
   // เปิด/ปิด + ตัวเลขทั้งหมด: AppConfig key 'event_socks' (JSON ทับค่าใน SOCKS_DEF ทีละช่อง) · ไม่มีแถว/enabled=false = ปิด
   // ==========================================
   var SOCKS_DEF = {
-    enabled: false, season: '2026', start: '2026-12-01', end: '2026-12-25', santaHour: 18,
+    enabled: false, season: '2026', start: '2026-12-01', end: '2026-12-25', santaHour: 18, teaseDays: 14,
     tiers: [15, 30, 45],            // ถุงเล็ก/กลาง/ใหญ่: คู่ต่อสมาชิก 1 คน
     bigPerPerson: 650,              // ถุงเท้ายักษ์: คู่ต่อสมาชิก 1 คน ทั้งเทศกาล
     maxSocks: 160, maxPerSec: 4,    // กันโกง: ต่อรอบ / ต่อวินาทีที่เล่นจริง
@@ -2545,7 +2549,8 @@ export function createCore(S) {
   function socksView_(m) {
     var c = socksCfg_(); if (!c) return null;
     var fid = m.family_id, t = todayKey_(), pend = socksPending_(c, fid), playable = socksPlayable_(c);
-    if (!playable && !pend.length && t < c.start) return null;
+    // ก่อนวันเริ่ม: นับถอยหลังได้ไม่เกิน teaseDays วัน (ป้ายเล็กบนการ์ดดาว)
+    if (t < c.start) { var dl = dayIdx_(t, c.start); return dl <= (c.teaseDays || 14) ? { soon: true, start: c.start, end: c.end, days: dl, santaHour: c.santaHour } : null; }
     var plays = socksPlays_(c, fid), mine = plays.find(function(p) { return p.play_id === m.member_id + '|' + t; });
     var cday = socksCountDay_(c, fid), tiers = socksTiers_(c, fid), total = socksDayTotal_(c, fid, cday);
     var members = getFamilyMembers_(fid), kids = members.filter(function(x) { return x.role === 'child'; });

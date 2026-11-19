@@ -982,6 +982,15 @@ body.touring #dd-go{pointer-events:none}
     .nk.nfx-ufo { animation:nkFloat 2.4s ease-in-out infinite; } .nk.nfx-ufo .nk-b, .nk.nfx-ufo .nk-f { animation:nkBlink 1.2s steps(2) infinite; }
     .nk.nfx-pudding { animation:nkJelly 2.2s ease-in-out infinite; transform-origin:50% 100%; }
     .nk.nfx-knit { animation:nkSquish 2.8s ease-in-out infinite; transform-origin:50% 100%; }
+    /* ฐานไข่หายาก: มงกุฎ = เงาทองกวาดผ่าน + ประกาย · รุ้ง = ลอย + สีไล่ · ไฟ = เปลวพลิ้ว + แสงอุ่น */
+    .nk.nfx-crown { animation:nkFloat 3.4s ease-in-out infinite; } .nk.nfx-crown .nk-b, .nk.nfx-crown .nk-f { animation:nkGold 2.8s ease-in-out infinite; }
+    @keyframes nkGold { 0%,70%,100%{filter:none} 80%{filter:brightness(1.25) drop-shadow(0 0 6px #FFD66B)} }
+    .nk.nfx-crown::after { content:"✨"; position:absolute; left:78%; top:-6px; font-size:11px; z-index:4; pointer-events:none; animation:nkTwinkle 1.6s ease-in-out infinite; }
+    .nk.nfx-rainbow { animation:nkFloat 2.6s ease-in-out infinite; } .nk.nfx-rainbow .nk-b, .nk.nfx-rainbow .nk-f { animation:nkHue 4s linear infinite; }
+    @keyframes nkHue { 0%,100%{filter:hue-rotate(0) saturate(1)} 50%{filter:hue-rotate(25deg) saturate(1.25)} }
+    .nk.nfx-fire { transform-origin:50% 100%; animation:nkFlick .5s ease-in-out infinite alternate; } .nk.nfx-fire .nk-b { filter:drop-shadow(0 0 8px #FF9A3C); }
+    @keyframes nkFlick { from{transform:scale(1,1)} to{transform:scale(1.015,1.04)} }
+    @media (prefers-reduced-motion: reduce) { .nk.nfx-crown, .nk.nfx-rainbow, .nk.nfx-fire, .nk.nfx-crown .nk-b, .nk.nfx-crown .nk-f, .nk.nfx-rainbow .nk-b, .nk.nfx-rainbow .nk-f, .nk.nfx-crown::after { animation:none; } }
     .nk.nfx-sakura::after, .nk.nfx-cloud::after { position:absolute; left:30%; top:-10px; font-size:11px; z-index:4; pointer-events:none; animation:nkPetal 3.2s linear infinite; }
     .nk.nfx-sakura::after { content:"🌸"; } .nk.nfx-cloud::after { content:"✨"; left:70%; animation:nkTwinkle 2s ease-in-out infinite; }
     @keyframes nkSway { 0%,100% { transform:rotate(-1.5deg) } 50% { transform:rotate(1.5deg) } }
@@ -1742,6 +1751,7 @@ function kid2Home(d) {
   if (fxb.nextElementSibling !== sxb) fxb.after(sxb);
   sxb.innerHTML = window.socksCard ? socksCard(d.socks) : ''; fxb = sxb;
   if (window.socksPop) setTimeout(function () { socksPop(d); }, 1800);
+  if (window.socksPill) socksPill();
   var wc = document.getElementById('child-wheel-card'); if (wc.previousElementSibling !== fxb) fxb.after(wc);
   var list = document.getElementById('child-missions-list');
   list.innerHTML = d.missions.length ? '<div class="k2-box"><h3>📋 ภารกิจวันนี้</h3>' + d.missions.map(function (x) {
@@ -4506,6 +4516,7 @@ function renderDaily(d) {
   }
   if (!isKid && ui2On()) setTimeout(ui2Restore, 0);
   el.innerHTML = html;
+  if (window.socksPill) socksPill();
   ppSprites(el);
   foldApply();
   feReplace(el);
@@ -4592,7 +4603,7 @@ function openEgg() {
     '<div>' + (ready ? '<b style="color:var(--danger)">ไข่พร้อมฟักแล้ว!</b> ' + (kid ? 'แตะ "ฟักเลย" ได้เลย' : 'ให้ลูกเป็นคนฟักนะ') : 'ความอบอุ่น <b>' + c.warm + ' / ' + c.goal + '</b> ❤️ · วันนี้ได้อีก ' + c.todayLeft) + '</div>' +
     '<div class="egg-who">' + c.contrib.map(function (x) { return esc(x.name) + ' ' + x.n; }).join('<span>·</span>') + '</div>' +
     (ready ? '' : '<div style="font-size:.76rem;color:var(--text-muted)">ภารกิจลูกที่อนุมัติ +1 · กอดไข่คนละครั้งต่อวัน +1 · ทั้งบ้านได้วันละไม่เกิน ' + c.dayCap + '</div>') +
-    '<div style="font-size:.76rem;color:var(--text-muted);margin-top:8px">อาจได้</div><div class="egg-pool">' + e.pool.map(function (p) { return p.sprite ? petThumb(p, 34, p.owned ? '' : 'no') : '<img src="' + decorUrl(p.art) + '" class="' + (p.owned ? '' : 'no') + '" alt="">'; }).join('') + '</div>' +
+    '<div style="font-size:.76rem;color:var(--text-muted);margin-top:8px">อาจได้</div><div class="egg-pool">' + e.pool.map(function (p) { return p.sprite ? petThumb(p, 34, p.owned ? '' : 'no') : '<img src="' + (p.kind === 'nest' ? nestUrl(p.art) : decorUrl(p.art)) + '" class="' + (p.owned ? '' : 'no') + '" alt="">'; }).join('') + '</div>' +
     '<div style="display:flex;gap:8px;margin-top:14px"><button class="dq-btn g" onclick="closeModal()">ปิด</button>' +
     (ready ? (kid ? '<button class="dq-btn p" style="flex:1.6" onclick="closeModal();eggHatchStart()">✨ ฟักเลย!</button>' : '') :
       '<button class="dq-btn p" style="flex:1.6" ' + (c.huggedToday ? 'disabled' : '') + ' onclick="eggHug(this)">' + (c.huggedToday ? 'กอดแล้ววันนี้ 💗' : '🤗 กอดไข่ (+1)') + '</button>') + '</div></div>');
@@ -4654,7 +4665,7 @@ function petThumb(p, h, cls) {
 }
 function eggPrizeHtml(p) {
   if (!p) return '';
-  return p.kind === 'purple' ? '<div class="ep-prize" style="font-size:5rem;line-height:1">💜</div>' : p.kind === 'pet' ? petThumb(p, 130, 'ep-prize') : '<img class="ep-prize" src="' + decorUrl(p.art) + '" alt="">';
+  return p.kind === 'purple' ? '<div class="ep-prize" style="font-size:5rem;line-height:1">💜</div>' : p.kind === 'pet' ? petThumb(p, 130, 'ep-prize') : p.kind === 'nest' ? '<div class="ep-prize" style="width:150px;margin:auto">' + nestBox({ art: p.art, rim: p.rim, fx: p.fx }) + '</div>' : '<img class="ep-prize" src="' + decorUrl(p.art) + '" alt="">';
 }
 function eggPrizeText(p) { return !p ? '' : (p.kind === 'purple' ? 'ดาวม่วง ' + p.amount + ' ดวง' : p.kind === 'pet' ? 'สัตว์เลี้ยง ' + esc(p.name) : esc(p.name)) + (p.coupon ? ' + คูปองลด ' + p.coupon + '%' : '') + '!'; }
 // ฐานไข่ในป๊อปอัปฟัก (หลังไข่) · ฐานรังฟางเดิม = ไม่แสดง (ไข่มีฐานไม้อยู่แล้ว)
@@ -5696,7 +5707,7 @@ function stripUpdate(avatars, stage, egg) {
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="/sprites/sprite-actor.js?v=2" defer></script>
 <script src="/sprites/scene.js" defer></script>
-<script src="/events/socks/ui.js?v=4" defer></script>
+<script src="/events/socks/ui.js?v=5" defer></script>
 <script>
 // ===================================================================
 // AUTH: ผู้ปกครองเข้าด้วย LINE · เด็กเข้าด้วยรหัสครอบครัว + รูป + PIN หรือ QR
