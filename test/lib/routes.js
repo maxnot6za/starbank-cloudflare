@@ -19,10 +19,16 @@ module.exports = async function routes(p) {
 module.exports.pinNews = async function pinNews(p, maxV) {
   await p.route(u => new URL(u).pathname === '/', async r => {
     const res = await r.fetch(); let body = await res.text();
-    body = body.replace(/var WHATS_NEW = \[\n([\s\S]*?)\n  \{ v: (\d+),/, (m, newer, v) => {
-      const keep = newer.split(/\n(?=  \{ v: )/).filter(b => { const x = /\{ v: (\d+)/.exec(b); return x && +x[1] <= maxV; });
-      return 'var WHATS_NEW = [\n' + (keep.length ? keep.join('\n') + '\n' : '') + '  { v: ' + v + ',';
-    });
+    // ตัดเวอร์ชันที่ใหม่กว่า maxV ทิ้ง (กี่เวอร์ชันก็ได้) ให้เทสต์เก่าเห็นมีอะไรใหม่เหมือนตอนเขียน
+    const head = 'var WHATS_NEW = [\n', i = body.indexOf(head);
+    if (i >= 0) {
+      let j = i + head.length, m;
+      const re = /  \{ v: (\d+),/g; re.lastIndex = j;
+      while ((m = re.exec(body)) && m.index === j && +m[1] > maxV) {
+        const next = body.indexOf('\n  { v: ', m.index + 1); if (next < 0) break; j = next + 1; re.lastIndex = j;
+      }
+      body = body.slice(0, i + head.length) + body.slice(j);
+    }
     return r.fulfill({ response: res, body });
   });
 };

@@ -84,7 +84,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
       // ทัวร์ "รูปโปรไฟล์"
       await pg.evaluate(() => { while (document.getElementById('modal-overlay').classList.contains('show')) closeModal(); });
       await pg.waitForTimeout(500);
-      ok(await pg.evaluate(() => WHATS_NEW[0].items[0][3] === 'tour:profile'), 'มีอะไรใหม่ v8 มีทัวร์โปรไฟล์');
+      ok(await pg.evaluate(() => WHATS_NEW.find(function (g) { return g.v === 8; }).items[0][3] === 'tour:profile'), 'มีอะไรใหม่ v8 มีทัวร์โปรไฟล์');
       await pg.evaluate(() => tourStart('profile'));
       await pg.waitForSelector('.tr-tip'); await pg.click('#parent-avatar', { force: true });
       await pg.waitForSelector('.pf-hero'); await pg.waitForTimeout(1200);
