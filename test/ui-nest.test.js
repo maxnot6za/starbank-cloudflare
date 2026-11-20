@@ -29,6 +29,7 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await mom.click('#pnav-shop'); await mom.waitForSelector('.shop-tabs');
   await mom.click('#screen-parent-shop .shop-tabs button:has-text("ฐานไข่")'); await mom.waitForTimeout(500);
   ok(await mom.locator('#screen-parent-shop .shop-item').count() === 11, 'ร้าน: ฐานไข่ 11 แบบ (รังฟางฟรี + 7 + หายากจากไข่ 3)');
+  ok(await mom.evaluate(() => [...document.querySelectorAll('#screen-parent-shop .shop-item')].filter(e => /ลุ้นจากไข่/.test(e.textContent)).every(e => /brightness\(0\)/.test(e.querySelector('.shop-stage').innerHTML) && !e.querySelector('.nk-egg'))), 'ฐานหายากที่ยังไม่มี = เงา ไม่มีไข่');
   await mom.screenshot({ path: OUT + 'n1-shop.png' });
   await mom.locator('#screen-parent-shop .shop-item:has-text("พุดดิ้ง")').click(); await mom.waitForSelector('#shop-buy');
   await mom.click('#shop-buy'); await mom.waitForTimeout(1200);

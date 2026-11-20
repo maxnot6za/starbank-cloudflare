@@ -4781,7 +4781,7 @@ function openEgg() {
   var e = dashboardData && dashboardData.egg, c = e && e.current; if (!c) return;
   var ready = c.status === 'ready', kid = e.canHatch;
   var rare = c.tier === 'rare';
-  openModal('<div style="text-align:center"><h2>' + (rare ? '✨ ไข่หายาก' : '🥚 ไข่ปริศนา') + 'ของบ้านเรา</h2>' + (rare ? '<span class="egg-tier">RARE · ลุ้นสัตว์เลี้ยง</span>' : '') + '<div class="eh-wrap" id="eh-egg" style="width:86px;margin:6px auto">' + eggSVG(eggStage(c), ready, c.tier) + '<div class="eh-fx" id="eh-fx"></div></div>' +
+  openModal('<div style="text-align:center"><h2>' + (rare ? '✨ ไข่หายาก' : '🥚 ไข่ปริศนา') + 'ของบ้านเรา</h2>' + (rare ? '<span class="egg-tier">RARE · ลุ้นสัตว์เลี้ยงหรือฐานหายาก</span>' : '') + '<div class="eh-wrap" id="eh-egg" style="width:86px;margin:6px auto">' + eggSVG(eggStage(c), ready, c.tier) + '<div class="eh-fx" id="eh-fx"></div></div>' +
     '<div class="egg-hb" id="eh-bar"><i style="width:' + Math.min(100, c.warm / c.goal * 100) + '%"></i></div>' +
     '<div>' + (ready ? '<b style="color:var(--danger)">ไข่พร้อมฟักแล้ว!</b> ' + (kid ? 'แตะ "ฟักเลย" ได้เลย' : 'ให้ลูกเป็นคนฟักนะ') : 'ความอบอุ่น <b>' + c.warm + ' / ' + c.goal + '</b> ❤️ · วันนี้ได้อีก ' + c.todayLeft) + '</div>' +
     '<div class="egg-who">' + c.contrib.map(function (x) { return esc(x.name) + ' ' + x.n; }).join('<span>·</span>') + '</div>' +
@@ -4909,7 +4909,7 @@ function maybeEggEvent(d) {
   }
   EGG.shown = ev.key;
   if (ev.type === 'found') {
-    eggPop('<div style="font-size:1.6rem;font-weight:700">' + (ev.tier === 'rare' ? '✨ เจอไข่หายาก!' : '🎉 เจอไข่ปริศนา!') + '</div>' + (ev.tier === 'rare' ? '<span class="egg-tier">RARE · ข้างในเป็นสัตว์เลี้ยง</span>' : '') + '<div style="width:120px">' + eggSVG(0, ev.tier === 'rare', ev.tier) + '</div>' +
+    eggPop('<div style="font-size:1.6rem;font-weight:700">' + (ev.tier === 'rare' ? '✨ เจอไข่หายาก!' : '🎉 เจอไข่ปริศนา!') + '</div>' + (ev.tier === 'rare' ? '<span class="egg-tier">RARE · ข้างในเป็นของหายาก</span>' : '') + '<div style="width:120px">' + eggSVG(0, ev.tier === 'rare', ev.tier) + '</div>' +
       '<div style="color:var(--text-muted)">' + (ev.byMe ? 'หนูทำภารกิจจนเจอไข่!' : esc(ev.by) + ' ทำภารกิจจนเจอไข่!') + '<br>ช่วยกันกอดไข่ทุกวัน แล้วรอฟักนะ</div>' +
       '<button class="dq-btn p" style="margin-top:12px;padding:12px 30px" onclick="eggPopClose(\'' + ev.key + '\')">เอาไปไว้ในห้อง</button>');
   } else {
@@ -5487,7 +5487,8 @@ function renderShop() {
 function shopArt(it, big) {
   if (it.kind === 'floor') return '<div class="shop-floor" style="--fl:url(' + floorUrl(it.art) + ')' + (big ? ';height:110px' : '') + '"></div>';
   if (it.kind === 'wall') return '<div class="shop-floor" style="--fl:url(' + wallUrl(it.art) + ');background-size:auto 100%' + (big ? ';height:110px' : '') + '"></div>';
-  if (it.kind === 'nest') return '<div class="shop-stage" style="display:grid;place-items:end center;padding-bottom:6px">' + nestBox({ art: it.art, rim: it.rim, fx: it.fx }, eggSVG(0)) + '</div>';
+  // ฐานลุ้นจากไข่ที่ยังไม่มี = เงาดำจาง ไม่มีไข่ (เหมือนของตกแต่งจากไข่)
+  if (it.kind === 'nest') { var lock = it.egg && !it.owned; return '<div class="shop-stage" style="display:grid;place-items:end center;padding-bottom:6px">' + (lock ? '<div style="filter:brightness(0) opacity(.25)">' + nestBox({ art: it.art, rim: it.rim }) + '</div>' : nestBox({ art: it.art, rim: it.rim, fx: it.fx }, eggSVG(0))) + '</div>'; }
   if (it.kind === 'decor') return '<div class="shop-stage" style="display:grid;place-items:center"><div class="dc ' + esc(it.fx || '') + '" style="position:relative;transform:none"><img src="' + decorUrl(it.art) + '" alt="" style="max-height:' + (big ? 120 : 84) + 'px;max-width:' + (big ? 180 : 110) + 'px;' + (it.egg && !it.owned ? 'filter:brightness(0) opacity(.25)' : '') + '">' + decorParts(it) + '</div></div>';
   return '<div class="shop-stage" data-sprite="' + it.sprite + '"' + (it.egg && !it.owned ? ' data-locked="1"' : '') + '></div>';
 }
