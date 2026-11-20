@@ -5455,7 +5455,10 @@ function renderShop() {
   var root = shopRoot(), d = SHOP.data; if (!root || !d) return;
   shopClearActors();
   var tabs = SHOP_KINDS;
-  var items = d.items.filter(function (i) { return i.kind === SHOP.tab; });
+  // ของลุ้นจากไข่ที่ยังไม่มี (เงา) อยู่ล่างสุดเสมอ · ที่เหลือคงลำดับเดิม
+  var items = d.items.filter(function (i) { return i.kind === SHOP.tab; })
+    .map(function (it, k) { return [it.egg && !it.owned ? 1 : 0, k, it]; })
+    .sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; }).map(function (x) { return x[2]; });
   var mine = d.items.filter(function (i) { return i.owned; }), cnt = function (k) { return mine.filter(function (i) { return i.kind === k; }).length; };
   var wishCount = d.items.reduce(function (n, i) { return n + (i.owned ? 0 : i.wishedBy.length); }, 0);
   var b = document.getElementById('shop-badge');
