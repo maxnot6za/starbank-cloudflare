@@ -213,11 +213,12 @@ LINE webhook URL ใน LINE Developers ต้องชี้มาที่ `/l
 - `SHOP_ITEMS` มี `kind` (avatar/floor/decor) · `floor_wood` + `wall_cream` ฟรีเป็นค่าเริ่มต้น · `Families.stage` JSON · `setFloor`/`setWall`/`saveRoom` เฉพาะผู้ปกครอง · ของที่ไม่รู้จัก → ค่าเริ่มต้น
 - ร้านแยกแท็บตามประเภท + การ์ด "🎒 ของของครอบครัว" → `openInventory()` (modal) จัดการตัวละคร/พื้น/จัดห้อง · เด็กดูอย่างเดียว
 - แถบล่าง `stripUpdate(avatars, stage)` วาดผนัง + พื้น + ของตกแต่ง ตัวละครยืน `ground:16` · มีแถบ → `.xmas-scene` สั้นลง (พื้นหลังธีมยกขึ้น)
-- ค้าง: ยังไม่มีพื้น/ผนังขาย (รอภาพจาก KC)
+- ~~ค้าง: ยังไม่มีพื้น/ผนังขาย~~ → มีชุดไดโนแล้ว (ดู 8.9)
 
 ### 8.9 ไข่ปริศนา + ของตกแต่ง 18 ชิ้น + จัดห้องอิสระ (migration 0014)
 - ของตกแต่ง `decor_<art>` ภาพที่ `public/stage/decor/` · ชุด xmas 6 ชิ้นขาย 10 ดาวม่วง (ใช้ส่วนลด 50% ชิ้นแรก) · ชุด room/toys 12 ชิ้น `egg:true` ได้จากไข่เท่านั้น
 - ห้อง `Families.stage.decor = [{id,x,s}]` (x 0–1, s 0.6–1.6, ลำดับ = หลัง→หน้า, สูงสุด 8) · `saveRoom(memberId, json)` ผู้ปกครองเท่านั้น · หน้าจอ `roomEditorHtml/roomRender/roomSave` ในแท็บตกแต่งของ "ของของครอบครัว"
+- **ชุดครอบครัวไดโนเสาร์ (20 พ.ย., branch feat/dino-room):** `floor_dino` พื้นหินรอยเท้าไดโน + `wall_dino` ผนังป่าดึกดำบรรพ์ (อย่างละ 20 ดาวม่วง) · ของตกแต่ง set `dino` ชิ้นละ 10: `decor_dvolcano` โคมไฟภูเขาไฟ · `dpalm` ต้นปาล์ม · `dskeleton` โมเดลโครงกระดูก · `dplush` ตุ๊กตาไดโนคอยาว · `dfossil` หินฟอสซิล · ภาพจาก Google Flow (flow-mcp) ต้นฉบับ `sprites/stage-src/dino/` · ผนังตัดด้วย `tile.py dino/wall.jpg dino 199 767 walls 160 560 583` พื้น `tile.py dino/floor.jpg dino 262 507` · ของตกแต่ง `decor.py` (เลือกชิ้นจาก 2 ชีต) · **เจนภาพ stage ต้องแนบภาพเดิมของแอปเป็น reference** (ผนังครีม/พื้นไม้/ของตกแต่ง) ไม่งั้นลายเส้นไม่เข้าชุด · เทสต์ `test/dinoroom.test.js`
 - ท่าขยับของตกแต่ง = CSS class `fx` (sway/rock/breathe/hover/bounce/beat/wiggle/hop/slide + lamp/fire/twinkle) จาก `SHOP_ITEMS` ไม่ต้องมีเฟรม
 - ตัวละครเดินผ่านของได้แต่ไม่หยุดยืนทับ: `SpriteScene` รับ `cfg.blocked()` (แก้ใน `sprites/scene.js` แล้วคัดลอกไป `public/sprites/`)
 - ไข่อยู่ชั้นบนสุดของแถบห้อง · ตอนมีไข่ หน้าจัดห้องแสดงเงา "ที่ของไข่" มุมขวา ลากของเข้าไปจะเด้งออก (`roomMaxX`)

@@ -30,9 +30,9 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   ok(/ตัวละคร 3 · สัตว์เลี้ยง 0 · ผนัง 1 · พื้น 1 · ตกแต่ง 0/.test(await mom.textContent('.inv-card')), 'การ์ดของของครอบครัวนับถูก');
   await mom.click('.shop-tabs button:nth-child(4)'); await mom.waitForSelector('.shop-floor');
   ok(/ใช้อยู่/.test(await mom.textContent('#screen-parent-shop .shop-item')), 'แท็บพื้น: พื้นไม้ "ใช้อยู่"');
-  ok(await mom.isVisible('text=พื้นแบบใหม่ เร็ว ๆ นี้'), 'แท็บพื้น: เร็ว ๆ นี้');
+  ok(/พื้นหินรอยเท้าไดโน/.test(await mom.textContent('#screen-parent-shop')), 'แท็บพื้น: มีพื้นไดโนขาย');
   await mom.screenshot({ path: OUT + 'g2-shop-floor.png' });
-  await mom.click('.shop-tabs button:nth-child(5)'); ok(await mom.locator('#screen-parent-shop .shop-item').count() === 18, 'แท็บของตกแต่ง: 18 ชิ้น');
+  await mom.click('.shop-tabs button:nth-child(5)'); ok(await mom.locator('#screen-parent-shop .shop-item').count() === 23, 'แท็บของตกแต่ง: 23 ชิ้น (รวมชุดไดโน 5)');
   ok(await mom.locator('#screen-parent-shop .shop-tag:has-text("จากไข่")').count() === 12, 'ของจากไข่ 12 ชิ้นติดป้าย');
   await mom.screenshot({ path: OUT + 'g2b-shop-decor.png' });
 

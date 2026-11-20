@@ -2194,6 +2194,9 @@ export function createCore(S) {
     { id: 'pet_firedragon', kind: 'pet', name: 'มังกรไฟจิ๋ว', sprite: 'petdragon', price: 0, currency: 'purple', egg: true, tier: 'rare', thumb: 'down', thumbFrames: 6 },
     { id: 'floor_wood', kind: 'floor', name: 'พื้นไม้', art: 'wood', price: 0, currency: 'purple', free: true },
     { id: 'wall_cream', kind: 'wall', name: 'ผนังครีมหน้าต่างฟ้า', art: 'cream', price: 0, currency: 'purple', free: true },
+    // ชุดครอบครัวไดโนเสาร์ (20 พ.ย. 2026) · ภาพจาก Google Flow ต้นฉบับ sprites/stage-src/dino/
+    { id: 'floor_dino', kind: 'floor', name: 'พื้นหินรอยเท้าไดโน', art: 'dino', price: 20, currency: 'purple' },
+    { id: 'wall_dino', kind: 'wall', name: 'ผนังป่าดึกดำบรรพ์', art: 'dino', price: 20, currency: 'purple' },
     // ฐานไข่ · rim = ขอบหน้าของแอ่ง (สัดส่วนจากบนภาพ) ใช้ทำ 2 ชั้นให้ไข่นั่งในแอ่ง · fx = ท่าในห้อง/ตอนฟัก
     { id: 'nest_straw', kind: 'nest', name: 'รังฟาง', art: '', price: 0, currency: 'purple', free: true }
   ];
@@ -2216,6 +2219,10 @@ export function createCore(S) {
    ['ball', 'ลูกบอลชายหาด', .35, 'bounce', 'toys'], ['horse', 'ม้าโยก', .6, 'rock', 'toys'], ['rocket', 'จรวด', .8, 'hover flame', 'toys'],
    ['blocks', 'ตัวต่อ', .55, 'wiggle sparkle', 'toys'], ['drum', 'กลอง', .45, 'beat notes', 'toys'], ['tent', 'เต็นท์', 1, 'sway sparkle', 'toys']].forEach(function(d) {
     SHOP_ITEMS.push({ id: 'decor_' + d[0], kind: 'decor', set: d[4], name: d[1], art: d[0], h: d[2], fx: d[3], price: 0, currency: 'purple', egg: true });
+  });
+  [['dvolcano', 'โคมไฟภูเขาไฟ', .7, 'breathe lamp'], ['dpalm', 'ต้นปาล์มดึกดำบรรพ์', .8, 'sway'], ['dskeleton', 'โมเดลโครงกระดูกไดโน', .7, 'breathe sparkle'],
+   ['dplush', 'ตุ๊กตาไดโนคอยาว', .5, 'breathe'], ['dfossil', 'หินฟอสซิลหอยงวงช้าง', .45, 'wiggle']].forEach(function(d) {
+    SHOP_ITEMS.push({ id: 'decor_' + d[0], kind: 'decor', set: 'dino', name: d[1], art: d[0], h: d[2], fx: d[3], price: 10, currency: 'purple' });
   });
   // ของจากกิจกรรมถุงเท้า (event: 'socks') ไม่ขายในร้าน · ex = รางวัลหมุดถุงเท้ายักษ์
   [['nutcracker', 'ทหารนัทแครกเกอร์', .8, 'sway'], ['ginger', 'บ้านขนมปังขิง', .6, 'breathe sparkle'], ['cocoa', 'โต๊ะโกโก้ร้อน', .5, 'breathe'],
