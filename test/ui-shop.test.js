@@ -35,8 +35,8 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
 
   await mom.click('#pnav-shop'); await mom.waitForSelector('.shop-item');
   await mom.waitForTimeout(1200);
-  ok(await mom.locator('#screen-parent-shop .shop-item').count() === 6, 'ร้านค้ามีตัวละคร 6 ตัว');
-  ok(await mom.locator('#screen-parent-shop .sa-actor').count() === 6, 'ตัวละครในร้านเดินโชว์');
+  ok(await mom.locator('#screen-parent-shop .shop-item').count() === 10, 'ร้านค้ามีตัวละคร 10 ตัว (รวมรางวัลใหญ่จากไข่ 4)');
+  ok(await mom.locator('#screen-parent-shop .sa-actor').count() === 10, 'ตัวละครในร้านเดินโชว์ (ตัวจากไข่เป็นเงาดำ)');
   ok(/ลด 50%/.test(await mom.textContent('#screen-parent-shop')), 'ป้ายลด 50% ตัวแรก');
   await mom.screenshot({ path: OUT + 's3-shop-parent.png' });
   await mom.click('#screen-parent-shop .shop-item:nth-child(3)'); await mom.waitForSelector('#shop-big .sa-actor', { state: 'attached' });
