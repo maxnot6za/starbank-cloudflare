@@ -5887,7 +5887,7 @@ function stripUpdate(avatars, stage, egg) {
   // จุดที่มีของตกแต่ง → ตัวละครเดินผ่านได้ แต่ไม่หยุดยืนทับ
   var blocked = function () { var w = el.clientWidth; return Array.prototype.map.call(el.querySelectorAll('.dc, .strip-nest'), function (d) { var r = d.getBoundingClientRect(), b = el.getBoundingClientRect(); var k = roomK(); return [(r.left - b.left) / k, (r.right - b.left) / k]; }).filter(function (b) { return w && b[1] > b[0]; }); };
   // ฉากโต้ตอบ: ครอบครัวไดโน + ครอบครัวหมี + สัตว์เลี้ยง (ใช้เฉพาะฉากที่ตัวละครอยู่ในห้องครบ)
-  var rulesP = STRIP.rules || (STRIP.rules = Promise.all(['family', 'bearfamily', 'petroom'].map(function (n) {
+  var rulesP = STRIP.rules || (STRIP.rules = Promise.all(['family', 'bearfamily', 'kimonofamily', 'petroom'].map(function (n) {
     return fetch('/sprites/scenes/' + n + '.json').then(function (r) { return r.json(); }).catch(function () { return { interactions: [] }; });
   })).then(function (all) { return { interactions: [].concat.apply([], all.map(function (x) { return x.interactions || []; })) }; }));
   Promise.all([rulesP].concat(list.map(function (a) { return spriteManifest(a.sprite); }))).then(function (res) {

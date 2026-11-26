@@ -1,0 +1,224 @@
+{
+  "id": "kimonofamily",
+  "name": "ครอบครัวชุดญี่ปุ่น",
+  "cast": [
+    "kimonodad",
+    "kimonomom",
+    "kimonogirl",
+    "kimonoboy"
+  ],
+  "interactions": [
+    {
+      "id": "kimonoOdoriDad",
+      "label": "ลูกสาวรำ พ่อโบกพัดเชียร์",
+      "who": [
+        "kimonodad",
+        "kimonogirl"
+      ],
+      "near": 5,
+      "chance": 0.6,
+      "cooldown": 30000,
+      "when": {
+        "kimonogirl": [
+          "odori"
+        ],
+        "kimonodad": [
+          "walk",
+          "fan"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.0
+        },
+        {
+          "kimonodad": "cheer",
+          "say": "รำสวยมากลูก 👏"
+        },
+        {
+          "kimonogirl": "say",
+          "say": "🥰",
+          "ms": 1100
+        }
+      ]
+    },
+    {
+      "id": "kimonoDango",
+      "label": "แม่กินดังโงะ ลูกสาวเดินมาขอ",
+      "who": [
+        "kimonomom",
+        "kimonogirl"
+      ],
+      "near": 4,
+      "chance": 0.6,
+      "cooldown": 30000,
+      "when": {
+        "kimonomom": [
+          "dango"
+        ],
+        "kimonogirl": [
+          "walk"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.8
+        },
+        {
+          "kimonogirl": "say",
+          "say": "ขอดังโงะลูกนึงค่ะ 🍡",
+          "ms": 1300
+        },
+        {
+          "kimonomom": "say",
+          "say": "เอาไปเลยจ้ะ 😊",
+          "ms": 1100
+        },
+        {
+          "kimonogirl": "cheer"
+        }
+      ]
+    },
+    {
+      "id": "kimonoKendama",
+      "label": "ลูกชายเล่นเคนดามะ พ่อเดินมาดู",
+      "who": [
+        "kimonodad",
+        "kimonoboy"
+      ],
+      "near": 5,
+      "chance": 0.6,
+      "cooldown": 30000,
+      "when": {
+        "kimonoboy": [
+          "kendama"
+        ],
+        "kimonodad": [
+          "walk",
+          "tea"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.0
+        },
+        {
+          "kimonoboy": "say",
+          "say": "พ่อดูนะ! 🎯",
+          "ms": 1200
+        },
+        {
+          "kimonodad": "cheer",
+          "say": "สุดยอด! 👏"
+        }
+      ]
+    },
+    {
+      "id": "kimonoKingyo",
+      "label": "ลูกชายอวดปลาทองให้แม่",
+      "who": [
+        "kimonomom",
+        "kimonoboy"
+      ],
+      "near": 4,
+      "chance": 0.5,
+      "cooldown": 30000,
+      "when": {
+        "kimonoboy": [
+          "kingyo"
+        ],
+        "kimonomom": [
+          "walk",
+          "parasol"
+        ]
+      },
+      "script": [
+        {
+          "meet": 1.8
+        },
+        {
+          "kimonoboy": "say",
+          "say": "แม่ ปลาทองผม! 🐟",
+          "ms": 1300
+        },
+        {
+          "kimonomom": "cheer",
+          "say": "น่ารักจัง 🌸"
+        }
+      ]
+    },
+    {
+      "id": "kimonoParents",
+      "label": "พ่อแม่ชุดญี่ปุ่นทักกัน",
+      "who": [
+        "kimonodad",
+        "kimonomom"
+      ],
+      "near": 3,
+      "chance": 0.5,
+      "cooldown": 25000,
+      "when": {
+        "kimonodad": [
+          "walk"
+        ],
+        "kimonomom": [
+          "walk"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.1
+        },
+        {
+          "together": [
+            {
+              "kimonomom": "cheer",
+              "say": "เทศกาลสนุกไหมคะ 🏮"
+            },
+            {
+              "kimonodad": "say",
+              "say": "สนุกมาก 😄",
+              "ms": 1300
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kimonoSiblings",
+      "label": "พี่น้องชุดญี่ปุ่นเจอกัน",
+      "who": [
+        "kimonogirl",
+        "kimonoboy"
+      ],
+      "near": 3,
+      "chance": 0.5,
+      "cooldown": 25000,
+      "when": {
+        "kimonogirl": [
+          "walk"
+        ],
+        "kimonoboy": [
+          "walk"
+        ]
+      },
+      "script": [
+        {
+          "meet": 2.0
+        },
+        {
+          "together": [
+            {
+              "kimonoboy": "cheer",
+              "say": "ไปเล่นกัน! 🎏"
+            },
+            {
+              "kimonogirl": "cheer",
+              "say": "เย้! 🏮"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

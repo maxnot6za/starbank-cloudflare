@@ -2,6 +2,7 @@
   "id": "kimonogirl",
   "name": "น้องยูกาตะปลาทอง",
   "headWidth": 150,
+  "scale": 1.15,
   "sheets": {
     "walk": {
       "file": "walk.webp",
