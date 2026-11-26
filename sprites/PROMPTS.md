@@ -138,4 +138,5 @@ Frame 3: standing, hands clasped at the chest, eyes wide and sparkling, amazed h
 - ลูกสาว `temari`: temari ball (red/yellow/white) · ใช้ชุด "Bouncing a ball"
 - ลูกสาว `odori`: small pink sensu fan · fan closed → open arms left knee bent → soft clap → fan raised right hip left → small step fan down → fan at chest
 - ลูกชาย `kendama`: small red wooden kendama · hanging → knees dip → ball flies up → lands on cup big grin → proud hop → same as 1
-- ลูกชาย `koi`: SHORT bamboo stick with one small red koinobori carp streamer (stays inside his own frame) · ใช้ชุด "Waving a flag"
+- ลูกชาย `kingyo`: SMALL clear festival water bag with one orange goldfish, red string, held close to his chest · at chest → lift to eye level → peer, eyes sparkling → laugh eyes closed → lower, proud grin → same as 1
+  (ธงปลาคาร์พบนไม้ไผ่ เจนแล้วตัดไม่ได้: ปลาลอยไปชนเฟรมข้าง ๆ → ของที่ถือควรอยู่ชิดตัว)
