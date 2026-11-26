@@ -2185,8 +2185,8 @@ export function createCore(S) {
     { id: 'bear_girl', kind: 'avatar', name: 'น้องหมีชมพู', type: 'kid', sprite: 'beargirl', price: 30, currency: 'purple' },
     // ครอบครัวชุดญี่ปุ่น = รางวัลใหญ่ในไข่ธรรมดา (jackpot · โอกาส EGG_JACKPOT_CHANCE ต่อใบ) ไม่ขายในร้าน · thumbAspect = กว้าง/สูง ของเฟรม walk
     { id: 'kimono_dad', kind: 'avatar', name: 'พ่อชุดยูกาตะ', type: 'dad', sprite: 'kimonodad', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.5 },
-    { id: 'kimono_mom', kind: 'avatar', name: 'แม่ชุดกิโมโน', type: 'mom', sprite: 'kimonomom', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.5 },
-    { id: 'kimono_girl', kind: 'avatar', name: 'น้องยูกาตะปลาทอง', type: 'kid', sprite: 'kimonogirl', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.5 },
+    { id: 'kimono_mom', kind: 'avatar', name: 'แม่ชุดกิโมโน', type: 'mom', sprite: 'kimonomom', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.56 },
+    { id: 'kimono_girl', kind: 'avatar', name: 'น้องยูกาตะปลาทอง', type: 'kid', sprite: 'kimonogirl', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.57 },
     { id: 'kimono_boy', kind: 'avatar', name: 'น้องฮัปปิ', type: 'kid', sprite: 'kimonoboy', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.5 },
     // สัตว์เลี้ยง (ตัวละครประเภทที่ 4): ของทั้งครอบครัว · อยู่ในห้องได้สูงสุด PET_MAX ตัว · เดินนิดเดียวแล้วนั่งเล่น/หลับ
     { id: 'pet_dino', kind: 'pet', name: 'ไดโนจิ๋ว', sprite: 'petdino', price: 20, currency: 'purple' },
