@@ -2183,6 +2183,11 @@ export function createCore(S) {
     { id: 'bear_dad', kind: 'avatar', name: 'พ่อหมี', type: 'dad', sprite: 'beardad', price: 30, currency: 'purple' },
     { id: 'bear_mom', kind: 'avatar', name: 'แม่หมี', type: 'mom', sprite: 'bearmom', price: 30, currency: 'purple' },
     { id: 'bear_girl', kind: 'avatar', name: 'น้องหมีชมพู', type: 'kid', sprite: 'beargirl', price: 30, currency: 'purple' },
+    // ครอบครัวชุดญี่ปุ่น = รางวัลใหญ่ในไข่ธรรมดา (jackpot · โอกาส EGG_JACKPOT_CHANCE ต่อใบ) ไม่ขายในร้าน · thumbAspect = กว้าง/สูง ของเฟรม walk
+    { id: 'kimono_dad', kind: 'avatar', name: 'พ่อชุดยูกาตะ', type: 'dad', sprite: 'kimonodad', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.5 },
+    { id: 'kimono_mom', kind: 'avatar', name: 'แม่ชุดกิโมโน', type: 'mom', sprite: 'kimonomom', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.5 },
+    { id: 'kimono_girl', kind: 'avatar', name: 'น้องยูกาตะปลาทอง', type: 'kid', sprite: 'kimonogirl', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.5 },
+    { id: 'kimono_boy', kind: 'avatar', name: 'น้องฮัปปิ', type: 'kid', sprite: 'kimonoboy', price: 0, currency: 'purple', egg: true, jackpot: true, thumbAspect: 0.5 },
     // สัตว์เลี้ยง (ตัวละครประเภทที่ 4): ของทั้งครอบครัว · อยู่ในห้องได้สูงสุด PET_MAX ตัว · เดินนิดเดียวแล้วนั่งเล่น/หลับ
     { id: 'pet_dino', kind: 'pet', name: 'ไดโนจิ๋ว', sprite: 'petdino', price: 20, currency: 'purple' },
     { id: 'pet_dino_pink', kind: 'pet', name: 'ไดโนชมพู', sprite: 'petpink', price: 20, currency: 'purple' },
@@ -2340,7 +2345,10 @@ export function createCore(S) {
   // ระดับไข่: rare 25% · การันตี rare ทุกใบที่ EGG_RARE_PITY · rare ที่ได้ของครบแล้ว = ดาวม่วง 30 + คูปองลด 50%
   var EGG_RARE_CHANCE = 0.25, EGG_RARE_PITY = 5, EGG_RARE_PURPLE = 30, EGG_RARE_COUPON = 50;
   function eggTier_(egg) { return (egg && egg.tier) || 'normal'; }
-  function eggPool_(tier) { return SHOP_ITEMS.filter(function(it) { return it.egg && (it.tier || 'normal') === tier; }); }
+  // ไข่ธรรมดา: ทุกใบมีโอกาส EGG_JACKPOT_CHANCE ได้ตัวละครรางวัลใหญ่ที่บ้านยังไม่มี · ของตกแต่งครบแล้ว = ได้ตัวละครแทนดาวม่วง
+  var EGG_JACKPOT_CHANCE = 0.08;
+  function eggPool_(tier) { return SHOP_ITEMS.filter(function(it) { return it.egg && !it.jackpot && (it.tier || 'normal') === tier; }); }
+  function eggJackpot_(tier) { return tier === 'normal' ? SHOP_ITEMS.filter(function(it) { return it.jackpot; }) : []; }
   function familyEggs_(familyId) { return getAllRows_('Eggs').filter(function(e) { return String(e.family_id) === String(familyId); }); }
   function activeEgg_(familyId) { return familyEggs_(familyId).find(function(e) { return e.status !== 'hatched'; }) || null; }
   function jsonObj_(s) { try { return JSON.parse(s || '{}') || {}; } catch (e) { return {}; } }
@@ -2389,7 +2397,9 @@ export function createCore(S) {
     if (!m || m.role !== 'child') throw new Error('ให้ลูกเป็นคนฟักไข่นะ');
     var egg = activeEgg_(m.family_id);
     if (!egg || egg.status !== 'ready') throw new Error('ไข่ยังไม่พร้อมฟัก');
-    var tier = eggTier_(egg), pool = eggPool_(tier).filter(function(it) { return !owns_(m.family_id, it); }), prize, pct = 0;
+    var tier = eggTier_(egg), unowned = function(it) { return !owns_(m.family_id, it); }, prize, pct = 0;
+    var pool = eggPool_(tier).filter(unowned), jp = eggJackpot_(tier).filter(unowned);
+    if (jp.length && (!pool.length || Math.random() < EGG_JACKPOT_CHANCE)) pool = jp;
     if (pool.length) {
       var it = pool[Math.floor(Math.random() * pool.length)];
       appendRow_('Inventory', { inv_id: genId_(), family_id: m.family_id, item_id: it.id, price: 0, currency: 'egg',
@@ -2422,7 +2432,7 @@ export function createCore(S) {
   function prizeView1_(prize) {
     if (String(prize).indexOf('purple:') === 0) return { kind: 'purple', amount: Number(String(prize).split(':')[1]) || 0 };
     var it = shopItem_(prize);
-    return it ? { kind: it.kind, id: it.id, name: it.name, art: it.art, h: it.h, fx: it.fx, set: it.set, sprite: it.sprite, thumb: it.thumb, thumbFrames: it.thumbFrames, tier: it.tier || 'normal' } : null;
+    return it ? { kind: it.kind, id: it.id, name: it.name, type: it.type, art: it.art, h: it.h, fx: it.fx, set: it.set, sprite: it.sprite, thumb: it.thumb, thumbFrames: it.thumbFrames, thumbAspect: it.thumbAspect, jackpot: !!it.jackpot, tier: it.tier || 'normal' } : null;
   }
   // ข้อมูลไข่สำหรับหน้าจอ: ใบที่กำลังฟัก + เหตุการณ์ล่าสุด (เจอ/ฟัก) ที่สมาชิกคนนี้ยังไม่เห็น
   function eggView_(m) {
@@ -2444,7 +2454,7 @@ export function createCore(S) {
       // ยังไม่มีไข่ → อีกไม่เกินกี่ภารกิจที่อนุมัติจะได้ไข่แน่นอน (การันตีครั้งที่ EGG_PITY) · ไม่บอกเรื่องไข่หายาก
       pity: cur ? null : { left: Math.max(1, EGG_PITY - Number((familyRow_(m.family_id) || {}).egg_pity || 0)), of: EGG_PITY },
       event: event, canHatch: m.role === 'child',
-      pool: eggPool_(eggTier_(cur)).map(function(it) { return { kind: it.kind, art: it.art, sprite: it.sprite, thumb: it.thumb, thumbFrames: it.thumbFrames, name: it.name, owned: owns_(m.family_id, it) }; })
+      pool: eggPool_(eggTier_(cur)).concat(eggJackpot_(eggTier_(cur))).map(function(it) { return { kind: it.kind, art: it.art, sprite: it.sprite, thumb: it.thumb, thumbFrames: it.thumbFrames, thumbAspect: it.thumbAspect, jackpot: !!it.jackpot, name: it.name, owned: owns_(m.family_id, it) }; })
     };
   }
 
@@ -2473,7 +2483,7 @@ export function createCore(S) {
         var own = it.free || inv.find(function(r) { return r.item_id === it.id; });
         var who = own && own.assigned_to ? getMember_(own.assigned_to) : null;   // ตัวละครเท่านั้น
         var ws = wishes.filter(function(w) { return w.item_id === it.id; });
-        return { id: it.id, kind: it.kind, name: it.name, type: it.type, sprite: it.sprite, art: it.art, free: !!it.free, egg: !!it.egg, event: it.event || '', tier: it.tier || 'normal', set: it.set, h: it.h, fx: it.fx, rim: it.rim, currency: it.currency, price: it.price,
+        return { id: it.id, kind: it.kind, name: it.name, type: it.type, sprite: it.sprite, art: it.art, free: !!it.free, egg: !!it.egg, jackpot: !!it.jackpot, event: it.event || '', tier: it.tier || 'normal', set: it.set, h: it.h, fx: it.fx, rim: it.rim, currency: it.currency, price: it.price,
           pay: first ? discPrice_(it.price, FIRST_DISCOUNT * 100) : it.price, owned: !!own,
           inUse: it.kind === 'floor' ? stage.floor === it.id : it.kind === 'wall' ? stage.wall === it.id : it.kind === 'decor' ? stage.decor.some(function(d) { return d.id === it.id; }) : it.kind === 'pet' ? stage.pets.indexOf(it.id) >= 0 : it.kind === 'nest' ? stage.nest.skin === it.id : undefined,
           assigned_to: who ? { member_id: who.member_id, name: who.name, avatar: who.avatar } : null,

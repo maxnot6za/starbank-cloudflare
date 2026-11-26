@@ -7,6 +7,10 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   const pushes = [];
   const { mf, db } = await start({ outbound: async (req) => { pushes.push(new URL(req.url).pathname); return new Response('', { status: 201 }); } });
   await seedFamily(db);
+  // ตัวละครรางวัลใหญ่ (8%) → ให้มีไว้ก่อน ผลฟักไข่ธรรมดาจะได้แน่นอน · ทดสอบรางวัลใหญ่แยกด้านล่าง
+  const KIMONO = ['kimono_dad', 'kimono_mom', 'kimono_girl', 'kimono_boy'];
+  const ownKimono = async () => { for (const id of KIMONO) await db.prepare("INSERT OR IGNORE INTO Inventory (inv_id,family_id,item_id,price,currency,bought_by,bought_at,assigned_to) VALUES (?,?,?,0,'egg',?,'','')").bind('k' + id, FAM, id, C).run(); };
+  await ownKimono();
   await db.prepare("INSERT INTO PushSubs (endpoint, member_id, family_id, p256dh, auth, device, created_at) VALUES (?,?,?,?,?,?,?)")
     .bind('https://push.example/kid', C, FAM, 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM', 'tBHItJI5svbpez7KI4CCXg', 'test', new Date().toISOString()).run();
   const approve = async () => { const s = await call(mf, 'submitMission', 'm1', C, FAM); return call(mf, 'reviewSubmission', s.value, 'approved', P2); };
@@ -55,15 +59,29 @@ const ok = (c, l, x) => { console.log(c ? '✓' : '✗', l, x === undefined ? ''
   await call(mf, 'eggSeen', P1, pd.egg.event.key);
   pd = (await call(mf, 'getParentDashboard', P1)).value;
   ok(!pd.egg.event && !pd.egg.current, 'เห็นแล้วไม่ขึ้นซ้ำ · ไม่มีไข่ค้าง');
-  ok(pd.egg.pool.length === 12 && pd.egg.pool.filter(p => p.owned).length === 1, 'ของจากไข่ 12 ชิ้น มีแล้ว 1');
+  ok(pd.egg.pool.length === 16 && pd.egg.pool.filter(p => p.owned).length === 5, 'รายการลุ้นไข่ธรรมดา = ของตกแต่ง 12 + ตัวละครรางวัลใหญ่ 4 · มีแล้ว 5', pd.egg.pool.length);
+  ok(pd.egg.pool.filter(p => p.jackpot).map(p => p.sprite).sort().join() === 'kimonoboy,kimonodad,kimonogirl,kimonomom', 'ตัวละครรางวัลใหญ่ในรายการลุ้นส่ง sprite + jackpot');
 
   // --- ของครบ → ดาวม่วง ---
   const eggItems = ['plant', 'lamp', 'bear', 'toybox', 'shelf', 'beanbag', 'ball', 'horse', 'rocket', 'blocks', 'drum', 'tent'].map(a => 'decor_' + a);
   for (const id of eggItems) await db.prepare("INSERT OR IGNORE INTO Inventory (inv_id,family_id,item_id,price,currency,bought_by,bought_at,assigned_to) VALUES (?,?,?,0,'egg',?,'','')").bind('x' + id, FAM, id, C).run();
+  // ของตกแต่งครบ แต่ยังไม่มีตัวละครรางวัลใหญ่ → ได้ตัวละครแทนดาวม่วง
+  await db.prepare("DELETE FROM Inventory WHERE family_id = ? AND item_id IN ('kimono_dad','kimono_mom','kimono_girl','kimono_boy')").bind(FAM).run();
+  await db.prepare("INSERT INTO Eggs (egg_id,family_id,status,warm,goal,day,day_warm,contrib,hugs,found_by,found_at,hatched_by,hatched_at,prize,created_at) VALUES (?,?,'ready',15,15,'',0,'{}','{}',?,'','','','','')").bind(FAM + '|8', FAM, C).run();
+  r = await call(mf, 'hatchEgg', C);
+  ok(r.ok && r.value.prize.kind === 'avatar' && r.value.prize.jackpot && KIMONO.includes(r.value.prize.id) && r.value.prize.sprite && r.value.prize.thumbAspect > 0, 'ของตกแต่งครบ → ได้ตัวละครรางวัลใหญ่', r.value && r.value.prize);
+  ok(!!(await db.prepare('SELECT 1 FROM Inventory WHERE family_id = ? AND item_id = ?').bind(FAM, r.value.prize.id).first()), 'ตัวละครเข้าคลังของครอบครัว');
+  r = await call(mf, 'assignAvatar', P1, r.value.prize.id, r.value.prize.type === 'kid' ? C : P1);
+  ok(r.ok, 'ผู้ปกครองมอบตัวละครจากไข่ให้สมาชิกได้', r.error);
+  let sp = (await call(mf, 'getShop', P1)).value.items.filter(i => KIMONO.includes(i.id));
+  ok(sp.length === 4 && sp.every(i => i.egg && i.jackpot && i.kind === 'avatar'), 'ร้าน: ตัวละครชุดญี่ปุ่น 4 ตัว เป็นของจากไข่ (รางวัลใหญ่)');
+  r = await call(mf, 'buyItem', P1, 'kimono_mom', ''); ok(!r.ok, 'ตัวละครรางวัลใหญ่ซื้อในร้านไม่ได้');
+  await db.prepare("UPDATE Eggs SET status = 'hatched' WHERE family_id = ?").bind(FAM).run();
+  await ownKimono();
   await db.prepare("INSERT INTO Eggs (egg_id,family_id,status,warm,goal,day,day_warm,contrib,hugs,found_by,found_at,hatched_by,hatched_at,prize,created_at) VALUES (?,?,'ready',15,15,'',0,'{}','{}',?,'','','','','')").bind(FAM + '|9', FAM, C).run();
   const before = (await db.prepare('SELECT purple FROM Families WHERE family_id = ?').bind(FAM).first()).purple;
   r = await call(mf, 'hatchEgg', C);
-  ok(r.ok && r.value.prize.kind === 'purple' && r.value.prize.amount === 15, 'ของจากไข่ครบแล้ว → ได้ดาวม่วง 15');
+  ok(r.ok && r.value.prize.kind === 'purple' && r.value.prize.amount === 15, 'ของจากไข่ครบแล้ว (รวมตัวละครรางวัลใหญ่) → ได้ดาวม่วง 15', r.value && r.value.prize);
   ok((await db.prepare('SELECT purple FROM Families WHERE family_id = ?').bind(FAM).first()).purple === before + 15, 'ดาวม่วงเข้ากระเป๋า');
 
   // --- ร้าน: ของคริสต์มาสซื้อได้ 10 · ของจากไข่ซื้อไม่ได้ ---

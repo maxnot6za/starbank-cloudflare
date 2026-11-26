@@ -120,3 +120,22 @@ Frame 3: standing, hands clasped at the chest, eyes wide and sparkling, amazed h
 
 **ตัดภาพ:** `python3 cut.py src/<ภาพ>.jpg <id> --sheet <ชื่อ>` ทีละภาพ → `python3 build.py` → `python3 publish.py`
 (ท่าฉลองธีมยังต้องต่อโค้ดใน `treePopOpen` ให้ใช้ชีต `celebrate` ของตัวละครที่เด็กใช้อยู่ — ตอนนี้ฝังเฉพาะลูกไดโน)
+
+## ครอบครัวชุดญี่ปุ่น (kimonodad / kimonomom / kimonogirl / kimonoboy) — 26 พ.ย. 2026
+
+เจนใน Google Flow (Nano Banana) ผ่าน flow MCP · ภาพอ้างอิง (ภาพ 0) ใช้ภาพครอบครัวหมีเดินเป็น reference ให้สัดส่วนเข้าชุด
+ชีตท่าทางใช้ภาพอ้างอิงของตัวเองเป็น reference + ส่วนกติกาชีต + ส่วนสไตล์ด้านบน · ของติดตัวที่ต้องเขียนในบรรทัด `Keep the costume…`:
+- พ่อ: round black glasses, white-and-red kitsune fox mask on the side of his head, navy-blue yukata with white wave pattern, mustard-yellow obi belt, wooden geta sandals
+- แม่: brown hair bun with pink sakura kanzashi flower pins, round glasses, soft pink kimono with white cherry-blossom pattern, mint-green obi with a bow at the back, white tabi socks, wooden geta sandals
+- ลูกสาว: two round hair buns with red ribbons, small white kitsune fox mask on the side of her head, red yukata with goldfish pattern, big yellow obi bow at the back, wooden geta sandals
+- ลูกชาย: white hachimaki headband tied at the side, short mint-green happi festival coat with white wave pattern at the hem, orange sash, navy shorts, wooden geta sandals
+
+ท่ากิจกรรม (6 เฟรม · ยืนที่เดิม):
+- พ่อ `fan`: small round red uchiwa paper fan · 1 at chest · 2 swing out right · 3 back toward face · 4 eyes closed enjoying breeze · 5 swing out · 6 same as 1
+- พ่อ `tea`: small green yunomi teacup with steam · 1 at chest · 2 lift · 3 sip eyes closed · 4 lower, content sigh · 5 smile · 6 same as 1
+- แม่ `parasol`: SMALL red-and-white wagasa parasol over shoulder (stays inside its own frame) · rest → tilt back → rotate → upright eyes closed → tilt forward → rest
+- แม่ `dango`: skewer of three dango (pink, white, green) · at chest → lift → bite top → chew cheeks puffed → smile sparkle → skewer with two dango
+- ลูกสาว `temari`: temari ball (red/yellow/white) · ใช้ชุด "Bouncing a ball"
+- ลูกสาว `odori`: small pink sensu fan · fan closed → open arms left knee bent → soft clap → fan raised right hip left → small step fan down → fan at chest
+- ลูกชาย `kendama`: small red wooden kendama · hanging → knees dip → ball flies up → lands on cup big grin → proud hop → same as 1
+- ลูกชาย `koi`: SHORT bamboo stick with one small red koinobori carp streamer (stays inside his own frame) · ใช้ชุด "Waving a flag"

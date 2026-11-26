@@ -4844,13 +4844,13 @@ function eggPopClose(key) {
 }
 // รูปเล็กสัตว์เลี้ยง = เฟรมแรกของชีต thumb
 function petThumb(p, h, cls) {
-  return '<span class="' + (cls || '') + '" style="display:inline-block;height:' + h + 'px;aspect-ratio:1.4;background:url(/sprites/characters/' + p.sprite + '/' + (p.thumb || 'walk') + '.webp) 0 0/' + ((p.thumbFrames || 6) * 100) + '% 100% no-repeat"></span>';
+  return '<span class="' + (cls || '') + '" style="display:inline-block;height:' + h + 'px;aspect-ratio:' + (p.thumbAspect || 1.4) + ';background:url(/sprites/characters/' + p.sprite + '/' + (p.thumb || 'walk') + '.webp) 0 0/' + ((p.thumbFrames || 6) * 100) + '% 100% no-repeat"></span>';
 }
 function eggPrizeHtml(p) {
   if (!p) return '';
-  return p.kind === 'purple' ? '<div class="ep-prize" style="font-size:5rem;line-height:1">💜</div>' : p.kind === 'pet' ? petThumb(p, 130, 'ep-prize') : p.kind === 'nest' ? '<div class="ep-prize" style="width:150px;margin:auto">' + nestBox({ art: p.art, rim: p.rim, fx: p.fx }) + '</div>' : '<img class="ep-prize" src="' + decorUrl(p.art) + '" alt="">';
+  return p.kind === 'purple' ? '<div class="ep-prize" style="font-size:5rem;line-height:1">💜</div>' : p.kind === 'avatar' ? petThumb(p, 150, 'ep-prize') : p.kind === 'pet' ? petThumb(p, 130, 'ep-prize') : p.kind === 'nest' ? '<div class="ep-prize" style="width:150px;margin:auto">' + nestBox({ art: p.art, rim: p.rim, fx: p.fx }) + '</div>' : '<img class="ep-prize" src="' + decorUrl(p.art) + '" alt="">';
 }
-function eggPrizeText(p) { return !p ? '' : (p.kind === 'purple' ? 'ดาวม่วง ' + p.amount + ' ดวง' : p.kind === 'pet' ? 'สัตว์เลี้ยง ' + esc(p.name) : esc(p.name)) + (p.coupon ? ' + คูปองลด ' + p.coupon + '%' : '') + '!'; }
+function eggPrizeText(p) { return !p ? '' : (p.kind === 'purple' ? 'ดาวม่วง ' + p.amount + ' ดวง' : p.kind === 'pet' ? 'สัตว์เลี้ยง ' + esc(p.name) : p.kind === 'avatar' ? 'ตัวละครหายาก ' + esc(p.name) : esc(p.name)) + (p.coupon ? ' + คูปองลด ' + p.coupon + '%' : '') + '!'; }
 // ฐานไข่ในป๊อปอัปฟัก (หลังไข่) · ฐานรังฟางเดิม = ไม่แสดง (ไข่มีฐานไม้อยู่แล้ว)
 function epNest() {
   var n = dashboardData && dashboardData.stage && dashboardData.stage.nest; if (!n || !n.art) return '';
@@ -4892,6 +4892,7 @@ function eggReveal(prize, title, sub, seenKey) {
     if (typeof treeChime === 'function') treeChime();
     var canPlace = currentMember.role === 'parent' && prize && prize.kind === 'decor';
     var cp = prize && prize.coupon;
+    if (!sub && prize && prize.kind === 'avatar') sub = 'รางวัลใหญ่ในไข่! ผู้ปกครองเลือกให้ใครใส่ได้ที่ร้านค้า › ตัวละคร';
     if (!sub && cp) sub = 'คูปองเก็บไว้ในร้านค้า · ผู้ปกครองใช้ลดของ 1 ชิ้นตอนซื้อ';
     document.getElementById('ep-msg').innerHTML = (cp ? '<div class="cp-card' + (cp >= 50 ? ' r' : '') + '" id="ep-cp" style="margin:-10px 0 10px"><span style="font-size:1.5rem">🎟️</span><span>คูปองลด ' + cp + '%' + (cp >= 50 ? '<small>✨ แรร์มาก!</small>' : '') + '</span></div>' : '') +
       '<h2>' + title + '</h2>' + (sub ? '<div style="color:var(--text-muted);margin-top:4px">' + sub + '</div>' : '') +
@@ -5497,7 +5498,7 @@ function shopArt(it, big) {
 }
 function openShopItem(id) {
   var d = SHOP.data, it = d.items.find(function (x) { return x.id === id; }); if (!it) return;
-  if (it.kind !== 'avatar') return openStageItem(it);
+  if (it.kind !== 'avatar' || (it.egg && !it.owned)) return openStageItem(it);
   var fits = d.members.filter(function (m) { return it.type === 'kid' ? m.role === 'child' : m.role === 'parent'; });
   window.__shopPick = it.assigned_to ? it.assigned_to.member_id : (fits.length === 1 ? fits[0].member_id : '');
   var whoHtml = d.canBuy ? '<div style="font-weight:700;margin-top:4px">' + (it.owned ? 'ให้ใครใช้?' : 'ซื้อแล้วให้ใครใช้?') + '</div><div class="shop-who" id="shop-who">' +
@@ -5529,10 +5530,10 @@ function openShopItem(id) {
 }
 function openStageItem(it) {
   if (it.egg && !it.owned) {
-    openModal('<div style="text-align:center"><h2>❓ ของปริศนา</h2>' + shopArt(it, true) + '<div style="margin-top:10px">ของชิ้นนี้ <b>' + (it.tier === 'rare' ? 'ได้จากไข่หายาก (RARE) เท่านั้น' : 'ได้จากไข่ปริศนาเท่านั้น') + '</b></div>' +
+    openModal('<div style="text-align:center"><h2>❓ ' + (it.kind === 'avatar' ? 'ตัวละครปริศนา' : 'ของปริศนา') + '</h2>' + shopArt(it, true) + '<div style="margin-top:10px">' + (it.kind === 'avatar' ? 'ตัวละครนี้' : 'ของชิ้นนี้') + ' <b>' + (it.tier === 'rare' ? 'ได้จากไข่หายาก (RARE) เท่านั้น' : 'ได้จากไข่ปริศนาเท่านั้น') + '</b>' + (it.jackpot ? '<br>✨ โอกาสน้อยมาก ลุ้นกันนะ!' : '') + '</div>' +
       '<div style="font-size:.85rem;color:var(--text-muted);margin-top:6px">ลูกส่งภารกิจ ผู้ปกครองอนุมัติ → ลุ้นเจอไข่ · ช่วยกันกอดไข่จนฟัก</div>' +
       '<div style="display:flex;gap:8px;margin-top:14px"><button class="dq-btn g" onclick="closeModal()">ปิด</button></div></div>');
-    if (it.kind === 'pet') spriteStages(document.getElementById('modal-content'), 48);
+    if (it.kind === 'pet' || it.kind === 'avatar') spriteStages(document.getElementById('modal-content'), 48);
     return;
   }
   var d = SHOP.data, cpHtml = couponOptsHtml(it), pay0 = cpHtml ? couponPrice(it.price, d.coupons[0].pct) : it.pay;
