@@ -1,0 +1,280 @@
+{
+  "id": "kimonogirl",
+  "name": "น้องยูกาตะปลาทอง",
+  "headWidth": 150,
+  "sheets": {
+    "walk": {
+      "file": "walk.webp",
+      "frames": 6,
+      "cell": [
+        188,
+        327
+      ],
+      "facing": "right",
+      "extent": [
+        75,
+        90
+      ],
+      "cut": {
+        "src": "src/walk.jpg",
+        "frames": 6,
+        "facing": "right",
+        "zoom": 1.0
+      }
+    },
+    "temari": {
+      "file": "temari.webp",
+      "frames": 6,
+      "cell": [
+        204,
+        314
+      ],
+      "facing": "right",
+      "extent": [
+        75,
+        98
+      ],
+      "cut": {
+        "src": "src/temari.jpg",
+        "frames": 6,
+        "facing": "right",
+        "zoom": 1.0
+      }
+    },
+    "cheer": {
+      "file": "cheer.webp",
+      "frames": 6,
+      "cell": [
+        186,
+        433
+      ],
+      "facing": "right",
+      "extent": [
+        89,
+        87
+      ],
+      "cut": {
+        "src": "src/cheer.jpg",
+        "frames": 6,
+        "facing": "right",
+        "keep_y": true,
+        "zoom": 1.0
+      }
+    },
+    "celebrate": {
+      "file": "celebrate.webp",
+      "frames": 3,
+      "cell": [
+        201,
+        314
+      ],
+      "facing": "right",
+      "extent": [
+        96,
+        96
+      ],
+      "cut": {
+        "src": "src/celebrate.jpg",
+        "frames": 3,
+        "facing": "right",
+        "zoom": 1.0
+      }
+    },
+    "odori": {
+      "file": "odori.webp",
+      "frames": 6,
+      "cell": [
+        258,
+        321
+      ],
+      "facing": "right",
+      "extent": [
+        113,
+        125
+      ],
+      "cut": {
+        "src": "src/odori.jpg",
+        "frames": 6,
+        "method": "split",
+        "facing": "right",
+        "zoom": 1.0
+      }
+    }
+  },
+  "anims": {
+    "walk": {
+      "label": "เดิน",
+      "sheet": "walk",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "ms": 140,
+      "loop": true,
+      "speed": 1.0,
+      "bob": [
+        0,
+        -1,
+        -1.5,
+        0,
+        -1,
+        -1.5
+      ]
+    },
+    "temari": {
+      "label": "เด้งลูกบอลเทมาริ",
+      "sheet": "temari",
+      "loop": true,
+      "steps": [
+        [
+          0,
+          500
+        ],
+        [
+          1,
+          250
+        ],
+        [
+          2,
+          200
+        ],
+        [
+          3,
+          250
+        ],
+        [
+          4,
+          350
+        ],
+        [
+          5,
+          500
+        ]
+      ]
+    },
+    "odori": {
+      "label": "รำบงโอโดริ",
+      "sheet": "odori",
+      "loop": true,
+      "steps": [
+        [
+          0,
+          450
+        ],
+        [
+          1,
+          400
+        ],
+        [
+          2,
+          350
+        ],
+        [
+          3,
+          400,
+          "รำวงกัน~ 🏮"
+        ],
+        [
+          4,
+          350
+        ],
+        [
+          5,
+          500
+        ]
+      ]
+    },
+    "cheer": {
+      "label": "ดีใจ กระโดด",
+      "sheet": "cheer",
+      "steps": [
+        [
+          0,
+          350
+        ],
+        [
+          1,
+          250
+        ],
+        [
+          2,
+          250
+        ],
+        [
+          3,
+          450
+        ],
+        [
+          4,
+          250
+        ],
+        [
+          5,
+          900
+        ]
+      ],
+      "lift": [
+        0,
+        0,
+        -8,
+        -14,
+        0,
+        0
+      ]
+    },
+    "celebrate": {
+      "label": "ฉลอง",
+      "sheet": "celebrate",
+      "steps": [
+        [
+          0,
+          900
+        ],
+        [
+          1,
+          900
+        ],
+        [
+          2,
+          1200
+        ]
+      ]
+    }
+  },
+  "life": [
+    {
+      "walk": "random"
+    },
+    {
+      "pick": [
+        "temari",
+        "odori"
+      ],
+      "for": [
+        5000,
+        8000
+      ]
+    },
+    {
+      "walk": "random"
+    },
+    {
+      "chance": 0.3,
+      "do": [
+        {
+          "play": "cheer"
+        }
+      ]
+    }
+  ],
+  "idle": "temari",
+  "walk": "walk",
+  "tap": {
+    "anim": "cheer",
+    "say": "เย้! 🎏"
+  }
+}
